@@ -32,6 +32,7 @@ function NuevaCompraModal({
   const [proveedorId, setProveedorId] = useState('');
   const [carrito, setCarrito] = useState<CompraItem[]>([]);
   const [searchProd, setSearchProd] = useState('');
+  const [searchProv, setSearchProv] = useState('');
   const [notas, setNotas] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ function NuevaCompraModal({
     setProveedorId('');
     setCarrito([]);
     setSearchProd('');
+    setSearchProv('');
     setNotas('');
     setSuccess(false);
     setError(null);
@@ -57,6 +59,17 @@ function NuevaCompraModal({
   };
 
   const proveedorSeleccionado = proveedores.find(p => p.id === proveedorId);
+
+  // Filtrado de proveedores en el paso 1
+  const proveedoresFiltrados = useMemo(() => {
+    return proveedores.filter(p => 
+      p.estado === 'activo' && (
+        p.nombre.toLowerCase().includes(searchProv.toLowerCase()) ||
+        p.nit.toLowerCase().includes(searchProv.toLowerCase()) ||
+        p.contacto.toLowerCase().includes(searchProv.toLowerCase())
+      )
+    );
+  }, [proveedores, searchProv]);
 
   // Filtrado de productos en el selector de compras
   const productosFiltrados = useMemo(() => {
@@ -215,19 +228,35 @@ function NuevaCompraModal({
           {/* Step 1: Proveedor */}
           {step === 'proveedor' && (
             <div className="space-y-4">
-              <p className="text-xs text-slate-500">Busca y selecciona el proveedor al que le realizarás el reabastecimiento:</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-xs text-slate-500">Busca y selecciona el proveedor al que le realizarás el reabastecimiento:</p>
+                <div className="relative w-full sm:w-64">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={searchProv}
+                    onChange={e => setSearchProv(e.target.value)}
+                    placeholder="Buscar proveedor..."
+                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white"
+                  />
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-75 overflow-y-auto pr-1">
-                {proveedores.filter(p => p.estado === 'activo').map(p => (
+                {proveedoresFiltrados.length === 0 ? (
+                  <div className="col-span-full py-8 text-center text-xs text-slate-400">No se encontraron proveedores activos con esa búsqueda.</div>
+                ) : proveedoresFiltrados.map(p => (
                   <div 
                     key={p.id}
                     onClick={() => setProveedorId(p.id)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-slate-50/50 flex flex-col text-left ${
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-slate-50 flex flex-col text-left ${
                       proveedorId === p.id 
                         ? 'border-teal-500 bg-teal-50/30 ring-2 ring-teal-500/10' 
                         : 'border-slate-200 bg-white'
                     }`}
                   >
-                    <span className="font-bold text-sm text-slate-800 truncate">{p.nombre}</span>
+                    <div className="flex justify-between items-start">
+                      <span className="font-bold text-sm text-slate-800 truncate pr-2">{p.nombre}</span>
+                      {proveedorId === p.id && <CheckCircle2 size={16} className="text-teal-600 shrink-0" />}
+                    </div>
                     <span className="text-[10px] text-slate-400 font-mono mt-1">NIT: {p.nit}</span>
                     <span className="text-[11px] text-slate-500 mt-2">Contacto: {p.contacto}</span>
                   </div>
