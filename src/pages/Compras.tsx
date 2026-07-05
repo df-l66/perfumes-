@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, Calendar, FileText, CheckCircle2, 
-  XCircle, Printer, ShoppingBag, PlusCircle, ArrowRight, ArrowLeft, Package, Eye
+  XCircle, Printer, Download, ShoppingBag, PlusCircle, ArrowRight, ArrowLeft, Package, Eye
 } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -335,44 +335,47 @@ function NuevaCompraModal({
                         El carrito está vacío
                       </div>
                     ) : carrito.map(item => (
-                      <div key={item.producto_id} className="p-2.5 bg-white rounded-lg border border-slate-100 shadow-2xs flex items-center justify-between gap-3 text-left">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-800 truncate">{item.nombre}</p>
-                          <div className="grid grid-cols-3 gap-2 mt-1.5">
-                            <div>
-                              <span className="block text-[8px] uppercase font-bold text-slate-400">Cantidad</span>
+                      <div key={item.producto_id} className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 text-left">
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-bold text-slate-800 truncate pr-2">{item.nombre}</p>
+                          <button 
+                            onClick={() => removeFromCart(item.producto_id)} 
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            title="Eliminar producto"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex gap-3">
+                            <div className="w-24 shrink-0">
+                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cant.</span>
                               <input 
                                 type="number" 
                                 min={1} 
                                 value={item.cantidad} 
                                 onChange={e => updateCartQty(item.producto_id, +e.target.value)} 
-                                className="w-full px-1.5 py-0.5 rounded border border-slate-200 text-xs font-semibold focus:outline-none"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all text-center"
                               />
                             </div>
-                            <div>
-                              <span className="block text-[8px] uppercase font-bold text-slate-400">Costo</span>
+                            <div className="flex-1">
+                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Costo Unit.</span>
                               <input 
                                 value={formatNumberWithDots(item.precio_costo)} 
                                 onChange={e => updateCartCost(item.producto_id, e.target.value)} 
-                                className="w-full px-1.5 py-0.5 rounded border border-slate-200 text-xs font-semibold focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <span className="block text-[8px] uppercase font-bold text-slate-400">P. Venta</span>
-                              <input 
-                                value={formatNumberWithDots(item.precio_venta || 0)} 
-                                onChange={e => updateCartSalePrice(item.producto_id, e.target.value)} 
-                                className="w-full px-1.5 py-0.5 rounded border border-slate-200 text-xs font-semibold focus:outline-none"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
                               />
                             </div>
                           </div>
+                          <div>
+                            <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Precio Venta Sugerido</span>
+                            <input 
+                              value={formatNumberWithDots(item.precio_venta || 0)} 
+                              onChange={e => updateCartSalePrice(item.producto_id, e.target.value)} 
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
+                            />
+                          </div>
                         </div>
-                        <button 
-                          onClick={() => removeFromCart(item.producto_id)}
-                          className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded cursor-pointer"
-                        >
-                          ✕
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -450,7 +453,7 @@ function NuevaCompraModal({
                   </tbody>
                   <tfoot className="bg-teal-50 border-t border-teal-200">
                     <tr>
-                      <td colSpan={3} className="px-4 py-3 text-right font-bold text-teal-700">TOTAL COMPRA</td>
+                      <td colSpan={4} className="px-4 py-3 text-right font-bold text-teal-700 uppercase">TOTAL COMPRA</td>
                       <td className="px-4 py-3 text-right font-bold text-teal-700 text-base font-mono">{formatCurrency(total)}</td>
                     </tr>
                   </tfoot>
@@ -676,14 +679,14 @@ export function Compras() {
                         </button>
                         <button 
                           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" 
-                          title="Imprimir comprobante"
+                          title="Descargar comprobante"
                           onClick={(e) => {
                             e.stopPropagation();
                             setDetailCompra(c);
                             setTimeout(() => window.print(), 100);
                           }}
                         >
-                          <Printer size={15} />
+                          <Download size={15} />
                         </button>
                       </div>
                     </td>
@@ -800,8 +803,8 @@ export function Compras() {
               )}
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setDetailCompra(null)}>Cerrar</Button>
-                <Button variant="secondary" icon={<Printer size={15} />} onClick={handlePrint}>
-                  Imprimir Comprobante
+                <Button variant="secondary" icon={<Download size={15} />} onClick={handlePrint}>
+                  Descargar Comprobante
                 </Button>
               </div>
             </div>
