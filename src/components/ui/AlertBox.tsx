@@ -1,3 +1,4 @@
+// Prueba de color amarillo para Git
 import React, { type ReactNode } from 'react';
 import { AlertTriangle, Info, XCircle } from 'lucide-react';
 

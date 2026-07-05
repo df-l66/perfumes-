@@ -7,6 +7,7 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  headerAction?: ReactNode;
 }
 
 const sizes = {
@@ -16,7 +17,7 @@ const sizes = {
   xl: 'max-w-2xl',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', headerAction }: ModalProps) {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) {
@@ -42,13 +43,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div className={`relative w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-10 animate-scale-in overflow-hidden`} style={{ maxHeight: 'calc(100vh - 150px)' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            aria-label="Cerrar"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1 ml-auto">
+            {headerAction}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
         <div className="overflow-y-auto flex-1 min-h-0 px-6 py-5">
           {children}

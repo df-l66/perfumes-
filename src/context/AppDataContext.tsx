@@ -109,6 +109,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     notas?: string
   ) => {
     const prov = proveedores.find(p => p.id === proveedorId);
+    const provNombre = proveedorId === 'sin-proveedor' ? 'Sin Proveedor Registrado' : (prov?.nombre ?? 'Desconocido');
     const total = items.reduce((s, i) => s + i.subtotal, 0);
     const facturaNum = `COM-2025-${String(compras.length + 1).padStart(4, '0')}`;
 
@@ -116,7 +117,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       id: genId('com'),
       factura_compra: facturaNum,
       proveedor_id: proveedorId,
-      proveedor_nombre: prov?.nombre ?? 'Desconocido',
+      proveedor_nombre: provNombre,
       fecha: new Date().toISOString().slice(0, 10),
       items,
       total,
@@ -145,7 +146,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     );
 
     addLog(
-      `Registró compra ${facturaNum} al proveedor "${prov?.nombre || 'Desconocido'}" por total de ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(total)}`,
+      `Registró compra ${facturaNum} al proveedor "${provNombre}" por total de ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(total)}`,
       'compras',
       compradorNombre,
       compradorRol
@@ -216,6 +217,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     vendedorRol: string
   ) => {
     const cliente = clientes.find(c => c.id === clienteId);
+    const clienteNombre = clienteId === 'walk-in' ? 'Cliente No Registrado' : (cliente?.nombre ?? 'Desconocido');
     const total = items.reduce((s, i) => s + i.subtotal, 0);
     const facturaNum = `FAC-2025-${String(ventas.length + 1).padStart(4, '0')}`;
     
@@ -223,7 +225,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       id: genId('v'),
       factura: facturaNum,
       cliente_id: clienteId,
-      cliente_nombre: cliente?.nombre ?? 'Desconocido',
+      cliente_nombre: clienteNombre,
       vendedor_id: vendedorId,
       vendedor_nombre: vendedorNombre,
       fecha: new Date().toISOString().slice(0, 10),

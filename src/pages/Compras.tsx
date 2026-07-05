@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, Calendar, FileText, CheckCircle2, 
-  XCircle, Printer, Download, ShoppingBag, PlusCircle, ArrowRight, ArrowLeft, Package, Eye
+  XCircle, Download, ShoppingBag, PlusCircle, ArrowRight, ArrowLeft, Package, Eye,
+  RotateCcw
 } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -10,6 +11,8 @@ import { Modal } from '../components/ui/Modal';
 import { AlertBox } from '../components/ui/AlertBox';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { Compra, CompraItem, Producto, Proveedor } from '../types';
 
 type WizardStep = 'proveedor' | 'productos' | 'confirmar';
@@ -49,7 +52,6 @@ function NuevaCompraModal({
   };
 
   const handleClose = () => {
-    reset();
     onClose();
   };
 
@@ -57,8 +59,6 @@ function NuevaCompraModal({
     if (value === undefined || value === null) return '0';
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
-
-  const proveedorSeleccionado = proveedores.find(p => p.id === proveedorId);
 
   // Filtrado de proveedores en el paso 1
   const proveedoresFiltrados = useMemo(() => {
@@ -150,6 +150,11 @@ function NuevaCompraModal({
 
   const total = carrito.reduce((s, item) => s + item.subtotal, 0);
 
+  const SIN_PROVEEDOR_ID = 'sin-proveedor';
+  const proveedorSeleccionado = proveedorId === SIN_PROVEEDOR_ID
+    ? { id: SIN_PROVEEDOR_ID, nombre: 'Sin Proveedor Registrado', nit: '—', contacto: '', telefono: '', email: '', ciudad: '', estado: 'activo' as const }
+    : proveedores.find(p => p.id === proveedorId);
+
   const handleConfirm = () => {
     setError(null);
     if (!proveedorId) {
@@ -193,7 +198,17 @@ function NuevaCompraModal({
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Registrar Compra a Proveedor" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Registrar Compra a Proveedor" size="xl"
+      headerAction={
+        <button
+          onClick={reset}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          title="Limpiar formulario"
+        >
+          <RotateCcw size={16} />
+        </button>
+      }
+    >
       {success ? (
         <div className="py-8 text-center space-y-4">
           <div className="w-14 h-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
@@ -240,7 +255,33 @@ function NuevaCompraModal({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-75 overflow-y-auto pr-1">
+
+              {/* Sin proveedor option */}
+              <div
+                onClick={() => setProveedorId(SIN_PROVEEDOR_ID)}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-slate-50 flex flex-col text-left ${
+                  proveedorId === SIN_PROVEEDOR_ID
+                    ? 'border-teal-500 bg-teal-50/30 ring-2 ring-teal-500/10'
+                    : 'border-dashed border-slate-300 hover:border-teal-400 hover:bg-teal-50/30'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className="font-bold text-sm text-slate-800 truncate pr-2">Sin Proveedor Registrado</span>
+                  {proveedorId === SIN_PROVEEDOR_ID && <CheckCircle2 size={16} className="text-teal-600 shrink-0" />}
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1">Compra sin proveedor registrado en el sistema</span>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-slate-400 font-medium">o proveedores registrados</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
                 {proveedoresFiltrados.length === 0 ? (
                   <div className="col-span-full py-8 text-center text-xs text-slate-400">No se encontraron proveedores activos con esa búsqueda.</div>
                 ) : proveedoresFiltrados.map(p => (
@@ -291,12 +332,19 @@ function NuevaCompraModal({
                     />
                   </div>
                   
-                  <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-65 overflow-y-auto bg-white">
+                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-y-auto bg-white">
                     {productosFiltrados.length === 0 ? (
-                      <p className="p-8 text-center text-xs text-slate-400">No se encontraron productos</p>
+                      <div className="py-8 text-center">
+                        <Package size={24} className="mx-auto text-slate-300 mb-2" />
+                        <p className="text-xs text-slate-400">Sin resultados</p>
+                      </div>
                     ) : productosFiltrados.map(p => (
-                      <div key={p.id} className="p-3 hover:bg-slate-50 flex items-center justify-between gap-3 text-left">
-                        <div className="flex items-center gap-2.5 min-w-0">
+                      <button
+                        key={p.id}
+                        onClick={() => addToCart(p, 1, p.precio_costo)}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-teal-50 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0">
                           <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
                             {p.imagen ? (
                               <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
@@ -305,19 +353,15 @@ function NuevaCompraModal({
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-800 truncate">{p.nombre}</p>
-                            <p className="text-[9px] text-slate-400 font-mono">{p.codigo} · Stock: {p.stock} {p.unidad}</p>
+                            <p className="text-sm font-medium text-slate-700 truncate">{p.nombre}</p>
+                            <p className="text-xs text-slate-400">{p.codigo} · stock: {p.stock}</p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="secondary" 
-                          icon={<Plus size={12} />}
-                          onClick={() => addToCart(p, 1, p.precio_costo)}
-                        >
-                          Añadir
-                        </Button>
-                      </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-teal-600">{formatCurrency(p.precio_venta)}</p>
+                          <p className="text-xs text-slate-300 group-hover:text-teal-400 transition-colors">+ agregar</p>
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -420,7 +464,7 @@ function NuevaCompraModal({
                 <div className="text-xs">
                   <span className="block text-slate-400 uppercase font-bold text-[8px]">Proveedor</span>
                   <span className="font-bold text-slate-800 block mt-0.5">{proveedorSeleccionado?.nombre}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">NIT: {proveedorSeleccionado?.nit}</span>
+                  {proveedorId !== SIN_PROVEEDOR_ID && <span className="text-[10px] text-slate-400 font-mono">NIT: {proveedorSeleccionado?.nit}</span>}
                 </div>
                 <div className="text-xs">
                   <span className="block text-slate-400 uppercase font-bold text-[8px]">Comprador Autorizado</span>
@@ -443,7 +487,7 @@ function NuevaCompraModal({
                   <tbody className="divide-y divide-slate-100 bg-white">
                     {carrito.map(item => (
                       <tr key={item.producto_id}>
-                        <td className="px-4 py-2.5 text-slate-700 text-left">{item.nombre}</td>
+                        <td className="px-4 py-2.5 text-slate-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
                         <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
                         <td className="px-4 py-2.5 text-right text-slate-600">{formatCurrency(item.precio_costo)}</td>
                         <td className="px-4 py-2.5 text-right text-teal-600 font-semibold">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
@@ -516,8 +560,112 @@ export function Compras() {
     return filtered.slice(start, start + ITEMS_PER_PAGE);
   }, [filtered, currentPage]);
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPDF = async (compra?: Compra) => {
+    const c = compra || detailCompra;
+    if (!c) return;
+
+    const prov = proveedores.find(p => p.id === c.proveedor_id);
+
+    const printableHtml = `
+      <div style="padding:32px;font-family:sans-serif;font-size:12px;color:#1e293b;max-width:1100px;margin:0 auto;background:#fff;line-height:1.5">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #e2e8f0;padding-bottom:20px;margin-bottom:20px">
+          <div>
+            <h1 style="font-size:20px;font-weight:bold;text-transform:uppercase;letter-spacing:-0.5px;color:#0f172a;margin:0">${configuracion.nombre}</h1>
+            <p style="font-size:10px;color:#94a3b8;margin:4px 0 0">NIT: ${configuracion.nit} · Tel: ${configuracion.telefono}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:0">${configuracion.direccion}</p>
+          </div>
+          <div style="text-align:right">
+            <h2 style="font-size:18px;font-weight:bold;color:#0d9488;margin:0">COMPRA DE MERCANCÍA</h2>
+            <p style="font-size:14px;font-weight:bold;font-family:monospace;margin:4px 0">${c.factura_compra}</p>
+            <p style="font-size:9px;color:#94a3b8;margin:0">Fecha registro: ${c.fecha}</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+          <div style="padding:12px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:8px;font-weight:bold;text-transform:uppercase;color:#94a3b8">PROVEEDOR</span>
+            <p style="font-weight:bold;color:#1e293b;margin:2px 0">${c.proveedor_nombre}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:4px 0">NIT: ${prov?.nit || 'N/A'} · Contacto: ${prov?.contacto || ''}</p>
+          </div>
+          <div style="padding:12px;background:#f8fafc;border-radius:8px">
+            <span style="font-size:8px;font-weight:bold;text-transform:uppercase;color:#94a3b8">METADATA COMPRADOR</span>
+            <p style="font-weight:bold;color:#1e293b;margin:2px 0">${c.comprador_nombre}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:4px 0">Estado de Factura: <strong style="text-transform:uppercase">${c.estado}</strong></p>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:24px">
+          <thead>
+            <tr style="border-bottom:2px solid #cbd5e1;background:#f1f5f9;font-weight:bold;color:#475569">
+              <th style="padding:8px 12px;text-align:left">Ítem / Producto</th>
+              <th style="padding:8px 12px;text-align:center">Cantidad</th>
+              <th style="padding:8px 12px;text-align:right">Costo Unit.</th>
+              <th style="padding:8px 12px;text-align:right">P. Venta</th>
+              <th style="padding:8px 12px;text-align:right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${c.items.map(item => `
+              <tr style="border-bottom:1px solid #f1f5f9">
+                <td style="padding:10px 12px;color:#1e293b">${item.nombre}</td>
+                <td style="padding:10px 12px;text-align:center;color:#64748b">${item.cantidad}</td>
+                <td style="padding:10px 12px;text-align:right;color:#64748b">${formatCurrency(item.precio_costo)}</td>
+                <td style="padding:10px 12px;text-align:right;color:#64748b">${item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#1e293b">${formatCurrency(item.subtotal)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="border-top:2px solid #cbd5e1;font-weight:bold;color:#0f172a;font-size:14px">
+              <td colspan="4" style="padding:12px;text-align:right;text-transform:uppercase">TOTAL PAGADO</td>
+              <td style="padding:12px;text-align:right;font-family:monospace;color:#0d9488">${formatCurrency(c.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        ${c.notas ? `
+          <div style="padding:12px;border:1px solid #e2e8f0;border-radius:8px">
+            <span style="font-size:8px;font-weight:bold;text-transform:uppercase;color:#94a3b8">Notas Administrativas</span>
+            <p style="color:#475569;margin:4px 0">${c.notas}</p>
+          </div>
+        ` : ''}
+
+        <div style="margin-top:48px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:24px">
+          Comprobante oficial generado por el sistema administrativo de inventarios de ${configuracion.nombre}.
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.innerHTML = printableHtml;
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.width = '1100px';
+    container.style.opacity = '0';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '-1';
+    document.body.appendChild(container);
+
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+      pdf.save(`Comprobante-${c.factura_compra}.pdf`);
+    } catch (err) {
+      console.error('Error al generar PDF de compra:', err);
+    } finally {
+      document.body.removeChild(container);
+    }
   };
 
   const handleAnular = () => {
@@ -564,6 +712,13 @@ export function Compras() {
           </div>
 
           <table className="w-full text-xs mb-6">
+            <colgroup>
+              <col className="w-[36%]" />
+              <col className="w-[12%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[16%]" />
+            </colgroup>
             <thead>
               <tr className="border-b border-slate-300 bg-slate-100 font-bold text-slate-700">
                 <th className="py-2 px-3 text-left">Ítem / Producto</th>
@@ -661,8 +816,7 @@ export function Compras() {
                 ) : paginated.map(c => (
                   <tr 
                     key={c.id} 
-                    className="hover:bg-slate-50/50 transition-colors cursor-pointer"
-                    onClick={() => setDetailCompra(c)}
+                    className="hover:bg-slate-50/50 transition-colors"
                   >
                     <td className="px-5 py-4 font-mono text-xs font-bold text-teal-600 whitespace-nowrap">{c.factura_compra}</td>
                     <td className="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">{c.proveedor_nombre}</td>
@@ -674,16 +828,19 @@ export function Compras() {
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        <button className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                        <button
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                          title="Ver detalles"
+                          onClick={() => setDetailCompra(c)}
+                        >
                           <Eye size={15} />
                         </button>
-                        <button 
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" 
+                        <button
+                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
                           title="Descargar comprobante"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setDetailCompra(c);
-                            setTimeout(() => window.print(), 100);
+                            handleDownloadPDF(c);
                           }}
                         >
                           <Download size={15} />
@@ -737,7 +894,7 @@ export function Compras() {
           isOpen={!!detailCompra} 
           onClose={() => setDetailCompra(null)} 
           title={`Detalle de Compra: ${detailCompra.factura_compra}`} 
-          size="lg"
+          size="xl"
         >
           <div className="space-y-6 text-left">
             <div className="grid grid-cols-2 gap-4">
@@ -769,7 +926,7 @@ export function Compras() {
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {detailCompra.items.map(item => (
                     <tr key={item.producto_id}>
-                      <td className="px-4 py-2.5 text-slate-700 text-left">{item.nombre}</td>
+                      <td className="px-4 py-2.5 text-slate-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
                       <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
                       <td className="px-4 py-2.5 text-right text-slate-600 font-mono">{formatCurrency(item.precio_costo)}</td>
                       <td className="px-4 py-2.5 text-right text-slate-500 font-mono">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
@@ -793,21 +950,16 @@ export function Compras() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
-              {isAdmin && detailCompra.estado === 'completada' ? (
-                <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
-                  Anular Compra
-                </Button>
-              ) : (
-                <div />
-              )}
-              <div className="flex gap-2">
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                {isAdmin && detailCompra.estado === 'completada' ? (
+                  <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
+                    Anular Compra
+                  </Button>
+                ) : (
+                  <div />
+                )}
                 <Button variant="secondary" onClick={() => setDetailCompra(null)}>Cerrar</Button>
-                <Button variant="secondary" icon={<Download size={15} />} onClick={handlePrint}>
-                  Descargar Comprobante
-                </Button>
               </div>
-            </div>
           </div>
         </Modal>
       )}

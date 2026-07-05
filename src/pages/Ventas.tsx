@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import {
   Plus, Search, ShoppingCart, Trash2, XCircle,
-  FileText, ChevronRight, CheckCircle2, Package, FileDown, Printer
+  FileText, ChevronRight, CheckCircle2, Package, FileDown, Download,
+  RotateCcw
 } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -10,6 +11,8 @@ import { Modal } from '../components/ui/Modal';
 import { AlertBox } from '../components/ui/AlertBox';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import type { Venta, VentaItem } from '../types';
 
 const formatCurrency = (v: number) =>
@@ -32,6 +35,7 @@ function NuevaVentaModal({
   const [clienteId, setClienteId] = useState('');
   const [carrito, setCarrito] = useState<VentaItem[]>([]);
   const [searchProd, setSearchProd] = useState('');
+  const [searchCliente, setSearchCliente] = useState('');
   const [success, setSuccess] = useState(false);
 
   const reset = () => {
@@ -39,11 +43,11 @@ function NuevaVentaModal({
     setClienteId('');
     setCarrito([]);
     setSearchProd('');
+    setSearchCliente('');
     setSuccess(false);
   };
 
   const handleClose = () => {
-    reset();
     onClose();
   };
 
@@ -91,13 +95,26 @@ function NuevaVentaModal({
 
   const total = carrito.reduce((s, i) => s + i.subtotal, 0);
 
+  const WALK_IN_ID = 'walk-in';
+  const clienteSeleccionado = clienteId === WALK_IN_ID
+    ? { id: WALK_IN_ID, nombre: 'Cliente No Registrado', tipo: 'persona' as const, documento: '—', ciudad: '' }
+    : clientes.find(c => c.id === clienteId);
+
   const handleConfirm = () => {
     if (!user) return;
     addVenta(carrito, clienteId, user.id, user.name, user.role);
     setSuccess(true);
   };
 
-  const clienteSeleccionado = clientes.find(c => c.id === clienteId);
+  const clientesFiltrados = useMemo(() => {
+    if (!searchCliente) return clientes;
+    const q = searchCliente.toLowerCase();
+    return clientes.filter(c =>
+      c.nombre.toLowerCase().includes(q) ||
+      c.documento.toLowerCase().includes(q) ||
+      c.ciudad.toLowerCase().includes(q)
+    );
+  }, [clientes, searchCliente]);
 
   const stepLabels: Record<WizardStep, string> = {
     cliente: '1. Cliente',
@@ -108,7 +125,17 @@ function NuevaVentaModal({
   const currentIdx = steps.indexOf(step);
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Nueva Venta" size="xl">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Nueva Venta" size="xl"
+      headerAction={
+        <button
+          onClick={reset}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          title="Limpiar formulario"
+        >
+          <RotateCcw size={16} />
+        </button>
+      }
+    >
       {success ? (
         <div className="flex flex-col items-center py-8 gap-4">
           <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
@@ -138,9 +165,52 @@ function NuevaVentaModal({
           {/* Step: Cliente */}
           {step === 'cliente' && (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-slate-600 mb-4">Selecciona el cliente para esta venta:</p>
-              <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1">
-                {clientes.map(c => (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm font-medium text-slate-600">Selecciona el cliente para esta venta:</p>
+                <div className="relative w-full sm:w-64">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={searchCliente}
+                    onChange={e => setSearchCliente(e.target.value)}
+                    placeholder="Buscar cliente por nombre, doc. o ciudad..."
+                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Walk-in option */}
+              <button
+                onClick={() => setClienteId(WALK_IN_ID)}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer ${
+                  clienteId === WALK_IN_ID
+                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-500/10'
+                    : 'border-dashed border-slate-300 hover:border-teal-400 hover:bg-teal-50/30'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${clienteId === WALK_IN_ID ? 'bg-teal-500' : 'bg-slate-100'}`}>
+                  <span className={`text-xs font-bold ${clienteId === WALK_IN_ID ? 'text-white' : 'text-slate-500'}`}>
+                    <ShoppingCart size={14} />
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-sm font-semibold ${clienteId === WALK_IN_ID ? 'text-teal-700' : 'text-slate-700'}`}>Cliente No Registrado</p>
+                  <p className="text-xs text-slate-400">Venta sin identificación de cliente · No afecta cartera</p>
+                </div>
+              </button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-white px-2 text-slate-400 font-medium">o clientes registrados</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
+                {clientesFiltrados.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-slate-400">No se encontraron clientes con esa búsqueda.</p>
+                ) : clientesFiltrados.map(c => (
                   <button
                     key={c.id}
                     onClick={() => setClienteId(c.id)}
@@ -314,7 +384,7 @@ function NuevaVentaModal({
                   <tbody className="divide-y divide-slate-100">
                     {carrito.map(item => (
                       <tr key={item.producto_id}>
-                        <td className="px-4 py-2.5 text-slate-700">{item.nombre}</td>
+                        <td className="px-4 py-2.5 text-slate-700 truncate max-w-0" title={item.nombre}>{item.nombre}</td>
                         <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
                         <td className="px-4 py-2.5 text-right text-slate-600">{formatCurrency(item.precio_unitario)}</td>
                         <td className="px-4 py-2.5 text-right font-semibold text-slate-800">{formatCurrency(item.subtotal)}</td>
@@ -405,6 +475,120 @@ export function Ventas() {
     document.body.removeChild(link);
   };
 
+  const handleDownloadPDF = async (venta?: Venta) => {
+    const v = venta || detailVenta;
+    if (!v) return;
+
+    const ivaFactor = 1 + (configuracion.iva_porcentaje / 100);
+    const subtotalSinIva = v.total / ivaFactor;
+    const ivaCalculado = v.total - subtotalSinIva;
+
+    const printableHtml = `
+      <div style="padding:32px;font-family:sans-serif;font-size:12px;color:#1e293b;max-width:900px;margin:0 auto;background:#fff;line-height:1.5">
+        <div style="display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid #e2e8f0;padding-bottom:16px;margin-bottom:16px">
+          <div>
+            <h3 style="font-size:18px;font-weight:800;margin:0;color:#1e293b">${configuracion.nombre}</h3>
+            <p style="font-size:11px;color:#64748b;margin:4px 0">NIT: ${configuracion.nit}</p>
+            <p style="font-size:11px;color:#94a3b8;margin:0">${configuracion.direccion}</p>
+            <p style="font-size:11px;color:#94a3b8;margin:0">Tel: ${configuracion.telefono}</p>
+          </div>
+          <div style="text-align:right">
+            <span style="font-size:11px;font-weight:bold;text-transform:uppercase;color:#94a3b8">Factura de Venta</span>
+            <h4 style="font-size:20px;font-family:monospace;font-weight:bold;color:#0d9488;margin:4px 0">${v.factura}</h4>
+            <p style="font-size:11px;color:#64748b;margin:0">Fecha: ${new Date(v.fecha).toLocaleDateString('es-CO')}</p>
+            <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:bold;text-transform:uppercase;margin-top:4px;background:#d1fae5;color:#065f46">${v.estado}</span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:11px;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px">
+          <div>
+            <p style="font-size:9px;color:#94a3b8;font-weight:bold;text-transform:uppercase;margin:0">Adquiriente</p>
+            <p style="font-weight:bold;color:#1e293b;margin:4px 0 0">${v.cliente_nombre}</p>
+          </div>
+          <div>
+            <p style="font-size:9px;color:#94a3b8;font-weight:bold;text-transform:uppercase;margin:0">Cajero / Vendedor</p>
+            <p style="font-weight:bold;color:#1e293b;margin:4px 0 0">${v.vendedor_nombre}</p>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px">
+          <thead>
+            <tr style="background:#f1f5f9;border-bottom:2px solid #e2e8f0">
+              <th style="padding:10px 12px;text-align:left;font-weight:bold;color:#475569">Descripción del Producto</th>
+              <th style="padding:10px 12px;text-align:center;font-weight:bold;color:#475569">Cant.</th>
+              <th style="padding:10px 12px;text-align:right;font-weight:bold;color:#475569">P. Unit.</th>
+              <th style="padding:10px 12px;text-align:right;font-weight:bold;color:#475569">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${v.items.map(item => `
+              <tr style="border-bottom:1px solid #f1f5f9">
+                <td style="padding:10px 12px;color:#334155;font-weight:500">${item.nombre}</td>
+                <td style="padding:10px 12px;text-align:center;color:#64748b;font-family:monospace">${item.cantidad}</td>
+                <td style="padding:10px 12px;text-align:right;color:#64748b;font-family:monospace">${formatCurrency(item.precio_unitario)}</td>
+                <td style="padding:10px 12px;text-align:right;font-weight:bold;color:#1e293b;font-family:monospace">${formatCurrency(item.subtotal)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="border-top:1px solid #e2e8f0;background:#f8fafc">
+              <td colspan="3" style="padding:8px 12px;text-align:right;color:#64748b;font-weight:600">Subtotal Gravado (Excl. IVA)</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:600;color:#334155;font-family:monospace">${formatCurrency(subtotalSinIva)}</td>
+            </tr>
+            <tr style="background:#f8fafc">
+              <td colspan="3" style="padding:8px 12px;text-align:right;color:#64748b;font-weight:600">IVA (${configuracion.iva_porcentaje}%)</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:600;color:#334155;font-family:monospace">${formatCurrency(ivaCalculado)}</td>
+            </tr>
+            <tr style="border-top:2px solid #14b8a6;background:#f0fdfa">
+              <td colspan="3" style="padding:12px;text-align:right;font-weight:800;color:#115e59;font-size:13px">TOTAL NETO</td>
+              <td style="padding:12px;text-align:right;font-weight:800;color:#115e59;font-size:13px;font-family:monospace">${formatCurrency(v.total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="border-top:1px solid #f1f5f9;padding-top:12px;font-size:10px;color:#94a3b8;line-height:1.5">
+          <p style="font-weight:500">Detalle DIAN:</p>
+          <p style="margin:2px 0 0">${configuracion.resolucion}</p>
+        </div>
+
+        <div style="margin-top:40px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #f1f5f9;padding-top:20px">
+          Comprobante oficial generado por el sistema administrativo de inventarios de ${configuracion.nombre}.
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.innerHTML = printableHtml;
+    container.style.position = 'fixed';
+    container.style.left = '0';
+    container.style.top = '0';
+    container.style.width = '900px';
+    container.style.opacity = '0';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '-1';
+    document.body.appendChild(container);
+
+    try {
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('landscape', 'mm', 'a4');
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+      pdf.save(`Factura-${v.factura}.pdf`);
+    } catch (err) {
+      console.error('Error al generar PDF de venta:', err);
+    } finally {
+      document.body.removeChild(container);
+    }
+  };
+
   return (
     <Layout
       title="Ventas"
@@ -486,6 +670,16 @@ export function Ventas() {
                       >
                         <FileText size={14} />
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadPDF(v);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                        title="Descargar comprobante"
+                      >
+                        <Download size={14} />
+                      </button>
                       {isAdmin && v.estado !== 'anulada' && (
                         <button
                           onClick={() => setAnularConfirm(v)}
@@ -540,7 +734,7 @@ export function Ventas() {
       <NuevaVentaModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
 
       {/* Detail Modal */}
-      <Modal isOpen={!!detailVenta} onClose={() => setDetailVenta(null)} title={`Factura — ${detailVenta?.factura}`} size="lg">
+      <Modal isOpen={!!detailVenta} onClose={() => setDetailVenta(null)} title={`Factura — ${detailVenta?.factura}`} size="xl">
         {detailVenta && (() => {
           const ivaFactor = 1 + (configuracion.iva_porcentaje / 100);
           const subtotalSinIva = detailVenta.total / ivaFactor;
@@ -593,7 +787,7 @@ export function Ventas() {
                     <tbody className="divide-y divide-slate-100">
                       {detailVenta.items.map(item => (
                         <tr key={item.producto_id} className="hover:bg-slate-50/20">
-                          <td className="px-4 py-2.5 text-slate-700 font-medium">{item.nombre}</td>
+                          <td className="px-4 py-2.5 text-slate-700 font-medium truncate max-w-0" title={item.nombre}>{item.nombre}</td>
                           <td className="px-4 py-2.5 text-center text-slate-600 font-mono">{item.cantidad}</td>
                           <td className="px-4 py-2.5 text-right text-slate-600 font-mono">{formatCurrency(item.precio_unitario)}</td>
                           <td className="px-4 py-2.5 text-right font-bold text-slate-800 font-mono">{formatCurrency(item.subtotal)}</td>
@@ -626,8 +820,8 @@ export function Ventas() {
 
               {/* Detail Buttons (Hidden on Print) */}
               <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-100 print:hidden">
-                <Button variant="secondary" icon={<Printer size={15} />} onClick={() => window.print()}>
-                  Imprimir Comprobante
+                <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()}>
+                  Descargar Comprobante
                 </Button>
                 <Button variant="ghost" onClick={() => setDetailVenta(null)}>
                   Cerrar
