@@ -11,6 +11,7 @@ import gastosRoutes from './routes/gastos.routes';
 import abonosRoutes from './routes/abonos.routes';
 import configRoutes from './routes/config.routes';
 import logsRoutes from './routes/logs.routes';
+import authRoutes from './routes/auth.routes';
 import { authMiddleware, adminMiddleware } from './middlewares/auth.middleware';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -50,6 +51,7 @@ app.use('/api/compras', authMiddleware, adminMiddleware, comprasRoutes);
 app.use('/api/gastos', authMiddleware, adminMiddleware, gastosRoutes);
 app.use('/api/config', authMiddleware, adminMiddleware, configRoutes);
 app.use('/api/logs', authMiddleware, adminMiddleware, logsRoutes);
+app.use('/api/auth', authMiddleware, adminMiddleware, authRoutes);
 
 // Basic health check route
 app.get('/api/health', (req, res) => {

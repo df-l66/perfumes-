@@ -168,8 +168,21 @@ export function Productos() {
   const handleAjusteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ajusteForm.producto_id || !ajusteForm.cantidad) return;
+    
+    if (ajusteForm.notas && ajusteForm.notas.trim().length < 5) {
+      alert("La justificación debe tener al menos 5 caracteres.");
+      return;
+    }
+    
     const qty = parseInt(ajusteForm.cantidad.replace(/\D/g, ''), 10);
     if (qty <= 0) return;
+    
+    const prod = productos.find(p => p.id === ajusteForm.producto_id);
+    if (ajusteForm.tipo === 'ajuste_salida' && prod && qty > prod.stock) {
+      alert(`No puedes reducir el stock en ${qty}. El stock actual es solo ${prod.stock}.`);
+      return;
+    }
+    
     registrarAjusteKardex(ajusteForm.producto_id, ajusteForm.tipo, qty, ajusteForm.notas, user?.name || 'Usuario', user?.id || '', user?.role || 'admin');
     setSuccessToast('Ajuste de inventario registrado con éxito');
     setAjusteModalOpen(false);
@@ -581,8 +594,10 @@ export function Productos() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Justificación (Opcional)</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Justificación (Obligatoria)</label>
             <textarea 
+              required
+              minLength={5}
               value={ajusteForm.notas}
               onChange={e => setAjusteForm({...ajusteForm, notas: e.target.value})}
               className={`${inp} resize-none`}
@@ -600,17 +615,13 @@ export function Productos() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editItem ? 'Editar Producto' : 'Nuevo Producto'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <AlertBox type="critical" title="Error de Validación">
-              {error}
-            </AlertBox>
-          )}
+          {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
 
           <div className="grid grid-cols-2 gap-4">
-            {field('Código', <input required value={form.codigo} onChange={e => setForm(f => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
+            {field('Código', <input required minLength={3} value={form.codigo} onChange={e => setForm(f => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
             {field('Unidad', <input required value={form.unidad} onChange={e => setForm(f => ({ ...f, unidad: e.target.value }))} className={inp} placeholder="Frasco, Spray…" />)}
           </div>
-          {field('Nombre del Producto', <input required value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
+          {field('Nombre del Producto', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
           <div className="grid grid-cols-2 gap-4">
             {field('Categoría', (
               <select required value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))} className={inp}>

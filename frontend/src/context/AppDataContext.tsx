@@ -13,6 +13,7 @@ import { fetchKardex, fetchRegistrarAjusteKardex } from '../api/kardex';
 import { fetchGastos, fetchCreateGasto } from '../api/gastos';
 import { fetchAbonos, fetchCreateAbono } from '../api/abonos';
 import { fetchConfig, fetchUpdateConfig } from '../api/config';
+import { fetchCreateUser, fetchUsers, fetchUpdateUser } from '../api/auth';
 import { fetchLogs, fetchCreateLog } from '../api/logs';
 
 interface AppDataContextType {
@@ -48,6 +49,11 @@ interface AppDataContextType {
   // Configuración de la Empresa
   configuracion: CompanyConfig;
   updateConfiguracion: (config: CompanyConfig, autorNombre: string, autorRol: string) => void;
+  // Auth
+  users: any[];
+  loadUsers: () => Promise<void>;
+  createUser: (userData: any, autorNombre: string, autorRol: string) => Promise<void>;
+  updateUserContext: (id: string, userData: any, autorNombre: string, autorRol: string) => Promise<void>;
   // Finanzas
   gastos: Gasto[];
   addGasto: (g: Omit<Gasto, 'id'>, autorNombre: string, autorRol: string) => void;
@@ -97,9 +103,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [abonos, setAbonos] = useState<Abono[]>([]);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [configuracion, setConfiguracion] = useState<CompanyConfig>(initialConfig);
+  const [users, setUsers] = useState<any[]>([]);
 
   const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
   const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
+
+  const loadUsers = async () => {
+    try {
+      const data = await fetchUsers();
+      setUsers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     refrescarProductos();
@@ -112,6 +128,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     fetchAbonos().then(setAbonos).catch(console.error);
     fetchLogs().then(setLogs).catch(console.error);
     fetchConfig().then(setConfiguracion).catch(console.error);
+    loadUsers();
   }, []);
   
   // Helper para insertar logs de auditoría
@@ -423,6 +440,28 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const createUser = async (userData: any, autorNombre: string, autorRol: string) => {
+    try {
+      await fetchCreateUser(userData);
+      addLog(`Creó un nuevo usuario: ${userData.nombre} (${userData.rol})`, 'configuracion', autorNombre, autorRol);
+      await loadUsers(); // Refrescar la tabla
+    } catch (e: any) {
+      console.error(e);
+      throw new Error(e.message || 'Error al crear usuario');
+    }
+  };
+
+  const updateUserContext = async (id: string, userData: any, autorNombre: string, autorRol: string) => {
+    try {
+      await fetchUpdateUser(id, userData);
+      addLog(`Actualizó datos del usuario: ${userData.nombre}`, 'configuracion', autorNombre, autorRol);
+      await loadUsers(); // Refrescar la tabla
+    } catch (e: any) {
+      console.error(e);
+      throw new Error(e.message || 'Error al actualizar usuario');
+    }
+  };
+
   const registrarAjusteKardex = async (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorId: string, autorRol: string) => {
     try {
       const payload = { producto_id, tipo, cantidad, notas, autorNombre, autorId };
@@ -452,6 +491,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       compras, addCompra, anularCompra,
       logs, addLog,
       configuracion, updateConfiguracion,
+      users, loadUsers, createUser, updateUserContext,
       kardex, registrarAjusteKardex
     }}>
       {children}

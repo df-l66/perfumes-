@@ -288,12 +288,8 @@ export function Clientes() {
       {/* Modal */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editItem ? 'Editar Cliente' : 'Nuevo Cliente'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <AlertBox type="critical" title="Error de Validación">
-              {error}
-            </AlertBox>
-          )}
-          {field('Nombre / Razón Social', <input required value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
+          {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
+          {field('Nombre / Razón Social', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
           <div className="grid grid-cols-2 gap-4">
             {field('Tipo', (
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value as TipoCliente }))} className={inp}>
@@ -304,8 +300,8 @@ export function Clientes() {
             {field('Documento (NIT / CC)', <input required value={form.documento} onChange={e => setForm(f => ({ ...f, documento: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {field('Email', <input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
-            {field('Teléfono', <input required value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
+            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
+            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-2 gap-4">
             {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
