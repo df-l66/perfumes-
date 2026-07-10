@@ -677,7 +677,7 @@ export function Compras() {
 
   const handleAnular = () => {
     if (detailCompra) {
-      anularCompra(detailCompra.id, user?.name || 'Usuario', user?.role || 'admin');
+      anularCompra(detailCompra.id, user?.name || 'Usuario', user?.id || '', user?.role || 'admin');
       setDetailCompra(null);
     }
   };

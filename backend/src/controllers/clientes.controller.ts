@@ -6,9 +6,12 @@ export const getClientes = async (req: Request, res: Response) => {
     const { data, error } = await supabase
       .from('clientes')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('fecha_registro', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
     res.status(200).json(data);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener clientes', error: error.message });

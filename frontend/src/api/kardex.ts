@@ -15,6 +15,7 @@ export const fetchRegistrarAjusteKardex = async (payload: {
   cantidad: number;
   notas: string;
   autorNombre: string;
+  autorId: string;
 }): Promise<MovimientoKardex> => {
   const response = await fetchWithAuth(`${API_URL}/ajuste`, {
     method: 'POST',

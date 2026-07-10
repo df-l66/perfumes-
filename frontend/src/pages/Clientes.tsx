@@ -145,7 +145,7 @@ export function Clientes() {
       metodo_pago: abonoForm.metodo_pago,
       notas: abonoForm.notas,
       registrado_por: user?.name || 'Usuario'
-    }, user?.name || 'Usuario', user?.role || 'admin');
+    }, user?.name || 'Usuario', user?.id || '', user?.role || 'admin');
 
     setSuccessToast('¡Abono registrado con éxito!');
     setAbonoModalOpen(false);

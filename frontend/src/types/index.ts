@@ -16,7 +16,7 @@ export interface Producto {
   codigo: string;
   nombre: string;
   categoria: string;
-  proveedor_id: string;
+  proveedor_id?: string | null;
   precio_costo: number;
   precio_venta: number;
   stock: number;

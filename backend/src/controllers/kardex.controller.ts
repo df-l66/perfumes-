@@ -5,18 +5,24 @@ export const getKardex = async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('movimientos_kardex')
-      .select('*')
+      .select('*, profiles!movimientos_kardex_registrado_por_fkey(nombre)')
       .order('fecha', { ascending: false });
 
     if (error) throw error;
-    res.status(200).json(data);
+    
+    const formattedData = data?.map((m: any) => ({
+      ...m,
+      registrado_por: m.profiles?.nombre || m.registrado_por
+    }));
+
+    res.status(200).json(formattedData);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener el kardex', error: error.message });
   }
 };
 
 export const registrarAjuste = async (req: Request, res: Response) => {
-  const { producto_id, tipo, cantidad, notas, autorNombre } = req.body;
+  const { producto_id, tipo, cantidad, notas, autorId, autorNombre } = req.body;
   
   try {
     // 1. Obtener producto actual
@@ -58,7 +64,7 @@ export const registrarAjuste = async (req: Request, res: Response) => {
         stock_nuevo,
         referencia: 'Ajuste Manual',
         notas,
-        registrado_por: autorNombre
+        registrado_por: autorId
       }])
       .select()
       .single();

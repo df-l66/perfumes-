@@ -44,6 +44,8 @@ export function Productos() {
   const [activeTab, setActiveTab] = useState<'catalogo' | 'kardex'>('catalogo');
   const [ajusteModalOpen, setAjusteModalOpen] = useState(false);
   const [ajusteForm, setAjusteForm] = useState({ producto_id: '', tipo: 'ajuste_entrada' as 'ajuste_entrada' | 'ajuste_salida', cantidad: '', notas: '' });
+  const [ajusteSearchProd, setAjusteSearchProd] = useState('');
+  const [ajusteSearchFocused, setAjusteSearchFocused] = useState(false);
   const [kardexSearch, setKardexSearch] = useState('');
   const [kardexFilterTipo, setKardexFilterTipo] = useState<'todos' | 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida'>('todos');
 
@@ -128,13 +130,11 @@ export function Productos() {
       setError("Debes seleccionar una categoría válida para el perfume.");
       return;
     }
-    if (!form.proveedor_id) {
-      setError("Debes seleccionar un proveedor para el abastecimiento.");
-      return;
-    }
+    // El proveedor ya no es obligatorio
 
     const computed = {
       ...form,
+      proveedor_id: form.proveedor_id || null,
       estado: form.estado === 'inactivo'
         ? 'inactivo'
         : form.stock === 0
@@ -170,10 +170,11 @@ export function Productos() {
     if (!ajusteForm.producto_id || !ajusteForm.cantidad) return;
     const qty = parseInt(ajusteForm.cantidad.replace(/\D/g, ''), 10);
     if (qty <= 0) return;
-    registrarAjusteKardex(ajusteForm.producto_id, ajusteForm.tipo, qty, ajusteForm.notas, user?.name || 'Usuario', user?.role || 'admin');
+    registrarAjusteKardex(ajusteForm.producto_id, ajusteForm.tipo, qty, ajusteForm.notas, user?.name || 'Usuario', user?.id || '', user?.role || 'admin');
     setSuccessToast('Ajuste de inventario registrado con éxito');
     setAjusteModalOpen(false);
     setAjusteForm({ producto_id: '', tipo: 'ajuste_entrada', cantidad: '', notas: '' });
+    setAjusteSearchProd('');
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
@@ -202,6 +203,12 @@ export function Productos() {
   );
 
   const inp = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white';
+  
+  const productosFiltradosParaAjuste = useMemo(() => {
+    if (!ajusteSearchProd) return productos;
+    const lower = ajusteSearchProd.toLowerCase();
+    return productos.filter(p => p.nombre.toLowerCase().includes(lower) || p.codigo.toLowerCase().includes(lower));
+  }, [ajusteSearchProd, productos]);
 
   return (
     <Layout
@@ -462,7 +469,7 @@ export function Productos() {
                       <td className="py-3 px-4 text-right font-bold font-mono text-slate-700">{k.stock_nuevo}</td>
                       <td className="py-3 px-4">
                         <span className="text-xs text-slate-600">{k.referencia}</span>
-                        {k.notas && <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[200px]">{k.notas}</p>}
+                        {k.notas && <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-50">{k.notas}</p>}
                       </td>
                       <td className="py-3 px-4 text-xs text-slate-500">{k.registrado_por}</td>
                     </tr>
@@ -486,19 +493,62 @@ export function Productos() {
             Los ajustes manuales alteran el stock físico y se guardan permanentemente en el Kardex para auditoría.
           </AlertBox>
           
-          <div>
+          <div className="relative">
             <label className="block text-xs font-semibold text-slate-600 mb-1.5">Producto a Ajustar</label>
-            <select 
-              required
-              value={ajusteForm.producto_id}
-              onChange={e => setAjusteForm({...ajusteForm, producto_id: e.target.value})}
-              className={inp}
-            >
-              <option value="">-- Seleccionar producto --</option>
-              {productos.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre} (Stock actual: {p.stock})</option>
-              ))}
-            </select>
+            <div className="relative">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input 
+                required={!ajusteForm.producto_id}
+                placeholder="Escribe para buscar un producto..."
+                value={ajusteSearchProd}
+                onFocus={() => setAjusteSearchFocused(true)}
+                onBlur={() => setTimeout(() => setAjusteSearchFocused(false), 200)}
+                onChange={e => {
+                  setAjusteSearchProd(e.target.value);
+                  if (ajusteForm.producto_id) setAjusteForm({...ajusteForm, producto_id: ''});
+                }}
+                className={`${inp} pl-8`}
+              />
+            </div>
+            
+            {ajusteSearchFocused && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+                {productosFiltradosParaAjuste.length === 0 ? (
+                  <div className="p-3 text-sm text-slate-500 text-center">No se encontraron productos</div>
+                ) : (
+                  productosFiltradosParaAjuste.map(p => (
+                    <button
+                      type="button"
+                      key={p.id}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input onBlur from firing prematurely
+                        setAjusteSearchProd(`${p.nombre} (${p.codigo})`);
+                        setAjusteForm({...ajusteForm, producto_id: p.id});
+                        setAjusteSearchFocused(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-teal-50 transition-colors flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{p.nombre}</p>
+                        <p className="text-xs text-slate-500 font-mono mt-0.5">{p.codigo}</p>
+                      </div>
+                      <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                        Stock: {p.stock}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+            
+            {ajusteForm.producto_id && (
+              <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1 mt-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+                Producto seleccionado correctamente
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -573,9 +623,9 @@ export function Productos() {
                 <option value="Decants / Muestras">Decants / Muestras</option>
               </select>
             ))}
-            {field('Proveedor', (
-              <select value={form.proveedor_id} onChange={e => setForm(f => ({ ...f, proveedor_id: e.target.value }))} className={inp}>
-                <option value="">— Seleccionar —</option>
+            {field('Proveedor (Opcional)', (
+              <select value={form.proveedor_id || ''} onChange={e => setForm(f => ({ ...f, proveedor_id: e.target.value }))} className={inp}>
+                <option value="">— Sin Proveedor —</option>
                 {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
             ))}

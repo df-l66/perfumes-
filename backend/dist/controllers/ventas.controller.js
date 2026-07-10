@@ -10,13 +10,15 @@ const getVentas = async (req, res) => {
         *,
         venta_detalles (*)
       `)
-            .order('created_at', { ascending: false });
-        if (error)
+            .order('fecha', { ascending: false });
+        if (error) {
+            console.error("Error getVentas:", error);
             throw error;
+        }
         // Formatear para que coincida con la interfaz del frontend
-        const formattedData = data.map((venta) => ({
+        const formattedData = (data || []).map((venta) => ({
             ...venta,
-            items: venta.venta_detalles
+            items: venta.venta_detalles || []
         }));
         res.status(200).json(formattedData);
     }
@@ -28,46 +30,41 @@ exports.getVentas = getVentas;
 const createVenta = async (req, res) => {
     const { items, ...ventaData } = req.body;
     try {
-        // 1. Crear la venta principal
+        // 1. Limpiar datos de columnas que no existen en la tabla ventas
+        const { subtotal, descuento, impuestos, monto_pagado, cambio, ...cleanVentaData } = ventaData;
+        // 2. Insertar la venta principal
         const { data: venta, error: ventaError } = await supabase_1.supabase
             .from('ventas')
-            .insert([ventaData])
+            .insert([{
+                factura: cleanVentaData.factura,
+                cliente_id: cleanVentaData.cliente_id,
+                cliente_nombre: cleanVentaData.cliente_nombre,
+                vendedor_id: cleanVentaData.vendedor_id,
+                vendedor_nombre: cleanVentaData.vendedor_nombre,
+                total: cleanVentaData.total,
+                metodo_pago: cleanVentaData.metodo_pago,
+                notas: cleanVentaData.notas,
+                estado: cleanVentaData.estado || (cleanVentaData.metodo_pago === 'credito' ? 'pendiente' : 'completada')
+            }])
             .select()
             .single();
         if (ventaError)
             throw ventaError;
-        // 2. Procesar cada item de la venta
+        // 3. Procesar cada ítem
         for (const item of items) {
-            // 2.1 Insertar en detalles
-            const detalleData = {
-                venta_id: venta.id,
-                producto_id: item.producto_id,
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                precio_unitario: item.precio_unitario,
-                subtotal: item.subtotal
-            };
-            const { error: detalleError } = await supabase_1.supabase.from('venta_detalles').insert([detalleData]);
-            if (detalleError)
-                console.error('Error insertando detalle:', detalleError);
-            // 2.2 Obtener stock actual del producto
-            const { data: prod } = await supabase_1.supabase
-                .from('productos')
-                .select('stock, stock_minimo')
-                .eq('id', item.producto_id)
-                .single();
+            await supabase_1.supabase.from('venta_detalles').insert([{
+                    venta_id: venta.id,
+                    producto_id: item.producto_id,
+                    nombre: item.nombre,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_unitario,
+                    subtotal: item.subtotal
+                }]);
+            const { data: prod } = await supabase_1.supabase.from('productos').select('stock, stock_minimo').eq('id', item.producto_id).single();
             if (prod) {
                 const nuevoStock = prod.stock - item.cantidad;
                 const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
-                // 2.3 Actualizar stock del producto
-                await supabase_1.supabase
-                    .from('productos')
-                    .update({
-                    stock: nuevoStock,
-                    estado: nuevoEstado
-                })
-                    .eq('id', item.producto_id);
-                // 2.4 Registrar en Kardex
+                await supabase_1.supabase.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
                 await supabase_1.supabase.from('movimientos_kardex').insert([{
                         producto_id: item.producto_id,
                         producto_nombre: item.nombre,
@@ -76,27 +73,21 @@ const createVenta = async (req, res) => {
                         stock_anterior: prod.stock,
                         stock_nuevo: nuevoStock,
                         referencia: `Venta ${venta.factura}`,
-                        registrado_por: ventaData.vendedor_nombre
+                        registrado_por: venta.vendedor_nombre
                     }]);
             }
         }
-        // 3. Actualizar crédito del cliente si es venta a crédito
-        if (ventaData.metodo_pago === 'credito' && ventaData.cliente_id) {
-            const { data: cliente } = await supabase_1.supabase
-                .from('clientes')
-                .select('credito_usado')
-                .eq('id', ventaData.cliente_id)
-                .single();
+        // 4. Actualizar crédito del cliente
+        if (venta.metodo_pago === 'credito' && venta.cliente_id) {
+            const { data: cliente } = await supabase_1.supabase.from('clientes').select('credito_usado').eq('id', venta.cliente_id).single();
             if (cliente) {
-                await supabase_1.supabase
-                    .from('clientes')
-                    .update({ credito_usado: (cliente.credito_usado || 0) + ventaData.total })
-                    .eq('id', ventaData.cliente_id);
+                await supabase_1.supabase.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + venta.total }).eq('id', venta.cliente_id);
             }
         }
-        res.status(201).json(venta);
+        res.status(201).json({ ...venta, items });
     }
     catch (error) {
+        console.error('Error al crear venta:', error);
         res.status(400).json({ message: 'No se pudo crear la venta', error: error.message });
     }
 };

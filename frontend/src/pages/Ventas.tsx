@@ -292,7 +292,7 @@ function NuevaVentaModal({
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-700 truncate">{p.nombre}</p>
-                            <p className="text-xs text-slate-400">{p.codigo} · stock: {p.stock}</p>
+                            <p className="text-xs text-slate-400">{p.codigo} · stock: {p.stock} {p.mililitros ? `· ${p.mililitros}ml` : ''}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -321,7 +321,7 @@ function NuevaVentaModal({
                       return (
                         <div key={item.producto_id} className="p-2.5">
                           <div className="flex items-start justify-between gap-1">
-                            <p className="text-xs font-medium text-slate-700 leading-tight">{item.nombre}</p>
+                            <p className="text-xs font-medium text-slate-700 leading-tight">{item.nombre} {prod?.mililitros ? `(${prod.mililitros}ml)` : ''}</p>
                             <button onClick={() => quitarProducto(item.producto_id)} className="text-slate-300 hover:text-red-500 transition-colors shrink-0 cursor-pointer">
                               <Trash2 size={12} />
                             </button>
@@ -455,14 +455,6 @@ function NuevaVentaModal({
                     ))}
                   </tbody>
                   <tfoot className="border-t border-slate-200 bg-slate-50">
-                    <tr>
-                      <td colSpan={3} className="px-4 py-1.5 text-right text-xs text-slate-500 font-semibold">Subtotal Gravado</td>
-                      <td className="px-4 py-1.5 text-right text-xs font-semibold text-slate-700 font-mono">{formatCurrency(total / (1 + configuracion.iva_porcentaje / 100))}</td>
-                    </tr>
-                    <tr>
-                      <td colSpan={3} className="px-4 py-1.5 text-right text-xs text-slate-500 font-semibold">IVA ({configuracion.iva_porcentaje}%)</td>
-                      <td className="px-4 py-1.5 text-right text-xs font-semibold text-slate-700 font-mono">{formatCurrency(total - (total / (1 + configuracion.iva_porcentaje / 100)))}</td>
-                    </tr>
                     <tr className="bg-teal-50 border-t-2 border-teal-200">
                       <td colSpan={3} className="px-4 py-2.5 text-right font-bold text-teal-700">TOTAL NETO</td>
                       <td className="px-4 py-2.5 text-right font-bold text-teal-700 text-base font-mono">{formatCurrency(total)}</td>
@@ -548,15 +540,30 @@ export function Ventas() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       
       // Header
+      try {
+        const response = await fetch('/logo.jpg');
+        if (response.ok) {
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          pdf.addImage(base64, 'JPEG', 14, 12, 20, 20);
+        }
+      } catch (e) {
+        console.warn('Could not load logo for PDF', e);
+      }
+
       pdf.setFontSize(20);
       pdf.setTextColor(13, 148, 136); // Teal 600
-      pdf.text(configuracion.nombre, 14, 22);
+      pdf.text(configuracion.nombre, 38, 20);
       
       pdf.setFontSize(10);
       pdf.setTextColor(100, 116, 139); // Slate 500
-      pdf.text(`NIT: ${configuracion.nit}`, 14, 30);
-      pdf.text(configuracion.direccion, 14, 35);
-      pdf.text(`Tel: ${configuracion.telefono}`, 14, 40);
+      pdf.text(`NIT: ${configuracion.nit}`, 38, 26);
+      pdf.text(configuracion.direccion, 38, 31);
+      pdf.text(`Tel: ${configuracion.telefono}`, 38, 36);
 
       // Invoice info
       pdf.setFontSize(12);
@@ -619,22 +626,11 @@ export function Ventas() {
       const finalY = (pdf as any).lastAutoTable.finalY + 10;
 
       // Totals
-      pdf.setFontSize(10);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text('Subtotal Gravado (Excl. IVA):', pageWidth - 60, finalY, { align: 'right' });
-      pdf.setTextColor(51, 65, 85);
-      pdf.text(formatCurrency(subtotalSinIva), pageWidth - 14, finalY, { align: 'right' });
-
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`IVA (${configuracion.iva_porcentaje}%):`, pageWidth - 60, finalY + 7, { align: 'right' });
-      pdf.setTextColor(51, 65, 85);
-      pdf.text(formatCurrency(ivaCalculado), pageWidth - 14, finalY + 7, { align: 'right' });
-
       pdf.setFontSize(12);
       pdf.setTextColor(17, 94, 89); // Teal 800
       pdf.setFont('helvetica', 'bold');
-      pdf.text('TOTAL NETO:', pageWidth - 60, finalY + 16, { align: 'right' });
-      pdf.text(formatCurrency(v.total), pageWidth - 14, finalY + 16, { align: 'right' });
+      pdf.text('TOTAL NETO:', pageWidth - 60, finalY + 5, { align: 'right' });
+      pdf.text(formatCurrency(v.total), pageWidth - 14, finalY + 5, { align: 'right' });
 
       // Footer
       pdf.setFontSize(9);
@@ -811,11 +807,14 @@ export function Ventas() {
                 
                 {/* Invoice Header */}
                 <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-slate-100 pb-4">
-                  <div className="space-y-1">
-                    <h3 className="font-extrabold text-slate-800 text-lg leading-tight">{configuracion.nombre}</h3>
-                    <p className="text-xs text-slate-500 font-medium">NIT: {configuracion.nit}</p>
-                    <p className="text-xs text-slate-400">{configuracion.direccion}</p>
-                    <p className="text-xs text-slate-400">Tel: {configuracion.telefono}</p>
+                  <div className="flex items-start gap-4">
+                    <img src="/logo.jpg" alt="Logo" className="w-16 h-16 object-contain print:w-16 print:h-16 rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-slate-800 text-lg leading-tight">{configuracion.nombre}</h3>
+                      <p className="text-xs text-slate-500 font-medium">NIT: {configuracion.nit}</p>
+                      <p className="text-xs text-slate-400">{configuracion.direccion}</p>
+                      <p className="text-xs text-slate-400">Tel: {configuracion.telefono}</p>
+                    </div>
                   </div>
                   <div className="text-left sm:text-right space-y-1 shrink-0">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Factura de Venta</span>
@@ -859,14 +858,7 @@ export function Ventas() {
                       ))}
                     </tbody>
                     <tfoot className="border-t border-slate-200 bg-slate-50/50 print:bg-slate-50">
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 text-right text-slate-500 font-semibold">Subtotal Gravado (Excl. IVA)</td>
-                        <td className="px-4 py-2 text-right font-semibold text-slate-700 font-mono">{formatCurrency(subtotalSinIva)}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="px-4 py-2 text-right text-slate-500 font-semibold">IVA ({configuracion.iva_porcentaje}%)</td>
-                        <td className="px-4 py-2 text-right font-semibold text-slate-700 font-mono">{formatCurrency(ivaCalculado)}</td>
-                      </tr>
+
                       <tr className="bg-teal-50/50 border-t border-teal-100 print:bg-teal-50">
                         <td colSpan={3} className="px-4 py-3 text-right font-extrabold text-teal-800 text-sm">TOTAL NETO</td>
                         <td className="px-4 py-3 text-right font-extrabold text-teal-800 text-sm font-mono">{formatCurrency(detailVenta.total)}</td>
@@ -904,8 +896,8 @@ export function Ventas() {
         </AlertBox>
         <div className="flex justify-end gap-3 mt-5">
           <Button variant="secondary" onClick={() => setAnularConfirm(null)}>Cancelar</Button>
-          <Button variant="warning" onClick={() => { anularVenta(anularConfirm!.id, user?.name || 'Usuario', user?.role || 'admin'); setAnularConfirm(null); }}>
-            Anular Venta
+          <Button variant="warning" onClick={() => { anularVenta(anularConfirm!.id, user?.name || 'Usuario', user?.id || '', user?.role || 'admin'); setAnularConfirm(null); }}>
+            Sí, Anular Venta
           </Button>
         </div>
       </Modal>

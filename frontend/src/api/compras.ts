@@ -19,11 +19,11 @@ export const fetchCreateCompra = async (compra: any): Promise<Compra> => {
   return response.json();
 };
 
-export const fetchAnularCompra = async (id: string, autorNombre: string): Promise<void> => {
+export const fetchAnularCompra = async (id: string, autorNombre: string, autorId: string): Promise<void> => {
   const response = await fetchWithAuth(`${API_URL}/${id}/anular`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ autorNombre }),
+    body: JSON.stringify({ autorNombre, autorId }),
   });
   
 };

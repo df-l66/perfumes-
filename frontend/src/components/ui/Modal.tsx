@@ -23,11 +23,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     if (isOpen) {
       document.addEventListener('keydown', handleKey);
-      document.body.style.overflow = 'hidden';
     }
     return () => {
       document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
 

@@ -7,9 +7,11 @@ const getClientes = async (req, res) => {
         const { data, error } = await supabase_1.supabase
             .from('clientes')
             .select('*')
-            .order('created_at', { ascending: false });
-        if (error)
+            .order('fecha_registro', { ascending: false });
+        if (error) {
+            console.error(error);
             throw error;
+        }
         res.status(200).json(data);
     }
     catch (error) {

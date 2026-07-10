@@ -19,11 +19,11 @@ export const fetchCreateVenta = async (venta: any): Promise<Venta> => {
   return response.json();
 };
 
-export const fetchAnularVenta = async (id: string, autorNombre: string): Promise<void> => {
+export const fetchAnularVenta = async (id: string, autorNombre: string, autorId: string): Promise<void> => {
   const response = await fetchWithAuth(`${API_URL}/${id}/anular`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ autorNombre }),
+    body: JSON.stringify({ autorNombre, autorId }),
   });
   
 };

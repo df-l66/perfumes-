@@ -33,15 +33,15 @@ interface AppDataContextType {
   deleteCliente: (id: string, autorNombre: string, autorRol: string) => void;
   // Abonos
   abonos: Abono[];
-  addAbono: (a: Omit<Abono, 'id'>, autorNombre: string, autorRol: string) => void;
+  addAbono: (a: Omit<Abono, 'id'>, autorNombre: string, autorId: string, autorRol: string) => void;
   // Ventas
   ventas: Venta[];
   addVenta: (items: VentaItem[], clienteId: string, vendedorId: string, vendedorNombre: string, vendedorRol: string, metodoPago?: 'contado' | 'credito') => void;
-  anularVenta: (id: string, autorNombre: string, autorRol: string) => void;
+  anularVenta: (id: string, autorNombre: string, autorId: string, autorRol: string) => void;
   // Compras
   compras: Compra[];
   addCompra: (items: CompraItem[], proveedorId: string, compradorId: string, compradorNombre: string, compradorRol: string, notas?: string) => void;
-  anularCompra: (id: string, autorNombre: string, autorRol: string) => void;
+  anularCompra: (id: string, autorNombre: string, autorId: string, autorRol: string) => void;
   // Logs de Auditoría
   logs: ActivityLog[];
   addLog: (accion: string, modulo: ActivityLog['modulo'], autorNombre: string, autorRol: string) => void;
@@ -54,7 +54,7 @@ interface AppDataContextType {
 
   // Kardex
   kardex: MovimientoKardex[];
-  registrarAjusteKardex: (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorRol: string) => void;
+  registrarAjusteKardex: (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorId: string, autorRol: string) => void;
 }
 
 export const getLocalTimestamp = () => {
@@ -221,12 +221,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const anularCompra = async (id: string, autorNombre: string, autorRol: string) => {
+  const anularCompra = async (id: string, autorNombre: string, autorId: string, autorRol: string) => {
     const cmp = compras.find(x => x.id === id);
     if (!cmp || cmp.estado === 'anulada') return;
 
     try {
-      await fetchAnularCompra(id, autorNombre);
+      await fetchAnularCompra(id, autorNombre, autorId);
       setCompras(prev => prev.map(c => c.id === id ? { ...c, estado: 'anulada' } : c));
       refrescarProductos();
 
@@ -315,7 +315,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const cliente = clientes.find(c => c.id === clienteId);
     const clienteNombre = clienteId === 'walk-in' ? 'Cliente No Registrado' : (cliente?.nombre ?? 'Desconocido');
     const total = items.reduce((s, i) => s + i.subtotal, 0);
-    const facturaNum = `FAC-2025-${String(ventas.length + 1).padStart(4, '0')}`;
+    const facturaNum = `FAC-${String((ventas?.length || 0) + 1).padStart(3, '0')}`;
     
     const payload = {
       factura: facturaNum,
@@ -323,9 +323,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       cliente_nombre: clienteNombre,
       vendedor_id: vendedorId,
       vendedor_nombre: vendedorNombre,
+      subtotal: total,
+      descuento: 0,
+      impuestos: 0,
       total,
-      estado: 'completada' as const,
       metodo_pago: metodoPago,
+      monto_pagado: total,
+      cambio: 0,
       items
     };
 
@@ -346,12 +350,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const anularVenta = async (id: string, autorNombre: string, autorRol: string) => {
+  const anularVenta = async (id: string, autorNombre: string, autorId: string, autorRol: string) => {
     const vnt = ventas.find(x => x.id === id);
     if (!vnt || vnt.estado === 'anulada') return;
 
     try {
-      await fetchAnularVenta(id, autorNombre);
+      await fetchAnularVenta(id, autorNombre, autorId);
       setVentas(prev => prev.map(v => v.id === id ? { ...v, estado: 'anulada' } : v));
       refrescarProductos();
       if (vnt.metodo_pago === 'credito') refrescarClientes(); // Sincronizar stock restaurado
@@ -369,9 +373,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   // ── Configuración de la Empresa ───────────────────────────────────────────
   // ─── Abonos ───
-  const addAbono = async (a: Omit<Abono, 'id'>, autorNombre: string, autorRol: string) => {
+  const addAbono = async (a: Omit<Abono, 'id'>, autorNombre: string, autorId: string, autorRol: string) => {
     try {
-      const payload: any = { ...a, registrado_por: autorNombre };
+      const payload: any = { ...a, registrado_por: autorId };
       const nuevoAbono = await fetchCreateAbono(payload);
       setAbonos(prev => [nuevoAbono, ...prev]);
       
@@ -419,9 +423,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const registrarAjusteKardex = async (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorRol: string) => {
+  const registrarAjusteKardex = async (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorId: string, autorRol: string) => {
     try {
-      const payload = { producto_id, tipo, cantidad, notas, autorNombre };
+      const payload = { producto_id, tipo, cantidad, notas, autorNombre, autorId };
       const nuevoMovimiento = await fetchRegistrarAjusteKardex(payload);
       setKardex(prev => [nuevoMovimiento, ...prev]);
       refrescarProductos();

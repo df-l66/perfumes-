@@ -9,9 +9,12 @@ export const getCompras = async (req: Request, res: Response) => {
         *,
         compra_detalles (*)
       `)
-      .order('created_at', { ascending: false });
+      .order('fecha', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      throw error;
+    }
     
     const formattedData = data.map((compra: any) => ({
       ...compra,
@@ -84,12 +87,18 @@ export const createCompra = async (req: Request, res: Response) => {
           stock_anterior: prod.stock,
           stock_nuevo: nuevoStock,
           referencia: `Compra ${compra.factura_compra}`,
-          registrado_por: compraData.comprador_nombre
+          registrado_por: compraData.comprador_id
         }]);
       }
     }
 
-    res.status(201).json(compra);
+    // Fetch the inserted items to return them correctly
+    const { data: insertedItems } = await supabase
+      .from('compra_detalles')
+      .select('*')
+      .eq('compra_id', compra.id);
+
+    res.status(201).json({ ...compra, items: insertedItems || [] });
   } catch (error: any) {
     res.status(400).json({ message: 'No se pudo crear la compra', error: error.message });
   }
@@ -97,7 +106,7 @@ export const createCompra = async (req: Request, res: Response) => {
 
 export const anularCompra = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { autorNombre } = req.body;
+  const { autorNombre, autorId } = req.body;
   
   try {
     const { data: compra, error: fetchError } = await supabase
@@ -144,7 +153,7 @@ export const anularCompra = async (req: Request, res: Response) => {
           stock_anterior: prod.stock,
           stock_nuevo: nuevoStock,
           referencia: `Anulación de Compra ${compra.factura_compra}`,
-          registrado_por: autorNombre || 'Sistema'
+          registrado_por: autorId
         }]);
       }
     }

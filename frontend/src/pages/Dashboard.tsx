@@ -77,18 +77,28 @@ export function Dashboard() {
   const [startDate, setStartDate] = useState(getLocalDate());
   const [endDate, setEndDate] = useState(getLocalDate());
 
+  // Convierte fecha UTC a YYYY-MM-DD en la zona horaria local
+  const getLocalIsoDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   const productosStockBajo = productos.filter(p => p.estado === 'stock_bajo' || p.stock <= p.stock_minimo);
   
   // Rango de fechas
   const isBetweenDates = (dateStr: string) => {
-    const dateOnly = dateStr.slice(0, 10);
+    const dateOnly = getLocalIsoDate(dateStr);
     return dateOnly >= startDate && dateOnly <= endDate;
   };
 
-  const ventasCompletadas = ventas.filter(v => v.estado === 'completada' && isBetweenDates(v.fecha));
+  const ventasCompletadas = ventas.filter(v => (v.estado === 'completada' || (v.estado === 'pendiente' && v.metodo_pago !== 'credito')) && isBetweenDates(v.fecha));
   const comprasFiltradas = compras.filter(c => c.estado === 'completada' && isBetweenDates(c.fecha));
   const gastosFiltrados = gastos.filter(g => isBetweenDates(g.fecha));
   
+  // El crédito pendiente es global y refleja la deuda total actual de los clientes
+  const clientesConDeuda = clientes.filter(c => c.credito_usado && c.credito_usado > 0);
+  const totalCreditoPendiente = clientes.reduce((sum, c) => sum + (c.credito_usado || 0), 0);
+
   // ── CÁLCULOS FINANCIEROS Y DE NEGOCIO REAL ─────────────────────────────────
   const totalVentas = ventasCompletadas.reduce((s, v) => s + v.total, 0);
 
@@ -110,7 +120,7 @@ export function Dashboard() {
   
   // Fill range with 0s (max 31 days to avoid memory issues)
   while (curDate <= enDate && daysCount <= 31) {
-    const isoDate = curDate.toISOString().slice(0, 10);
+    const isoDate = `${curDate.getFullYear()}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')}`;
     const shortDate = curDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
     chartDataMap[isoDate] = { fecha: shortDate, total: 0, cantidad: 0 };
     curDate.setDate(curDate.getDate() + 1);
@@ -118,7 +128,7 @@ export function Dashboard() {
   }
 
   ventasCompletadas.forEach(v => {
-    const isoDate = v.fecha.slice(0, 10);
+    const isoDate = getLocalIsoDate(v.fecha);
     if (chartDataMap[isoDate]) {
       chartDataMap[isoDate].total += v.total;
       chartDataMap[isoDate].cantidad += 1;
@@ -213,15 +223,23 @@ export function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
         <KpiCard
-          title="Ventas Totales (Ingresos)"
+          title="Ventas Reales (Pagadas)"
           value={formatCurrency(totalVentas)}
           subtitle={`${ventasCompletadas.length} transacciones concretadas`}
           icon={<TrendingUp size={22} className="text-teal-600 animate-pulse" />}
           trend="+12% mes"
           color="bg-teal-50"
           delayClass="animate-fade-in-up"
+        />
+        <KpiCard
+          title="Por Cobrar (Crédito)"
+          value={formatCurrency(totalCreditoPendiente)}
+          subtitle={`${clientesConDeuda.length} cliente(s) con deuda pendiente`}
+          icon={<Wallet size={22} className="text-indigo-600" />}
+          color="bg-indigo-50"
+          delayClass="animate-fade-in-up animation-delay-75"
         />
         <KpiCard
           title="Pagado a Proveedores"

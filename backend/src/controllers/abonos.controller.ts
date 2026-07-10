@@ -5,11 +5,17 @@ export const getAbonos = async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('abonos')
-      .select('*')
+      .select('*, profiles!abonos_registrado_por_fkey(nombre)')
       .order('fecha', { ascending: false });
 
     if (error) throw error;
-    res.status(200).json(data);
+    
+    const formattedData = data?.map((a: any) => ({
+      ...a,
+      registrado_por: a.profiles?.nombre || a.registrado_por
+    }));
+
+    res.status(200).json(formattedData);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener abonos', error: error.message });
   }

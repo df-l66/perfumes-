@@ -17,27 +17,42 @@ const abonos_routes_1 = __importDefault(require("./routes/abonos.routes"));
 const config_routes_1 = __importDefault(require("./routes/config.routes"));
 const logs_routes_1 = __importDefault(require("./routes/logs.routes"));
 const auth_middleware_1 = require("./middlewares/auth.middleware");
+const helmet_1 = __importDefault(require("helmet"));
+const morgan_1 = __importDefault(require("morgan"));
+const rateLimiter_middleware_1 = require("./middlewares/rateLimiter.middleware");
+const error_middleware_1 = require("./middlewares/error.middleware");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Middlewares
-app.use((0, cors_1.default)());
+app.use((0, helmet_1.default)()); // Cabeceras de seguridad
+app.use((0, morgan_1.default)('dev')); // Logger de peticiones HTTP
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use((0, cors_1.default)({
+    origin: allowedOrigin,
+    credentials: true,
+}));
 app.use(express_1.default.json());
-// Rutas protegidas
+// Limitar peticiones a todas las rutas de /api
+app.use('/api/', rateLimiter_middleware_1.apiLimiter);
+// Rutas protegidas (Todos los usuarios autenticados)
 app.use('/api/productos', auth_middleware_1.authMiddleware, productos_routes_1.default);
-app.use('/api/proveedores', auth_middleware_1.authMiddleware, proveedores_routes_1.default);
 app.use('/api/clientes', auth_middleware_1.authMiddleware, clientes_routes_1.default);
 app.use('/api/ventas', auth_middleware_1.authMiddleware, ventas_routes_1.default);
-app.use('/api/compras', auth_middleware_1.authMiddleware, compras_routes_1.default);
 app.use('/api/kardex', auth_middleware_1.authMiddleware, kardex_routes_1.default);
-app.use('/api/gastos', auth_middleware_1.authMiddleware, gastos_routes_1.default);
 app.use('/api/abonos', auth_middleware_1.authMiddleware, abonos_routes_1.default);
-app.use('/api/config', auth_middleware_1.authMiddleware, config_routes_1.default);
-app.use('/api/logs', auth_middleware_1.authMiddleware, logs_routes_1.default);
+// Rutas administrativas (Solo administradores)
+app.use('/api/proveedores', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, proveedores_routes_1.default);
+app.use('/api/compras', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, compras_routes_1.default);
+app.use('/api/gastos', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, gastos_routes_1.default);
+app.use('/api/config', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, config_routes_1.default);
+app.use('/api/logs', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, logs_routes_1.default);
 // Basic health check route
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'Servidor backend corriendo correctamente' });
 });
+// Middleware de errores global (Debe ir siempre al final de las rutas)
+app.use(error_middleware_1.errorMiddleware);
 // Arrancar el servidor
 app.listen(PORT, () => {
     console.log(`🚀 Servidor ejecutándose en http://localhost:${PORT}`);

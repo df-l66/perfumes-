@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authMiddleware = void 0;
+exports.adminMiddleware = exports.authMiddleware = void 0;
 const supabase_js_1 = require("@supabase/supabase-js");
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY; // Nota: para verificar JWT propiamente en Supabase, a veces se usa la anon key o JWT_SECRET
@@ -13,12 +13,24 @@ const authMiddleware = async (req, res, next) => {
         }
         const token = authHeader.split(' ')[1];
         // Verificar el token con Supabase
-        const { data, error } = await supabase.auth.getUser(token);
-        if (error || !data.user) {
-            return res.status(401).json({ message: 'Token expirado o no autorizado', error: error?.message });
+        const { data: authData, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !authData.user) {
+            return res.status(401).json({ message: 'Token expirado o no autorizado', error: authError?.message });
         }
-        // Opcional: Inyectar el ID de usuario en la request
-        req.user = data.user;
+        // Obtener el perfil para saber el rol
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('rol')
+            .eq('id', authData.user.id)
+            .single();
+        if (profileError || !profile) {
+            return res.status(401).json({ message: 'Perfil de usuario no encontrado', error: profileError?.message });
+        }
+        // Inyectar el usuario y su rol en la request
+        req.user = {
+            ...authData.user,
+            rol: profile.rol
+        };
         next();
     }
     catch (error) {
@@ -26,3 +38,13 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 exports.authMiddleware = authMiddleware;
+const adminMiddleware = (req, res, next) => {
+    const user = req.user;
+    if (!user || user.rol !== 'admin') {
+        return res.status(403).json({
+            message: 'Acceso Denegado. Se requieren permisos de administrador para realizar esta acción.'
+        });
+    }
+    next();
+};
+exports.adminMiddleware = adminMiddleware;

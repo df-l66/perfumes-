@@ -10,9 +10,11 @@ const getCompras = async (req, res) => {
         *,
         compra_detalles (*)
       `)
-            .order('created_at', { ascending: false });
-        if (error)
+            .order('fecha', { ascending: false });
+        if (error) {
+            console.error(error);
             throw error;
+        }
         const formattedData = data.map((compra) => ({
             ...compra,
             items: compra.compra_detalles
@@ -79,7 +81,12 @@ const createCompra = async (req, res) => {
                     }]);
             }
         }
-        res.status(201).json(compra);
+        // Fetch the inserted items to return them correctly
+        const { data: insertedItems } = await supabase_1.supabase
+            .from('compra_detalles')
+            .select('*')
+            .eq('compra_id', compra.id);
+        res.status(201).json({ ...compra, items: insertedItems || [] });
     }
     catch (error) {
         res.status(400).json({ message: 'No se pudo crear la compra', error: error.message });
