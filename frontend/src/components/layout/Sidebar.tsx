@@ -36,11 +36,13 @@ export function Sidebar() {
   const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);
 
   return (
-    <div
-      className="w-20 shrink-0 min-h-screen relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <>
+      {/* Desktop Sidebar */}
+      <div
+        className="hidden md:block w-20 shrink-0 min-h-screen relative"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       <aside
         className={`flex flex-col fixed top-0 left-0 bottom-0 bg-slate-950 text-slate-100 border-r border-slate-800/40 z-30 transition-all duration-300 ease-in-out select-none overflow-hidden ${
           isHovered ? 'w-64 shadow-2xl shadow-slate-950/80' : 'w-20'
@@ -140,5 +142,31 @@ export function Sidebar() {
         </div>
       </aside>
     </div>
+
+      {/* Mobile Bottom Nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950 border-t border-slate-800/60 z-40 flex items-center justify-around px-2 pb-safe">
+        {visibleItems.map(item => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
+                isActive ? 'text-teal-400' : 'text-slate-400 hover:text-white'
+              }`
+            }
+          >
+            {item.icon}
+            <span className="text-[9px] font-medium truncate w-full text-center px-1">{item.label}</span>
+          </NavLink>
+        ))}
+        <button
+          onClick={handleLogout}
+          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-400 hover:text-red-400 transition-colors"
+        >
+          <LogOut size={18} />
+          <span className="text-[9px] font-medium truncate w-full text-center px-1">Salir</span>
+        </button>
+      </div>
+    </>
   );
 }

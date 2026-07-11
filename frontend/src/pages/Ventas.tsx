@@ -855,7 +855,7 @@ export function Ventas() {
                 </div>
 
                 {/* Cliente / Vendedor Metadata */}
-                <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 print:bg-white print:border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 print:bg-white print:border-slate-200">
                   <div>
                     <p className="text-slate-400 font-bold uppercase tracking-wider">Adquiriente</p>
                     <p className="font-bold text-slate-800 mt-1">{detailVenta.cliente_nombre}</p>

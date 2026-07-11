@@ -705,7 +705,7 @@ export function Compras() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
             <div className="p-3 bg-slate-50 rounded-lg">
               <span className="block text-[8px] font-bold text-slate-400 uppercase">PROVEEDOR</span>
               <p className="font-bold text-slate-800 mt-0.5">{detailCompra.proveedor_nombre}</p>
@@ -904,7 +904,7 @@ export function Compras() {
           size="xl"
         >
           <div className="space-y-6 text-left">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="text-xs space-y-1">
                 <span className="block text-slate-400 uppercase font-bold text-[8px]">Proveedor</span>
                 <span className="font-bold text-slate-800 text-sm block">{detailCompra.proveedor_nombre}</span>

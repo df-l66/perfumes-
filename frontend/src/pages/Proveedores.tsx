@@ -229,11 +229,11 @@ export function Proveedores() {
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
 
           {field('Nombre / Empresa', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('NIT', <input required minLength={3} value={form.nit} onChange={e => setForm(f => ({ ...f, nit: e.target.value }))} className={inp} placeholder="900.123.456-7" />)}
             {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Persona de contacto', <input required value={form.contacto} onChange={e => setForm(f => ({ ...f, contacto: e.target.value }))} className={inp} />)}
             {field('Estado', (
               <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as ProveedorEstado }))} className={inp}>
@@ -242,7 +242,7 @@ export function Proveedores() {
               </select>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
             {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
           </div>
@@ -288,7 +288,7 @@ export function Proveedores() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Contacto Principal</span>
                   <div className="flex items-center gap-2 mt-1">
@@ -305,7 +305,7 @@ export function Proveedores() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Teléfono de Contacto</span>
                   <a href={`tel:${detailItem.telefono}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50/20 text-slate-700 hover:text-teal-600 transition-all font-semibold text-xs w-fit">

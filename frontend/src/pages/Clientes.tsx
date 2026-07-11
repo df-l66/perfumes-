@@ -290,7 +290,7 @@ export function Clientes() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
           {field('Nombre / Razón Social', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Tipo', (
               <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value as TipoCliente }))} className={inp}>
                 <option value="empresa">Empresa</option>
@@ -299,15 +299,15 @@ export function Clientes() {
             ))}
             {field('Documento (NIT / CC)', <input required value={form.documento} onChange={e => setForm(f => ({ ...f, documento: e.target.value }))} className={inp} />)}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
             {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
             {field('Fecha de Registro', <input type="date" required value={form.fecha_registro} onChange={e => setForm(f => ({ ...f, fecha_registro: e.target.value }))} className={inp} />)}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Límite de Crédito (COP)', <input value={formatNumberWithDots(form.limite_credito)} onChange={e => handlePriceChange('limite_credito', e.target.value)} className={inp} placeholder="0" />)}
             {field('Crédito Usado / Deuda (COP)', <input value={formatNumberWithDots(form.credito_usado)} onChange={e => handlePriceChange('credito_usado', e.target.value)} className={inp} placeholder="0" />)}
           </div>
@@ -402,7 +402,7 @@ export function Clientes() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Dirección</span>
                   <div className="flex items-center gap-2 mt-1">
@@ -419,7 +419,7 @@ export function Clientes() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Teléfono</span>
                   <a href={`tel:${detailItem.telefono}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50/20 text-slate-700 hover:text-teal-600 transition-all font-semibold text-xs w-fit">

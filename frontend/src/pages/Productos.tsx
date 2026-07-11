@@ -564,7 +564,7 @@ export function Productos() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">Tipo de Ajuste</label>
               <select 
@@ -617,12 +617,12 @@ export function Productos() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Código', <input required minLength={3} value={form.codigo} onChange={e => setForm(f => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
             {field('Unidad', <input required value={form.unidad} onChange={e => setForm(f => ({ ...f, unidad: e.target.value }))} className={inp} placeholder="Frasco, Spray…" />)}
           </div>
           {field('Nombre del Producto', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Categoría', (
               <select required value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))} className={inp}>
                 <option value="">— Seleccionar —</option>
@@ -641,7 +641,7 @@ export function Productos() {
               </select>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {isAdmin && field('Precio Costo (COP)', (
               <input 
                 type="text" 
@@ -663,13 +663,13 @@ export function Productos() {
               />
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Stock Actual', <input type="number" min={0} required value={form.stock} onChange={e => setForm(f => ({ ...f, stock: +e.target.value }))} className={inp} />)}
             {field('Stock Mínimo', <input type="number" min={0} required value={form.stock_minimo} onChange={e => setForm(f => ({ ...f, stock_minimo: +e.target.value }))} className={inp} />)}
           </div>
           {/* Campos específicos de Perfumería (Fijos) */}
           <div className="p-4.5 bg-teal-50/30 rounded-xl border border-teal-100/50 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Calidad del Perfume', (
                 <select value={form.calidad || 'Original'} onChange={e => setForm(f => ({ ...f, calidad: e.target.value }))} className={inp}>
                   <option value="Original">Original</option>
@@ -686,7 +686,7 @@ export function Productos() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Género', (
                 <select value={form.genero || 'Unisex'} onChange={e => setForm(f => ({ ...f, genero: e.target.value as any }))} className={inp}>
                   <option value="Unisex">Unisex</option>
@@ -699,7 +699,7 @@ export function Productos() {
           </div>
 
           {field('Descripción', <textarea rows={2} value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} className={inp} placeholder="Descripción corta del producto…" />)}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Estado del Producto', (
               <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as any }))} className={inp}>
                 <option value="activo">Activo / Disponible</option>
@@ -744,7 +744,7 @@ export function Productos() {
                 <p className="text-xs font-mono text-slate-400 mt-0.5">{detailItem.codigo} · {detailItem.unidad}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Calidad</span>
                   <div>
@@ -763,7 +763,7 @@ export function Productos() {
                 </div>
               </div>
 
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Categoría</span>
                   <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.categoria}</p>
@@ -776,7 +776,7 @@ export function Productos() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Género</span>
                   <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.genero || 'Unisex'}</p>
