@@ -39,6 +39,7 @@ function NuevaVentaModal({
   const [searchCliente, setSearchCliente] = useState('');
   const [metodoPago, setMetodoPago] = useState<'contado' | 'credito'>('contado');
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setStep('cliente');
@@ -48,6 +49,7 @@ function NuevaVentaModal({
     setSearchCliente('');
     setMetodoPago('contado');
     setSuccess(false);
+    setError(null);
   };
 
   const handleClose = () => {
@@ -117,6 +119,35 @@ function NuevaVentaModal({
 
   const handleConfirm = () => {
     if (!user) return;
+    setError(null);
+
+    if (!clienteId) {
+      setError("Por favor selecciona un cliente para la venta.");
+      return;
+    }
+
+    if (carrito.length === 0) {
+      setError("El carrito está vacío. Debes agregar al menos un producto.");
+      return;
+    }
+
+    for (const item of carrito) {
+      const prod = productos.find(p => p.id === item.producto_id);
+      if (prod && item.cantidad > prod.stock) {
+        setError(`El producto "${item.nombre}" supera el stock disponible (${prod.stock}).`);
+        return;
+      }
+    }
+
+    if (metodoPago === 'credito' && clienteSeleccionado && clienteSeleccionado.id !== 'walk-in') {
+      const limite = clienteSeleccionado.limite_credito || 0;
+      const deuda = clienteSeleccionado.credito_usado || 0;
+      if (deuda + total > limite && limite > 0) {
+        setError(`El cliente no tiene suficiente límite de crédito disponible. (Límite: ${formatCurrency(limite)}, Deuda actual: ${formatCurrency(deuda)})`);
+        return;
+      }
+    }
+
     addVenta(carrito, clienteId, user.id, user.name, user.role, metodoPago);
     setSuccess(true);
   };
@@ -158,10 +189,9 @@ function NuevaVentaModal({
           </div>
           <div className="text-center">
             <p className="text-lg font-bold text-slate-800">¡Venta registrada!</p>
-            <p className="text-slate-500 text-sm mt-1">El stock se ha actualizado automáticamente</p>
-            <p className="text-2xl font-bold text-teal-600 mt-3">{formatCurrency(total)}</p>
+            <p className="text-sm text-slate-500 mt-1">El stock ha sido descontado correctamente.</p>
           </div>
-          <Button onClick={handleClose}>Cerrar</Button>
+          <Button onClick={reset} className="mt-4">Nueva Venta</Button>
         </div>
       ) : (
         <>
