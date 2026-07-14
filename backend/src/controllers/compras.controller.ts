@@ -40,55 +40,77 @@ export const createCompra = async (req: Request, res: Response) => {
     if (compraError) throw compraError;
 
     for (const item of items) {
+      const isMP = !!item.materia_prima_id;
+      
       const detalleData = {
         compra_id: compra.id,
-        producto_id: item.producto_id,
+        producto_id: item.producto_id || null, // Will be null for materia prima if we altered DB
+        materia_prima_id: item.materia_prima_id || null,
         nombre: item.nombre,
         cantidad: item.cantidad,
         precio_costo: item.precio_costo,
-        precio_venta: item.precio_venta,
+        precio_venta: item.precio_venta || 0,
         subtotal: item.subtotal
       };
       
       await supabase.from('compra_detalles').insert([detalleData]);
 
-      const { data: prod } = await supabase
-        .from('productos')
-        .select('stock, stock_minimo')
-        .eq('id', item.producto_id)
-        .single();
-
-      if (prod) {
-        const nuevoStock = prod.stock + item.cantidad;
-        const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
-
-        // Actualizar stock y precio de costo/venta
-        const updatePayload: any = { 
-          stock: nuevoStock,
-          estado: nuevoEstado,
-          precio_costo: item.precio_costo
-        };
-        
-        if (item.precio_venta && item.precio_venta > 0) {
-          updatePayload.precio_venta = item.precio_venta;
+      if (isMP) {
+        const { data: mp } = await supabase.from('materias_primas').select('stock').eq('id', item.materia_prima_id).single();
+        if (mp) {
+          const nuevoStock = Number(mp.stock) + item.cantidad;
+          await supabase.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
+          
+          await supabase.from('movimientos_materias_primas').insert([{
+            materia_prima_id: item.materia_prima_id,
+            materia_prima_nombre: item.nombre,
+            tipo: 'entrada',
+            cantidad: item.cantidad,
+            stock_anterior: mp.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Compra ${compra.factura_compra}`,
+            registrado_por: compraData.comprador_id
+          }]);
         }
-
-        await supabase
+      } else if (item.producto_id) {
+        const { data: prod } = await supabase
           .from('productos')
-          .update(updatePayload)
-          .eq('id', item.producto_id);
+          .select('stock, stock_minimo')
+          .eq('id', item.producto_id)
+          .single();
 
-        // Registrar en Kardex
-        await supabase.from('movimientos_kardex').insert([{
-          producto_id: item.producto_id,
-          producto_nombre: item.nombre,
-          tipo: 'entrada',
-          cantidad: item.cantidad,
-          stock_anterior: prod.stock,
-          stock_nuevo: nuevoStock,
-          referencia: `Compra ${compra.factura_compra}`,
-          registrado_por: compraData.comprador_id
-        }]);
+        if (prod) {
+          const nuevoStock = prod.stock + item.cantidad;
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+
+          // Actualizar stock y precio de costo/venta
+          const updatePayload: any = { 
+            stock: nuevoStock,
+            estado: nuevoEstado,
+            precio_costo: item.precio_costo
+          };
+          
+          if (item.precio_venta && item.precio_venta > 0) {
+            updatePayload.precio_venta = item.precio_venta;
+          }
+
+          await supabase
+            .from('productos')
+            .update(updatePayload)
+            .eq('id', item.producto_id);
+
+          // Registrar en Kardex
+          await supabase.from('movimientos_kardex').insert([{
+            producto_id: item.producto_id,
+            producto_nombre: item.nombre,
+            tipo: 'entrada',
+            cantidad: item.cantidad,
+            stock_anterior: prod.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Compra ${compra.factura_compra}`,
+            registrado_por: compraData.comprador_id
+          }]);
+        }
       }
     }
 
@@ -127,34 +149,53 @@ export const anularCompra = async (req: Request, res: Response) => {
 
     // Descontar el stock (reversar compra)
     for (const item of compra.compra_detalles) {
-      const { data: prod } = await supabase
-        .from('productos')
-        .select('stock, stock_minimo')
-        .eq('id', item.producto_id)
-        .single();
-
-      if (prod) {
-        const nuevoStock = prod.stock - item.cantidad;
-        const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
-
-        await supabase
+      if (item.materia_prima_id) {
+        const { data: mp } = await supabase.from('materias_primas').select('stock').eq('id', item.materia_prima_id).single();
+        if (mp) {
+          const nuevoStock = Number(mp.stock) - item.cantidad;
+          await supabase.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
+          
+          await supabase.from('movimientos_materias_primas').insert([{
+            materia_prima_id: item.materia_prima_id,
+            materia_prima_nombre: item.nombre,
+            tipo: 'ajuste_salida',
+            cantidad: item.cantidad,
+            stock_anterior: mp.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Anulación de Compra ${compra.factura_compra}`,
+            registrado_por: autorId
+          }]);
+        }
+      } else if (item.producto_id) {
+        const { data: prod } = await supabase
           .from('productos')
-          .update({ 
-            stock: nuevoStock,
-            estado: nuevoEstado
-          })
-          .eq('id', item.producto_id);
+          .select('stock, stock_minimo')
+          .eq('id', item.producto_id)
+          .single();
 
-        await supabase.from('movimientos_kardex').insert([{
-          producto_id: item.producto_id,
-          producto_nombre: item.nombre,
-          tipo: 'ajuste_salida',
-          cantidad: item.cantidad,
-          stock_anterior: prod.stock,
-          stock_nuevo: nuevoStock,
-          referencia: `Anulación de Compra ${compra.factura_compra}`,
-          registrado_por: autorId
-        }]);
+        if (prod) {
+          const nuevoStock = prod.stock - item.cantidad;
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+
+          await supabase
+            .from('productos')
+            .update({ 
+              stock: nuevoStock,
+              estado: nuevoEstado
+            })
+            .eq('id', item.producto_id);
+
+          await supabase.from('movimientos_kardex').insert([{
+            producto_id: item.producto_id,
+            producto_nombre: item.nombre,
+            tipo: 'ajuste_salida',
+            cantidad: item.cantidad,
+            stock_anterior: prod.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Anulación de Compra ${compra.factura_compra}`,
+            registrado_por: autorId
+          }]);
+        }
       }
     }
 

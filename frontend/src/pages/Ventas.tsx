@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { AlertBox } from '../components/ui/AlertBox';
+import { PrepararTripleAaaModal } from '../components/ui/PrepararTripleAaaModal';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
 import { jsPDF } from 'jspdf';
@@ -29,12 +30,13 @@ function NuevaVentaModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { clientes, productos, addVenta, configuracion } = useAppData();
+  const { clientes, productos, addVenta, configuracion, materiasPrimas } = useAppData();
   const { user } = useAuth();
 
   const [step, setStep] = useState<WizardStep>('cliente');
   const [clienteId, setClienteId] = useState('');
   const [carrito, setCarrito] = useState<VentaItem[]>([]);
+  const [tripleAaaModalOpen, setTripleAaaModalOpen] = useState(false);
   const [searchProd, setSearchProd] = useState('');
   const [searchCliente, setSearchCliente] = useState('');
   const [metodoPago, setMetodoPago] = useState<'contado' | 'credito'>('contado');
@@ -96,6 +98,10 @@ function NuevaVentaModal({
     });
   };
 
+  const agregarPreparado = (item: VentaItem) => {
+    setCarrito(prev => [...prev, item]);
+  };
+
   const cambiarCantidad = (prodId: string, cantidad: number, maxStock: number) => {
     if (cantidad < 1) return;
     const qty = Math.min(cantidad, maxStock);
@@ -132,6 +138,7 @@ function NuevaVentaModal({
     }
 
     for (const item of carrito) {
+      if (item.es_preparado) continue; // No validamos stock de productos para los preparados (se validará materias primas en backend)
       const prod = productos.find(p => p.id === item.producto_id);
       if (prod && item.cantidad > prod.stock) {
         setError(`El producto "${item.nombre}" supera el stock disponible (${prod.stock}).`);
@@ -171,6 +178,7 @@ function NuevaVentaModal({
   const currentIdx = steps.indexOf(step);
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={handleClose} title="Nueva Venta" size="xl"
       headerAction={
         <button
@@ -288,6 +296,11 @@ function NuevaVentaModal({
           {/* Step: Productos */}
           {step === 'productos' && (
             <div className="space-y-4">
+              <div className="flex justify-end mb-2">
+                 <Button type="button" onClick={() => setTripleAaaModalOpen(true)} variant="secondary" size="sm" className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100">
+                   Preparar Triple AAA
+                 </Button>
+              </div>
               <div className="flex gap-4">
                 {/* Product picker */}
                 <div className="flex-1 min-w-0">
@@ -510,7 +523,13 @@ function NuevaVentaModal({
           )}
         </>
       )}
-    </Modal>
+      </Modal>
+      <PrepararTripleAaaModal 
+        isOpen={tripleAaaModalOpen} 
+        onClose={() => setTripleAaaModalOpen(false)} 
+        onAdd={agregarPreparado} 
+      />
+    </>
   );
 }
 

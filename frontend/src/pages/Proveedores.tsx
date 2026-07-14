@@ -9,8 +9,8 @@ import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
 import type { Proveedor, ProveedorEstado } from '../types';
 
-const EMPTY: Omit<Proveedor, 'id'> = {
-  nombre: '', nit: '', contacto: '', telefono: '', email: '', ciudad: '', estado: 'activo'
+const EMPTY: any = {
+  nombre: '', nit: '', contacto: '', telefono: '', email: '', ciudad: '', direccion: '', estado: 'activo'
 };
 
 export function Proveedores() {
@@ -19,7 +19,7 @@ export function Proveedores() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Proveedor | null>(null);
-  const [form, setForm] = useState<Omit<Proveedor, 'id'>>(EMPTY);
+  const [form, setForm] = useState<any>(EMPTY);
   const [deleteConfirm, setDeleteConfirm] = useState<Proveedor | null>(null);
   const [detailItem, setDetailItem] = useState<Proveedor | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,8 +131,17 @@ export function Proveedores() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                {['Nombre / Empresa', 'NIT', 'Contacto', 'Teléfono', 'Email', 'Ciudad', 'Estado', 'Acciones'].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                {[
+                  { label: 'Nombre / Empresa', className: '' }, 
+                  { label: 'NIT', className: '' }, 
+                  { label: 'Contacto', className: 'hidden md:table-cell' }, 
+                  { label: 'Teléfono', className: 'hidden sm:table-cell' }, 
+                  { label: 'Email', className: 'hidden lg:table-cell' }, 
+                  { label: 'Ciudad', className: 'hidden sm:table-cell' }, 
+                  { label: 'Estado', className: 'hidden md:table-cell' }, 
+                  { label: 'Acciones', className: 'text-right' }
+                ].map(h => (
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
@@ -146,23 +155,26 @@ export function Proveedores() {
                 </tr>
               ) : paginated.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
                         <Truck size={14} className="text-slate-500" />
                       </div>
-                      <span className="font-medium text-slate-800">{p.nombre}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{p.nombre}</span>
+                        <span className="text-[10px] sm:hidden text-slate-500">{p.nit}</span>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{p.nit}</td>
-                  <td className="px-5 py-3.5 text-slate-700">{p.contacto}</td>
-                  <td className="px-5 py-3.5 text-slate-600 whitespace-nowrap">{p.telefono}</td>
-                  <td className="px-5 py-3.5 text-slate-600">{p.email}</td>
-                  <td className="px-5 py-3.5 text-slate-600">{p.ciudad}</td>
-                  <td className="px-5 py-3.5"><Badge variant={p.estado} /></td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setDetailItem(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-slate-500 hidden sm:table-cell">{p.nit}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-700 hidden md:table-cell">{p.contacto}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden sm:table-cell">{p.telefono}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 hidden lg:table-cell">{p.email}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 hidden sm:table-cell">{p.ciudad}</td>
+                  <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={p.estado} /></td>
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
                       {isAdmin && (

@@ -10,10 +10,10 @@ import { useAuth } from '../context/AuthContext';
 import { exportToCSV as downloadCSV } from '../utils/exportToCSV';
 import type { Producto, ProductStatus } from '../types';
 
-const EMPTY: Omit<Producto, 'id'> = {
+const EMPTY: any = {
   codigo: '', nombre: '', categoria: '', proveedor_id: '',
-  precio_costo: 0, precio_venta: 0, stock: 0, stock_minimo: 5,
-  estado: 'activo', unidad: 'Frasco', descripcion: '',  tipo_producto: 'perfume', calidad: 'Original', mililitros: 100, genero: 'Unisex', familia_olfativa: ''
+  precio_costo: '', precio_venta: '', stock: '', stock_minimo: '',
+  estado: 'activo', unidad: 'Frasco', descripcion: '',  tipo_producto: 'perfume', calidad: 'Original', mililitros: '', genero: 'Unisex', familia_olfativa: ''
 };
 
 const formatCurrency = (v: number) =>
@@ -34,7 +34,7 @@ export function Productos() {
   const [filterStatus, setFilterStatus] = useState<ProductStatus | 'todos'>('todos');
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Producto | null>(null);
-  const [form, setForm] = useState<Omit<Producto, 'id'>>(EMPTY);
+  const [form, setForm] = useState<any>(EMPTY);
   const [deleteConfirm, setDeleteConfirm] = useState<Producto | null>(null);
   const [detailItem, setDetailItem] = useState<Producto | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +49,10 @@ export function Productos() {
   const [kardexSearch, setKardexSearch] = useState('');
   const [kardexFilterTipo, setKardexFilterTipo] = useState<'todos' | 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida'>('todos');
 
-  const handlePriceChange = (field: 'precio_costo' | 'precio_venta', rawValue: string) => {
-    const digits = rawValue.replace(/\D/g, '');
-    const numericValue = digits ? parseInt(digits, 10) : 0;
-    setForm(f => ({ ...f, [field]: numericValue }));
+  const handlePriceChange = (field: keyof Producto, value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+    const num = cleaned === '' ? '' : Number(cleaned);
+    setForm(f => ({ ...f, [field]: num }));
   };
 
   const toggleEstado = (p: Producto) => {
@@ -285,18 +285,18 @@ export function Productos() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 {[
-                  'Código', 
-                  'Producto', 
-                  'Categoría', 
-                  'Calidad', 
-                  'Volumen',
-                  'Precio Venta', 
-                  'Stock', 
-                  'Mín.', 
-                  'Estado', 
-                  'Acciones'
+                  { label: 'Código', className: 'hidden sm:table-cell' }, 
+                  { label: 'Producto', className: '' }, 
+                  { label: 'Categoría', className: 'hidden md:table-cell' }, 
+                  { label: 'Calidad', className: 'hidden lg:table-cell' }, 
+                  { label: 'Volumen', className: 'hidden lg:table-cell' },
+                  { label: 'Precio Venta', className: '' }, 
+                  { label: 'Stock', className: '' }, 
+                  { label: 'Mín.', className: 'hidden sm:table-cell' }, 
+                  { label: 'Estado', className: 'hidden md:table-cell' }, 
+                  { label: 'Acciones', className: 'text-right' }
                 ].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
@@ -310,58 +310,58 @@ export function Productos() {
                 </tr>
               ) : paginated.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-5 py-3.5 font-mono text-xs text-slate-500 whitespace-nowrap">{p.codigo}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
+                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-slate-500 whitespace-nowrap hidden sm:table-cell">{p.codigo}</td>
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
                         {p.imagen ? (
                           <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
                         ) : (
                           <Package size={16} className="text-slate-400" />
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium text-slate-800">{p.nombre}</p>
-                        <p className="text-xs text-slate-400">{p.unidad} · {p.descripcion.slice(0, 50)}{p.descripcion.length > 50 ? '…' : ''}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs">{p.nombre}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 truncate max-w-[120px] sm:max-w-xs">{p.unidad} · {p.descripcion}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-600 whitespace-nowrap">{p.categoria}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden md:table-cell">{p.categoria}</td>
                   
                   {/* Columnas fijas de Perfumes */}
-                  <td className="px-5 py-3.5 text-slate-600 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium scale-90 ${p.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden lg:table-cell">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium scale-90 ${p.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
                       {p.calidad || 'Original'}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap font-mono text-xs">{p.mililitros || 100} ml</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[10px] sm:text-xs hidden lg:table-cell">{p.mililitros || 100} ml</td>
 
-                  <td className="px-5 py-3.5 font-semibold text-slate-800 whitespace-nowrap">{formatCurrency(p.precio_venta)}</td>
-                  <td className="px-5 py-3.5">
-                    <span className={`font-bold ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
+                  <td className="px-4 sm:px-5 py-3.5 font-semibold text-slate-800 whitespace-nowrap text-sm">{formatCurrency(p.precio_venta)}</td>
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <span className={`font-bold text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
                       {p.stock}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-500">{p.stock_minimo}</td>
-                  <td className="px-5 py-3.5"><Badge variant={p.estado} /></td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setDetailItem(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-500 hidden sm:table-cell">{p.stock_minimo}</td>
+                  <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={p.estado} /></td>
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
                       {isAdmin && (
                         <>
                           <button 
                             onClick={() => toggleEstado(p)} 
-                            className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
+                            className={`hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Perfume' : 'Inactivar Perfume'}
                           >
                             <Power size={14} />
                           </button>
-                          <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                          <button onClick={() => openEdit(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                          <button onClick={() => setDeleteConfirm(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                             <Trash2 size={14} />
                           </button>
                         </>
@@ -664,8 +664,8 @@ export function Productos() {
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Stock Actual', <input type="number" min={0} required value={form.stock} onChange={e => setForm(f => ({ ...f, stock: +e.target.value }))} className={inp} />)}
-            {field('Stock Mínimo', <input type="number" min={0} required value={form.stock_minimo} onChange={e => setForm(f => ({ ...f, stock_minimo: +e.target.value }))} className={inp} />)}
+            {field('Stock Actual', <input type="number" step="any" min={0} required value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
+            {field('Stock Mínimo', <input type="number" step="any" min={0} required value={form.stock_minimo} onChange={e => setForm(f => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
           </div>
           {/* Campos específicos de Perfumería (Fijos) */}
           <div className="p-4.5 bg-teal-50/30 rounded-xl border border-teal-100/50 space-y-4">
@@ -681,7 +681,7 @@ export function Productos() {
               ))}
               {field('Volumen / Tamaño (Mililitros)', (
                 <div className="relative">
-                  <input type="number" min={1} required value={form.mililitros || 100} onChange={e => setForm(f => ({ ...f, mililitros: +e.target.value }))} className={`${inp} pr-8`} />
+                  <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm(f => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ml</span>
                 </div>
               ))}
@@ -841,7 +841,15 @@ export function Productos() {
             </div>
           </div>
         )}
-        <div className="flex justify-end gap-3 mt-6 pt-3 border-t border-slate-100">
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
+          <div className="flex gap-2">
+            {isAdmin && detailItem && (
+               <>
+                 <Button variant="secondary" size="sm" onClick={() => { setDetailItem(null); openEdit(detailItem); }}>Editar</Button>
+                 <Button variant="secondary" size="sm" onClick={() => { setDetailItem(null); setDeleteConfirm(detailItem); }} className="text-red-600 hover:text-red-700 border-red-200 bg-red-50">Eliminar</Button>
+               </>
+            )}
+          </div>
           <Button onClick={() => setDetailItem(null)}>Cerrar</Button>
         </div>
       </Modal>

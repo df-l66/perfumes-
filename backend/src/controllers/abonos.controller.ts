@@ -5,14 +5,13 @@ export const getAbonos = async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('abonos')
-      .select('*, profiles!abonos_registrado_por_fkey(nombre)')
+      .select('*')
       .order('fecha', { ascending: false });
 
     if (error) throw error;
     
     const formattedData = data?.map((a: any) => ({
-      ...a,
-      registrado_por: a.profiles?.nombre || a.registrado_por
+      ...a
     }));
 
     res.status(200).json(formattedData);

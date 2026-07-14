@@ -75,6 +75,11 @@ export interface VentaItem {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+  es_preparado?: boolean;
+  receta?: {
+    materia_prima_id: string;
+    cantidad: number;
+  }[];
 }
 
 export interface Venta {
@@ -96,7 +101,9 @@ export interface Venta {
 export type CompraEstado = 'completada' | 'anulada';
 
 export interface CompraItem {
-  producto_id: string;
+  producto_id?: string;
+  materia_prima_id?: string;
+  tipo_item?: 'producto' | 'materia_prima';
   nombre: string;
   cantidad: number;
   precio_costo: number;
@@ -187,3 +194,33 @@ export interface MovimientoKardex {
   registrado_por: string;
 }
 
+// ─── Materias Primas ───────────────────────────────────────────────────────────
+export type MateriaPrimaEstado = 'activo' | 'inactivo' | 'stock_bajo';
+
+export interface MateriaPrima {
+  id: string;
+  nombre: string;
+  tipo: string; // 'esencia', 'alcohol', 'envase', etc.
+  unidad_medida: string; // 'ml', 'g', 'ud'
+  stock: number;
+  stock_minimo: number;
+  costo_unitario: number;
+  estado: MateriaPrimaEstado;
+  imagen?: string; // URL of the essence image
+}
+
+export type MovimientoMateriaPrimaTipo = 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida';
+
+export interface MovimientoMateriaPrima {
+  id: string;
+  materia_prima_id: string;
+  materia_prima_nombre: string;
+  fecha: string;
+  tipo: MovimientoMateriaPrimaTipo;
+  cantidad: number;
+  stock_anterior: number;
+  stock_nuevo: number;
+  referencia: string;
+  notas?: string;
+  registrado_por: string;
+}

@@ -28,10 +28,11 @@ function NuevaCompraModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { productos, proveedores, addCompra } = useAppData();
+  const { productos, proveedores, addCompra, materiasPrimas } = useAppData();
   const { user } = useAuth();
 
   const [step, setStep] = useState<WizardStep>('proveedor');
+  const [tipoItem, setTipoItem] = useState<'producto' | 'materia_prima'>('producto');
   const [proveedorId, setProveedorId] = useState('');
   const [carrito, setCarrito] = useState<CompraItem[]>([]);
   const [searchProd, setSearchProd] = useState('');
@@ -71,19 +72,26 @@ function NuevaCompraModal({
     );
   }, [proveedores, searchProv]);
 
-  // Filtrado de productos en el selector de compras
-  const productosFiltrados = useMemo(() => {
-    return productos.filter(p => 
-      p.nombre.toLowerCase().includes(searchProd.toLowerCase()) ||
-      p.codigo.toLowerCase().includes(searchProd.toLowerCase())
-    );
-  }, [productos, searchProd]);
+  const itemsFiltrados = useMemo(() => {
+    if (tipoItem === 'producto') {
+      return productos.filter(p => 
+        p.nombre.toLowerCase().includes(searchProd.toLowerCase()) ||
+        p.codigo.toLowerCase().includes(searchProd.toLowerCase())
+      ).map(p => ({ ...p, _id: p.id, _nombre: p.nombre, _precio_costo: p.precio_costo, _precio_venta: p.precio_venta, _codigo: p.codigo, _stock: p.stock }));
+    } else {
+      return materiasPrimas.filter(m => 
+        m.estado !== 'inactivo' && m.nombre.toLowerCase().includes(searchProd.toLowerCase())
+      ).map(m => ({ ...m, _id: m.id, _nombre: m.nombre, _precio_costo: 0, _precio_venta: 0, _codigo: `MP-${m.tipo.toUpperCase()}`, _stock: m.stock }));
+    }
+  }, [productos, materiasPrimas, searchProd, tipoItem]);
+
+  const getItemId = (item: CompraItem) => item.producto_id || item.materia_prima_id || '';
 
   // Manejo del carrito
-  const addToCart = (prod: Producto, cantidad: number, costo: number) => {
+  const addToCart = (item: any, cantidad: number, costo: number) => {
     if (cantidad <= 0) return;
     setCarrito(prev => {
-      const idx = prev.findIndex(item => item.producto_id === prod.id);
+      const idx = prev.findIndex(i => getItemId(i) === item._id);
       if (idx >= 0) {
         const updated = [...prev];
         updated[idx].cantidad += cantidad;
@@ -91,61 +99,67 @@ function NuevaCompraModal({
         return updated;
       }
       return [...prev, {
-        producto_id: prod.id,
-        nombre: prod.nombre,
+        producto_id: tipoItem === 'producto' ? item._id : undefined,
+        materia_prima_id: tipoItem === 'materia_prima' ? item._id : undefined,
+        tipo_item: tipoItem,
+        nombre: item._nombre,
         cantidad,
         precio_costo: costo,
-        precio_venta: prod.precio_venta,
+        precio_venta: item._precio_venta || 0,
         subtotal: cantidad * costo
       }];
     });
   };
 
-  const updateCartQty = (prodId: string, qty: number) => {
+  const updateCartQty = (id: string, qty: number) => {
     setCarrito(prev =>
       prev.map(item => {
-        if (item.producto_id !== prodId) return item;
+        if (getItemId(item) !== id) return item;
         const newQty = Math.max(1, qty);
-        return {
-          ...item,
-          cantidad: newQty,
-          subtotal: newQty * item.precio_costo
-        };
+        if (item.tipo_item === 'materia_prima') {
+           return { ...item, cantidad: newQty, precio_costo: newQty > 0 ? (item.subtotal / newQty) : 0 };
+        }
+        return { ...item, cantidad: newQty, subtotal: newQty * item.precio_costo };
       })
     );
   };
 
-  const updateCartCost = (prodId: string, rawCost: string) => {
+  const updateCartCost = (id: string, rawCost: string) => {
     const digits = rawCost.replace(/\D/g, '');
     const cost = digits ? parseInt(digits, 10) : 0;
     setCarrito(prev =>
       prev.map(item => {
-        if (item.producto_id !== prodId) return item;
-        return {
-          ...item,
-          precio_costo: cost,
-          subtotal: item.cantidad * cost
-        };
+        if (getItemId(item) !== id) return item;
+        return { ...item, precio_costo: cost, subtotal: item.cantidad * cost };
       })
     );
   };
 
-  const updateCartSalePrice = (prodId: string, rawSalePrice: string) => {
+  const updateCartSubtotal = (id: string, rawSubtotal: string) => {
+    const digits = rawSubtotal.replace(/\D/g, '');
+    const subtotal = digits ? parseInt(digits, 10) : 0;
+    setCarrito(prev =>
+      prev.map(item => {
+        if (getItemId(item) !== id) return item;
+        const unitCost = item.cantidad > 0 ? (subtotal / item.cantidad) : 0;
+        return { ...item, subtotal: subtotal, precio_costo: unitCost };
+      })
+    );
+  };
+
+  const updateCartSalePrice = (id: string, rawSalePrice: string) => {
     const digits = rawSalePrice.replace(/\D/g, '');
     const salePrice = digits ? parseInt(digits, 10) : 0;
     setCarrito(prev =>
       prev.map(item => {
-        if (item.producto_id !== prodId) return item;
-        return {
-          ...item,
-          precio_venta: salePrice
-        };
+        if (getItemId(item) !== id) return item;
+        return { ...item, precio_venta: salePrice };
       })
     );
   };
 
-  const removeFromCart = (prodId: string) => {
-    setCarrito(prev => prev.filter(item => item.producto_id !== prodId));
+  const removeFromCart = (id: string) => {
+    setCarrito(prev => prev.filter(item => getItemId(item) !== id));
   };
 
   const total = carrito.reduce((s, item) => s + item.subtotal, 0);
@@ -172,7 +186,7 @@ function NuevaCompraModal({
       return;
     }
     
-    const invalidMargin = carrito.find(item => item.precio_costo > (item.precio_venta || 0));
+    const invalidMargin = carrito.find(item => item.tipo_item !== 'materia_prima' && item.precio_costo > (item.precio_venta || 0));
     if (invalidMargin) {
       setError(`El precio de costo de "${invalidMargin.nombre}" no puede ser mayor que su precio de venta sugerido.`);
       return;
@@ -322,10 +336,26 @@ function NuevaCompraModal({
                 
                 {/* Catalog Picker */}
                 <div className="space-y-3">
+                  <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button 
+                      type="button" 
+                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'producto' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setTipoItem('producto')}
+                    >
+                      Productos
+                    </button>
+                    <button 
+                      type="button"
+                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'materia_prima' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      onClick={() => setTipoItem('materia_prima')}
+                    >
+                      Materias Primas
+                    </button>
+                  </div>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                     <input
-                      placeholder="Buscar producto por nombre o código..."
+                      placeholder={`Buscar ${tipoItem === 'producto' ? 'producto' : 'materia prima'}...`}
                       value={searchProd}
                       onChange={e => setSearchProd(e.target.value)}
                       className={`${inp} pl-9`}
@@ -333,32 +363,33 @@ function NuevaCompraModal({
                   </div>
                   
                   <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-y-auto bg-white">
-                    {productosFiltrados.length === 0 ? (
+                    {itemsFiltrados.length === 0 ? (
                       <div className="py-8 text-center">
                         <Package size={24} className="mx-auto text-slate-300 mb-2" />
                         <p className="text-xs text-slate-400">Sin resultados</p>
                       </div>
-                    ) : productosFiltrados.map(p => (
+                    ) : itemsFiltrados.map(p => (
                       <button
-                        key={p.id}
-                        onClick={() => addToCart(p, 1, p.precio_costo)}
+                        key={p._id}
+                        type="button"
+                        onClick={() => addToCart(p, 1, p._precio_costo)}
                         className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-teal-50 text-left transition-colors cursor-pointer group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
                           <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
-                            {p.imagen ? (
-                              <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                            {(p as any).imagen ? (
+                              <img src={(p as any).imagen} alt={p._nombre} className="w-full h-full object-cover" />
                             ) : (
                               <Package size={14} className="text-slate-400" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-700 truncate">{p.nombre}</p>
-                            <p className="text-xs text-slate-400">{p.codigo} · stock: {p.stock}</p>
+                            <p className="text-sm font-medium text-slate-700 truncate">{p._nombre}</p>
+                            <p className="text-xs text-slate-400">{p._codigo} · stock: {p._stock}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-teal-600">{formatCurrency(p.precio_venta)}</p>
+                          <p className="text-sm font-bold text-teal-600">{formatCurrency(p._precio_venta)}</p>
                           <p className="text-xs text-slate-300 group-hover:text-teal-400 transition-colors">+ agregar</p>
                         </div>
                       </button>
@@ -379,11 +410,14 @@ function NuevaCompraModal({
                         El carrito está vacío
                       </div>
                     ) : carrito.map(item => (
-                      <div key={item.producto_id} className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 text-left">
+                      <div key={getItemId(item)} className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 text-left relative">
+                        {item.tipo_item === 'materia_prima' && (
+                          <span className="absolute top-0 right-0 mt-2 mr-8 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Materia Prima</span>
+                        )}
                         <div className="flex justify-between items-start">
-                          <p className="text-sm font-bold text-slate-800 truncate pr-2">{item.nombre}</p>
+                          <p className="text-sm font-bold text-slate-800 truncate pr-2 w-3/4">{item.nombre}</p>
                           <button 
-                            onClick={() => removeFromCart(item.producto_id)} 
+                            onClick={() => removeFromCart(getItemId(item))} 
                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                             title="Eliminar producto"
                           >
@@ -398,27 +432,37 @@ function NuevaCompraModal({
                                 type="number" 
                                 min={1} 
                                 value={item.cantidad} 
-                                onChange={e => updateCartQty(item.producto_id, +e.target.value)} 
+                                onChange={e => updateCartQty(getItemId(item), +e.target.value)} 
                                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all text-center"
                               />
                             </div>
                             <div className="flex-1">
-                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Costo Unit.</span>
+                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">
+                                {item.tipo_item === 'materia_prima' ? 'Costo Total' : 'Costo Unit.'}
+                              </span>
                               <input 
-                                value={formatNumberWithDots(item.precio_costo)} 
-                                onChange={e => updateCartCost(item.producto_id, e.target.value)} 
+                                value={formatNumberWithDots(item.tipo_item === 'materia_prima' ? item.subtotal : item.precio_costo)} 
+                                onChange={e => {
+                                  if (item.tipo_item === 'materia_prima') {
+                                    updateCartSubtotal(getItemId(item), e.target.value);
+                                  } else {
+                                    updateCartCost(getItemId(item), e.target.value);
+                                  }
+                                }} 
                                 className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
                               />
                             </div>
                           </div>
-                          <div>
-                            <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Precio Venta Sugerido</span>
-                            <input 
-                              value={formatNumberWithDots(item.precio_venta || 0)} 
-                              onChange={e => updateCartSalePrice(item.producto_id, e.target.value)} 
-                              className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
-                            />
-                          </div>
+                          {item.tipo_item !== 'materia_prima' && (
+                            <div>
+                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Precio Venta Sugerido</span>
+                              <input 
+                                value={formatNumberWithDots(item.precio_venta || 0)} 
+                                onChange={e => updateCartSalePrice(getItemId(item), e.target.value)} 
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -807,9 +851,17 @@ export function Compras() {
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  {['Nro. Factura', 'Proveedor', 'Fecha Registro', 'Responsable', 'Total Compra', 'Estado', 'Acción'].map(h => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
-                  ))}
+                {[
+                  { label: 'Nro. Factura', className: '' }, 
+                  { label: 'Proveedor', className: '' }, 
+                  { label: 'Fecha Registro', className: 'hidden sm:table-cell' }, 
+                  { label: 'Responsable', className: 'hidden md:table-cell' }, 
+                  { label: 'Total Compra', className: '' }, 
+                  { label: 'Estado', className: 'hidden md:table-cell' }, 
+                  { label: 'Acción', className: 'text-right' }
+                ].map(h => (
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
+                ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -825,15 +877,18 @@ export function Compras() {
                     key={c.id} 
                     className="hover:bg-slate-50/50 transition-colors"
                   >
-                    <td className="px-5 py-4 font-mono text-xs font-bold text-teal-600 whitespace-nowrap">{c.factura_compra}</td>
-                    <td className="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">{c.proveedor_nombre}</td>
-                    <td className="px-5 py-4 text-slate-500 whitespace-nowrap">{c.fecha}</td>
-                    <td className="px-5 py-4 text-slate-600 whitespace-nowrap">{c.comprador_nombre}</td>
-                    <td className="px-5 py-4 font-semibold text-slate-800 whitespace-nowrap font-mono">{formatCurrency(c.total)}</td>
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-4 sm:px-5 py-4 font-mono text-[10px] sm:text-xs font-bold text-teal-600 whitespace-nowrap">{c.factura_compra}</td>
+                    <td className="px-4 sm:px-5 py-4">
+                      <span className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.proveedor_nombre}</span>
+                      <span className="text-[10px] sm:hidden text-slate-500">{c.fecha}</span>
+                    </td>
+                    <td className="px-4 sm:px-5 py-4 text-slate-500 whitespace-nowrap hidden sm:table-cell">{c.fecha}</td>
+                    <td className="px-4 sm:px-5 py-4 text-slate-600 whitespace-nowrap hidden md:table-cell">{c.comprador_nombre}</td>
+                    <td className="px-4 sm:px-5 py-4 font-semibold text-slate-800 whitespace-nowrap font-mono text-sm">{formatCurrency(c.total)}</td>
+                    <td className="px-4 sm:px-5 py-4 whitespace-nowrap hidden md:table-cell">
                       <Badge variant={c.estado} />
                     </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
+                    <td className="px-4 sm:px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <button
                           className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"

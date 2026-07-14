@@ -9,11 +9,9 @@ import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
 import type { Cliente, TipoCliente } from '../types';
 
-const EMPTY: Omit<Cliente, 'id'> = {
-  nombre: '', tipo: 'empresa', documento: '', email: '', telefono: '',
-  ciudad: '', direccion: '', fecha_registro: new Date().toISOString().slice(0, 10),
-  limite_credito: 0,
-  credito_usado: 0
+const EMPTY: any = {
+  nombre: '', documento: '', tipo: 'persona', email: '', telefono: '', 
+  ciudad: '', direccion: '', limite_credito: '', credito_usado: '', fecha_registro: new Date().toISOString().split('T')[0]
 };
 
 export function Clientes() {
@@ -22,7 +20,7 @@ export function Clientes() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState<Cliente | null>(null);
-  const [form, setForm] = useState<Omit<Cliente, 'id'>>(EMPTY);
+  const [form, setForm] = useState<any>(EMPTY);
   const [deleteConfirm, setDeleteConfirm] = useState<Cliente | null>(null);
   const [detailItem, setDetailItem] = useState<Cliente | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +45,7 @@ export function Clientes() {
 
   const handlePriceChange = (field: 'limite_credito' | 'credito_usado', rawValue: string) => {
     const digits = rawValue.replace(/\D/g, '');
-    const numericValue = digits ? parseInt(digits, 10) : 0;
+    const numericValue = digits === '' ? '' : parseInt(digits, 10);
     setForm(f => ({ ...f, [field]: numericValue }));
   };
 
@@ -190,8 +188,16 @@ export function Clientes() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                {['Nombre / Razón Social', 'Documento', 'Tipo', 'Ciudad', 'Deuda (Crédito Usado)', 'Límite de Crédito', 'Acciones'].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                {[
+                  { label: 'Nombre / Razón Social', className: '' }, 
+                  { label: 'Documento', className: 'hidden sm:table-cell' }, 
+                  { label: 'Tipo', className: 'hidden md:table-cell' }, 
+                  { label: 'Ciudad', className: 'hidden sm:table-cell' }, 
+                  { label: 'Deuda (Crédito Usado)', className: '' }, 
+                  { label: 'Límite de Crédito', className: 'hidden lg:table-cell' }, 
+                  { label: 'Acciones', className: 'text-right' }
+                ].map(h => (
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
@@ -205,43 +211,46 @@ export function Clientes() {
                 </tr>
               ) : paginated.map(c => (
                 <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${c.tipo === 'empresa' ? 'bg-teal-50 text-teal-600' : 'bg-slate-100 text-slate-600'}`}>
                         {c.tipo === 'empresa' ? <Building2 size={14} /> : <User size={14} />}
                       </div>
-                      <span className="font-medium text-slate-800">{c.nombre}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.nombre}</span>
+                        <span className="text-[10px] sm:hidden text-slate-500">{c.documento}</span>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{c.documento}</td>
-                  <td className="px-5 py-3.5"><Badge variant={c.tipo} /></td>
-                  <td className="px-5 py-3.5 text-slate-600">{c.ciudad}</td>
-                  <td className="px-5 py-3.5">
+                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-slate-500 hidden sm:table-cell">{c.documento}</td>
+                  <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={c.tipo} /></td>
+                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 hidden sm:table-cell">{c.ciudad}</td>
+                  <td className="px-4 sm:px-5 py-3.5">
                     {c.credito_usado && c.credito_usado > 0 ? (
-                      <span className="font-semibold text-red-600 font-mono">
+                      <span className="font-semibold text-red-600 font-mono text-sm">
                         {formatCurrency(c.credito_usado)}
                       </span>
                     ) : (
-                      <span className="text-slate-450 font-mono">$ 0</span>
+                      <span className="text-slate-450 font-mono text-sm">$ 0</span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-slate-600">
+                  <td className="px-4 sm:px-5 py-3.5 font-mono text-slate-600 hidden lg:table-cell">
                     {c.limite_credito ? formatCurrency(c.limite_credito) : '$ 0'}
                   </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-1">
+                  <td className="px-4 sm:px-5 py-3.5">
+                    <div className="flex justify-end gap-1">
                       {(c.credito_usado || 0) > 0 && (
-                        <button onClick={() => openAbono(c)} className="p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer" title="Registrar Pago / Abono">
+                        <button onClick={() => openAbono(c)} className="p-1 sm:p-1.5 rounded-lg hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer" title="Registrar Pago / Abono">
                           <Banknote size={14} />
                         </button>
                       )}
-                      <button onClick={() => setDetailItem(c)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                      <button onClick={() => setDetailItem(c)} className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
-                      <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                      <button onClick={() => openEdit(c)} className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => setDeleteConfirm(c)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                      <button onClick={() => setDeleteConfirm(c)} className="p-1 sm:p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                         <Trash2 size={14} />
                       </button>
                     </div>

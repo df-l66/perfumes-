@@ -13,6 +13,7 @@ const Proveedores = lazy(() => import('./pages/Proveedores').then(m => ({ defaul
 const Clientes = lazy(() => import('./pages/Clientes').then(m => ({ default: m.Clientes })));
 const Ventas = lazy(() => import('./pages/Ventas').then(m => ({ default: m.Ventas })));
 const Compras = lazy(() => import('./pages/Compras').then(m => ({ default: m.Compras })));
+const MateriasPrimas = lazy(() => import('./pages/MateriasPrimas').then(m => ({ default: m.MateriasPrimas })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(m => ({ default: m.Configuracion })));
 
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
@@ -36,6 +37,7 @@ function AppRoutes() {
         <Route path="/clientes" element={<ProtectedRoute><Clientes /></ProtectedRoute>} />
         <Route path="/ventas" element={<ProtectedRoute><Ventas /></ProtectedRoute>} />
         <Route path="/compras" element={<ProtectedRoute adminOnly><Compras /></ProtectedRoute>} />
+        <Route path="/materias-primas" element={<ProtectedRoute adminOnly><MateriasPrimas /></ProtectedRoute>} />
 
         <Route path="/configuracion" element={<ProtectedRoute adminOnly><Configuracion /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to={user ? (isAdmin ? '/dashboard' : '/ventas') : '/login'} replace />} />

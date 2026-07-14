@@ -12,6 +12,7 @@ import abonosRoutes from './routes/abonos.routes';
 import configRoutes from './routes/config.routes';
 import logsRoutes from './routes/logs.routes';
 import authRoutes from './routes/auth.routes';
+import materiasPrimasRoutes from './routes/materias_primas.routes';
 import { authMiddleware, adminMiddleware } from './middlewares/auth.middleware';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -44,6 +45,7 @@ app.use('/api/clientes', authMiddleware, clientesRoutes);
 app.use('/api/ventas', authMiddleware, ventasRoutes);
 app.use('/api/kardex', authMiddleware, kardexRoutes);
 app.use('/api/abonos', authMiddleware, abonosRoutes);
+app.use('/api/materias-primas', authMiddleware, adminMiddleware, materiasPrimasRoutes);
 
 // Rutas administrativas (Solo administradores)
 app.use('/api/proveedores', authMiddleware, adminMiddleware, proveedoresRoutes);

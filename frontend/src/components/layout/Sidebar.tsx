@@ -16,6 +16,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { to: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Panel', adminOnly: true },
   { to: '/productos', icon: <Package size={18} />, label: 'Productos' },
+  { to: '/materias-primas', icon: <Package size={18} />, label: 'Materias Primas', adminOnly: true },
   { to: '/proveedores', icon: <Truck size={18} />, label: 'Proveedores', adminOnly: true },
   { to: '/clientes', icon: <Users size={18} />, label: 'Clientes' },
   { to: '/ventas', icon: <ShoppingCart size={18} />, label: 'Ventas' },

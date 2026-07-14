@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo } from '../types';
+import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo, MateriaPrima, MovimientoMateriaPrima } from '../types';
 import {
   mockVentas,
   mockCompras
@@ -15,6 +15,7 @@ import { fetchAbonos, fetchCreateAbono } from '../api/abonos';
 import { fetchConfig, fetchUpdateConfig } from '../api/config';
 import { fetchCreateUser, fetchUsers, fetchUpdateUser } from '../api/auth';
 import { fetchLogs, fetchCreateLog } from '../api/logs';
+import { fetchMateriasPrimas, fetchCreateMateriaPrima, fetchUpdateMateriaPrima, fetchDeleteMateriaPrima, fetchMovimientosMateriasPrimas, fetchRegistrarMovimientoMateriaPrima } from '../api/materiasPrimas';
 
 interface AppDataContextType {
   // Productos
@@ -61,6 +62,14 @@ interface AppDataContextType {
   // Kardex
   kardex: MovimientoKardex[];
   registrarAjusteKardex: (producto_id: string, tipo: 'ajuste_entrada' | 'ajuste_salida', cantidad: number, notas: string, autorNombre: string, autorId: string, autorRol: string) => void;
+
+  // Materias Primas
+  materiasPrimas: MateriaPrima[];
+  movimientosMateriasPrimas: MovimientoMateriaPrima[];
+  addMateriaPrima: (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string) => void;
+  updateMateriaPrima: (id: string, mp: Partial<MateriaPrima>, autorNombre: string, autorRol: string) => void;
+  deleteMateriaPrima: (id: string, autorNombre: string, autorRol: string) => void;
+  registrarMovimientoMateriaPrima: (materia_prima_id: string, tipo: 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida', cantidad: number, referencia: string, notas: string, autorId: string, autorNombre: string, autorRol: string) => void;
 }
 
 export const getLocalTimestamp = () => {
@@ -104,6 +113,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [configuracion, setConfiguracion] = useState<CompanyConfig>(initialConfig);
   const [users, setUsers] = useState<any[]>([]);
+  const [materiasPrimas, setMateriasPrimas] = useState<MateriaPrima[]>([]);
+  const [movimientosMateriasPrimas, setMovimientosMateriasPrimas] = useState<MovimientoMateriaPrima[]>([]);
 
   const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
   const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
@@ -128,6 +139,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     fetchAbonos().then(setAbonos).catch(console.error);
     fetchLogs().then(setLogs).catch(console.error);
     fetchConfig().then(setConfiguracion).catch(console.error);
+    fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
+    fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
     loadUsers();
   }, []);
   
@@ -479,6 +492,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addMateriaPrima = async (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string) => {
+    try {
+      const nueva = await fetchCreateMateriaPrima(mp);
+      setMateriasPrimas(prev => [nueva, ...prev]);
+      addLog(`Creó nueva materia prima: ${mp.nombre}`, 'productos', autorNombre, autorRol);
+    } catch(e) { console.error(e); alert('Error al crear materia prima'); }
+  };
+
+  const updateMateriaPrima = async (id: string, mp: Partial<MateriaPrima>, autorNombre: string, autorRol: string) => {
+    try {
+      const updated = await fetchUpdateMateriaPrima(id, mp);
+      setMateriasPrimas(prev => prev.map(m => m.id === id ? updated : m));
+      addLog(`Actualizó materia prima: ${updated.nombre}`, 'productos', autorNombre, autorRol);
+    } catch(e) { console.error(e); alert('Error al actualizar materia prima'); }
+  };
+
+  const deleteMateriaPrima = async (id: string, autorNombre: string, autorRol: string) => {
+    try {
+      const mp = materiasPrimas.find(m => m.id === id);
+      await fetchDeleteMateriaPrima(id);
+      setMateriasPrimas(prev => prev.filter(m => m.id !== id));
+      if (mp) addLog(`Eliminó materia prima: ${mp.nombre}`, 'productos', autorNombre, autorRol);
+    } catch(e) { console.error(e); alert('Error al eliminar materia prima. Asegúrate que no tenga movimientos'); }
+  };
+
+  const registrarMovimientoMateriaPrima = async (materia_prima_id: string, tipo: 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida', cantidad: number, referencia: string, notas: string, autorId: string, autorNombre: string, autorRol: string) => {
+    try {
+      const nuevoMov = await fetchRegistrarMovimientoMateriaPrima(materia_prima_id, tipo, cantidad, referencia, notas, autorId, autorNombre);
+      setMovimientosMateriasPrimas(prev => [nuevoMov, ...prev]);
+      const mpActualizada = await fetchMateriasPrimas();
+      setMateriasPrimas(mpActualizada);
+      addLog(`Movimiento de materia prima (${tipo}) registrado: ${nuevoMov.materia_prima_nombre}`, 'productos', autorNombre, autorRol);
+    } catch(e) { console.error(e); alert('Error al registrar movimiento'); }
+  };
+
+
   return (
     <AppDataContext.Provider value={{
       productos, addProducto, updateProducto, deleteProducto,
@@ -492,7 +541,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       logs, addLog,
       configuracion, updateConfiguracion,
       users, loadUsers, createUser, updateUserContext,
-      kardex, registrarAjusteKardex
+      kardex, registrarAjusteKardex,
+      materiasPrimas, movimientosMateriasPrimas, addMateriaPrima, updateMateriaPrima, deleteMateriaPrima, registrarMovimientoMateriaPrima
     }}>
       {children}
     </AppDataContext.Provider>

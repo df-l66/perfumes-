@@ -39,10 +39,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
         onClick={onClose}
       />
       {/* Modal Container */}
-      <div className="flex min-h-full items-start sm:items-center justify-center p-2 sm:p-4 py-8 sm:py-12">
-        <div className={`relative w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-10 animate-scale-in`}>
+      <div className="flex min-h-full items-end sm:items-center justify-center p-0 sm:p-4 pt-10 sm:py-12">
+        <div className={`relative w-full ${sizes[size]} bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border-t sm:border border-slate-100 flex flex-col z-10 animate-scale-in max-h-[90vh] sm:max-h-[85vh] overflow-hidden`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 sticky top-0 bg-white z-20 rounded-t-2xl">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white z-20 shrink-0">
             <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
             <div className="flex items-center gap-1 ml-auto">
               {headerAction}
@@ -58,7 +58,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
             </div>
           </div>
           {/* Body */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto">
             {children}
           </div>
         </div>

@@ -56,32 +56,67 @@ export const createVenta = async (req: Request, res: Response) => {
 
     // 3. Procesar cada ítem
     for (const item of items) {
-      await supabase.from('venta_detalles').insert([{
+      const isPreparado = item.es_preparado;
+      // Intentar omitir producto_id si es preparado para evitar constraint de FK si aplica, o usar null
+      const detallePayload: any = {
         venta_id: venta.id,
-        producto_id: item.producto_id,
         nombre: item.nombre,
         cantidad: item.cantidad,
         precio_unitario: item.precio_unitario,
         subtotal: item.subtotal
-      }]);
+      };
+      
+      if (!isPreparado) {
+        detallePayload.producto_id = item.producto_id;
+      }
 
-      const { data: prod } = await supabase.from('productos').select('stock, stock_minimo').eq('id', item.producto_id).single();
-      if (prod) {
-        const nuevoStock = prod.stock - item.cantidad;
-        const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
-        
-        await supabase.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
+      await supabase.from('venta_detalles').insert([detallePayload]);
 
-        await supabase.from('movimientos_kardex').insert([{
-          producto_id: item.producto_id,
-          producto_nombre: item.nombre,
-          tipo: 'salida',
-          cantidad: item.cantidad,
-          stock_anterior: prod.stock,
-          stock_nuevo: nuevoStock,
-          referencia: `Venta ${venta.factura}`,
-          registrado_por: venta.vendedor_id
-        }]);
+      if (isPreparado && item.receta) {
+        const descontarMateriaPrima = async (id: string, qty: number) => {
+          if (!id) return;
+          const { data: mp } = await supabase.from('materias_primas').select('stock, stock_minimo, nombre').eq('id', id).single();
+          if (mp) {
+            const nuevoStock = Number(mp.stock) - qty;
+            const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
+            await supabase.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', id);
+            await supabase.from('movimientos_materias_primas').insert([{
+              materia_prima_id: id,
+              materia_prima_nombre: mp.nombre,
+              tipo: 'salida',
+              cantidad: qty,
+              stock_anterior: mp.stock,
+              stock_nuevo: nuevoStock,
+              referencia: `Venta ${venta.factura}`,
+              registrado_por: venta.vendedor_id
+            }]);
+          }
+        };
+
+        if (Array.isArray(item.receta)) {
+          for (const ing of item.receta) {
+            await descontarMateriaPrima(ing.materia_prima_id, ing.cantidad * item.cantidad);
+          }
+        }
+      } else {
+        const { data: prod } = await supabase.from('productos').select('stock, stock_minimo').eq('id', item.producto_id).single();
+        if (prod) {
+          const nuevoStock = prod.stock - item.cantidad;
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+          
+          await supabase.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
+
+          await supabase.from('movimientos_kardex').insert([{
+            producto_id: item.producto_id,
+            producto_nombre: item.nombre,
+            tipo: 'salida',
+            cantidad: item.cantidad,
+            stock_anterior: prod.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Venta ${venta.factura}`,
+            registrado_por: venta.vendedor_id
+          }]);
+        }
       }
     }
 
