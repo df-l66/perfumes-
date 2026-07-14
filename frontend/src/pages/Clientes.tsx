@@ -46,7 +46,7 @@ export function Clientes() {
   const handlePriceChange = (field: 'limite_credito' | 'credito_usado', rawValue: string) => {
     const digits = rawValue.replace(/\D/g, '');
     const numericValue = digits === '' ? '' : parseInt(digits, 10);
-    setForm(f => ({ ...f, [field]: numericValue }));
+    setForm((f: any) => ({ ...f, [field]: numericValue }));
   };
 
   const filtered = useMemo(() =>
@@ -298,29 +298,29 @@ export function Clientes() {
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editItem ? 'Editar Cliente' : 'Nuevo Cliente'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
-          {field('Nombre / Razón Social', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
+          {field('Nombre / Razón Social', <input required minLength={3} value={form.nombre} onChange={e => setForm((f: any) => ({ ...f, nombre: e.target.value }))} className={inp} />)}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Tipo', (
-              <select value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value as TipoCliente }))} className={inp}>
+              <select value={form.tipo} onChange={e => setForm((f: any) => ({ ...f, tipo: e.target.value as TipoCliente }))} className={inp}>
                 <option value="empresa">Empresa</option>
                 <option value="persona">Persona Natural</option>
               </select>
             ))}
-            {field('Documento (NIT / CC)', <input required value={form.documento} onChange={e => setForm(f => ({ ...f, documento: e.target.value }))} className={inp} />)}
+            {field('Documento (NIT / CC)', <input required value={form.documento} onChange={e => setForm((f: any) => ({ ...f, documento: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
-            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
+            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className={inp} />)}
+            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm((f: any) => ({ ...f, telefono: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
-            {field('Fecha de Registro', <input type="date" required value={form.fecha_registro} onChange={e => setForm(f => ({ ...f, fecha_registro: e.target.value }))} className={inp} />)}
+            {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm((f: any) => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
+            {field('Fecha de Registro', <input type="date" required value={form.fecha_registro} onChange={e => setForm((f: any) => ({ ...f, fecha_registro: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Límite de Crédito (COP)', <input value={formatNumberWithDots(form.limite_credito)} onChange={e => handlePriceChange('limite_credito', e.target.value)} className={inp} placeholder="0" />)}
             {field('Crédito Usado / Deuda (COP)', <input value={formatNumberWithDots(form.credito_usado)} onChange={e => handlePriceChange('credito_usado', e.target.value)} className={inp} placeholder="0" />)}
           </div>
-          {field('Dirección', <input required value={form.direccion} onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))} className={inp} />)}
+          {field('Dirección', <input required value={form.direccion} onChange={e => setForm((f: any) => ({ ...f, direccion: e.target.value }))} className={inp} />)}
           <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit">{editItem ? 'Guardar' : 'Crear'}</Button>

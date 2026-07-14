@@ -240,23 +240,23 @@ export function Proveedores() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
 
-          {field('Nombre / Empresa', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} />)}
+          {field('Nombre / Empresa', <input required minLength={3} value={form.nombre} onChange={e => setForm((f: any) => ({ ...f, nombre: e.target.value }))} className={inp} />)}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('NIT', <input required minLength={3} value={form.nit} onChange={e => setForm(f => ({ ...f, nit: e.target.value }))} className={inp} placeholder="900.123.456-7" />)}
-            {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm(f => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
+            {field('NIT', <input required minLength={3} value={form.nit} onChange={e => setForm((f: any) => ({ ...f, nit: e.target.value }))} className={inp} placeholder="900.123.456-7" />)}
+            {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm((f: any) => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Persona de contacto', <input required value={form.contacto} onChange={e => setForm(f => ({ ...f, contacto: e.target.value }))} className={inp} />)}
+            {field('Persona de contacto', <input required value={form.contacto} onChange={e => setForm((f: any) => ({ ...f, contacto: e.target.value }))} className={inp} />)}
             {field('Estado', (
-              <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as ProveedorEstado }))} className={inp}>
+              <select value={form.estado} onChange={e => setForm((f: any) => ({ ...f, estado: e.target.value as ProveedorEstado }))} className={inp}>
                 <option value="activo">Activo</option>
                 <option value="inactivo">Inactivo</option>
               </select>
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={inp} />)}
-            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={inp} />)}
+            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm((f: any) => ({ ...f, telefono: e.target.value }))} className={inp} />)}
+            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className={inp} />)}
           </div>
           <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>

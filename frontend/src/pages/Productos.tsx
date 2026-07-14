@@ -52,7 +52,7 @@ export function Productos() {
   const handlePriceChange = (field: keyof Producto, value: string) => {
     const cleaned = value.replace(/\D/g, '');
     const num = cleaned === '' ? '' : Number(cleaned);
-    setForm(f => ({ ...f, [field]: num }));
+    setForm((f: any) => ({ ...f, [field]: num }));
   };
 
   const toggleEstado = (p: Producto) => {
@@ -618,13 +618,13 @@ export function Productos() {
           {error && <AlertBox type="warning" title="Atención" className="mb-4">{error}</AlertBox>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Código', <input required minLength={3} value={form.codigo} onChange={e => setForm(f => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
-            {field('Unidad', <input required value={form.unidad} onChange={e => setForm(f => ({ ...f, unidad: e.target.value }))} className={inp} placeholder="Frasco, Spray…" />)}
+            {field('Código', <input required minLength={3} value={form.codigo} onChange={e => setForm((f: any) => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
+            {field('Unidad', <input required value={form.unidad} onChange={e => setForm((f: any) => ({ ...f, unidad: e.target.value }))} className={inp} placeholder="Frasco, Spray…" />)}
           </div>
-          {field('Nombre del Producto', <input required minLength={3} value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
+          {field('Nombre del Producto', <input required minLength={3} value={form.nombre} onChange={e => setForm((f: any) => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Categoría', (
-              <select required value={form.categoria} onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))} className={inp}>
+              <select required value={form.categoria} onChange={e => setForm((f: any) => ({ ...f, categoria: e.target.value }))} className={inp}>
                 <option value="">— Seleccionar —</option>
                 <option value="Fragancias Árabes">Fragancias Árabes</option>
                 <option value="Fragancias Casuales">Fragancias Casuales</option>
@@ -635,7 +635,7 @@ export function Productos() {
               </select>
             ))}
             {field('Proveedor (Opcional)', (
-              <select value={form.proveedor_id || ''} onChange={e => setForm(f => ({ ...f, proveedor_id: e.target.value }))} className={inp}>
+              <select value={form.proveedor_id || ''} onChange={e => setForm((f: any) => ({ ...f, proveedor_id: e.target.value }))} className={inp}>
                 <option value="">— Sin Proveedor —</option>
                 {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
@@ -664,14 +664,14 @@ export function Productos() {
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Stock Actual', <input type="number" step="any" min={0} required value={form.stock} onChange={e => setForm(f => ({ ...f, stock: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
-            {field('Stock Mínimo', <input type="number" step="any" min={0} required value={form.stock_minimo} onChange={e => setForm(f => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
+            {field('Stock Actual', <input type="number" step="any" min={0} required value={form.stock} onChange={e => setForm((f: any) => ({ ...f, stock: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
+            {field('Stock Mínimo', <input type="number" step="any" min={0} required value={form.stock_minimo} onChange={e => setForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
           </div>
           {/* Campos específicos de Perfumería (Fijos) */}
           <div className="p-4.5 bg-teal-50/30 rounded-xl border border-teal-100/50 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Calidad del Perfume', (
-                <select value={form.calidad || 'Original'} onChange={e => setForm(f => ({ ...f, calidad: e.target.value }))} className={inp}>
+                <select value={form.calidad || 'Original'} onChange={e => setForm((f: any) => ({ ...f, calidad: e.target.value }))} className={inp}>
                   <option value="Original">Original</option>
                   <option value="1.1 Original">1.1 Original (Alta Similitud)</option>
                   <option value="Replica AAA">Réplica AAA</option>
@@ -681,32 +681,32 @@ export function Productos() {
               ))}
               {field('Volumen / Tamaño (Mililitros)', (
                 <div className="relative">
-                  <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm(f => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
+                  <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ml</span>
                 </div>
               ))}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Género', (
-                <select value={form.genero || 'Unisex'} onChange={e => setForm(f => ({ ...f, genero: e.target.value as any }))} className={inp}>
+                <select value={form.genero || 'Unisex'} onChange={e => setForm((f: any) => ({ ...f, genero: e.target.value as any }))} className={inp}>
                   <option value="Unisex">Unisex</option>
                   <option value="Masculino">Masculino</option>
                   <option value="Femenino">Femenino</option>
                 </select>
               ))}
-              {field('Familia Olfativa', <input value={form.familia_olfativa || ''} onChange={e => setForm(f => ({ ...f, familia_olfativa: e.target.value }))} className={inp} placeholder="Amaderada, Floral, Cítrica…" />)}
+              {field('Familia Olfativa', <input value={form.familia_olfativa || ''} onChange={e => setForm((f: any) => ({ ...f, familia_olfativa: e.target.value }))} className={inp} placeholder="Amaderada, Floral, Cítrica…" />)}
             </div>
           </div>
 
-          {field('Descripción', <textarea rows={2} value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} className={inp} placeholder="Descripción corta del producto…" />)}
+          {field('Descripción', <textarea rows={2} value={form.descripcion} onChange={e => setForm((f: any) => ({ ...f, descripcion: e.target.value }))} className={inp} placeholder="Descripción corta del producto…" />)}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Estado del Producto', (
-              <select value={form.estado} onChange={e => setForm(f => ({ ...f, estado: e.target.value as any }))} className={inp}>
+              <select value={form.estado} onChange={e => setForm((f: any) => ({ ...f, estado: e.target.value as any }))} className={inp}>
                 <option value="activo">Activo / Disponible</option>
                 <option value="inactivo">Inactivo / Oculto</option>
               </select>
             ))}
-            {field('URL de la Imagen', <input value={form.imagen || ''} onChange={e => setForm(f => ({ ...f, imagen: e.target.value }))} className={inp} placeholder="https://ejemplo.com/perfume.jpg" />)}
+            {field('URL de la Imagen', <input value={form.imagen || ''} onChange={e => setForm((f: any) => ({ ...f, imagen: e.target.value }))} className={inp} placeholder="https://ejemplo.com/perfume.jpg" />)}
           </div>
           <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
