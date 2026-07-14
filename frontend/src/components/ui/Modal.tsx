@@ -32,31 +32,35 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 md:pt-12">
+    <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
         onClick={onClose}
       />
-      {/* Modal */}
-      <div className={`relative w-full ${sizes[size]} max-h-[96vh] sm:max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-10 animate-scale-in overflow-hidden`}>
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100">
-          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
-          <div className="flex items-center gap-1 ml-auto">
-            {headerAction}
-            {!hideCloseButton && (
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                aria-label="Cerrar"
-              >
-                <X size={18} />
-              </button>
-            )}
+      {/* Modal Container */}
+      <div className="flex min-h-full items-start sm:items-center justify-center p-2 sm:p-4 py-8 sm:py-12">
+        <div className={`relative w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-10 animate-scale-in`}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 sticky top-0 bg-white z-20 rounded-t-2xl">
+            <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+            <div className="flex items-center gap-1 ml-auto">
+              {headerAction}
+              {!hideCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  aria-label="Cerrar"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 py-4 sm:py-5">
-          {children}
+          {/* Body */}
+          <div className="px-4 sm:px-6 py-4 sm:py-5">
+            {children}
+          </div>
         </div>
       </div>
     </div>
