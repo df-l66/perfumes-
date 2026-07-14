@@ -66,7 +66,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function Dashboard() {
-  const { productos, ventas, clientes, logs, compras, gastos } = useAppData();
+  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas } = useAppData();
   const { user } = useAuth();
 
   const getLocalDate = () => {
@@ -102,14 +102,28 @@ export function Dashboard() {
   // ── CÁLCULOS FINANCIEROS Y DE NEGOCIO REAL ─────────────────────────────────
   const totalVentas = ventasCompletadas.reduce((s, v) => s + v.total, 0);
 
-  // Pagado a proveedores (Costo de venta): suma del total de compras completadas
-  const costoTotal = comprasFiltradas.reduce((sum, c) => sum + c.total, 0);
+  // Costo de Ventas Real (COGS - Cost of Goods Sold)
+  const costoVentas = ventasCompletadas.reduce((sum, v) => {
+    return sum + v.items.reduce((itemSum, item) => {
+      if (item.es_preparado && item.receta) {
+        return itemSum + item.receta.reduce((rSum, r) => {
+          const mp = materiasPrimas.find(m => m.id === r.materia_prima_id);
+          return rSum + (r.cantidad * (mp?.costo_unitario || 0));
+        }, 0);
+      }
+      const p = productos.find(prod => prod.id === item.producto_id);
+      return itemSum + (item.cantidad * (p?.precio_costo || 0));
+    }, 0);
+  }, 0);
+
+  // Pagado a proveedores (Compras de inventario - Flujo de Caja)
+  const costoTotalCompras = comprasFiltradas.reduce((sum, c) => sum + c.total, 0);
 
   // Gastos Operativos y de Caja
   const totalGastos = gastosFiltrados.reduce((sum, g) => sum + g.monto, 0);
 
-  // Ganancias (Margen Neto Real)
-  const gananciaTotal = totalVentas - costoTotal - totalGastos;
+  // Ganancias (Margen Neto Real de la Operación)
+  const gananciaTotal = totalVentas - costoVentas - totalGastos;
 
   // ── CHART DATA (Dinámico basado en el rango) ──────────────────────────────
   const chartDataMap: Record<string, { fecha: string; total: number; cantidad: number }> = {};
@@ -183,15 +197,17 @@ export function Dashboard() {
     const headers = {
       rango: 'Rango de Fechas',
       ingresos: 'Ingresos Totales (Ventas)',
-      costos: 'Costo Mercancía (Compras)',
+      costos_ventas: 'Costo de Ventas (Mercancía Entregada)',
+      inversion_inventario: 'Inversión en Inventario (Compras)',
       gastos: 'Gastos Operativos',
-      ganancia: 'Ganancia Neta Real'
+      ganancia: 'Ganancia Neta Operativa'
     };
 
     const data = [{
       rango: `${startDate} al ${endDate}`,
       ingresos: totalVentas,
-      costos: costoTotal,
+      costos_ventas: costoVentas,
+      inversion_inventario: costoTotalCompras,
       gastos: totalGastos,
       ganancia: gananciaTotal
     }];
@@ -242,20 +258,28 @@ export function Dashboard() {
           delayClass="animate-fade-in-up animation-delay-75"
         />
         <KpiCard
-          title="Pagado a Proveedores"
-          value={formatCurrency(costoTotal)}
-          subtitle="Costo de mercancía vendida"
-          icon={<DollarSign size={22} className="text-amber-600" />}
+          title="Costo de Ventas"
+          value={formatCurrency(costoVentas)}
+          subtitle="Costo real de los productos vendidos"
+          icon={<ShoppingCart size={22} className="text-amber-600" />}
           color="bg-amber-50"
           delayClass="animate-fade-in-up animation-delay-100"
         />
         <KpiCard
-          title="Ganancia Neta Real"
+          title="Ganancia Neta Operativa"
           value={formatCurrency(gananciaTotal)}
-          subtitle={`Descontando compras y $${formatCurrency(totalGastos)} en gastos`}
-          icon={<DollarSign size={22} className="text-emerald-600 animate-bounce" />}
-          color="bg-emerald-50"
+          subtitle={gananciaTotal < 0 ? 'Pérdidas operativas' : 'Beneficio real (Ventas - Costos - Gastos)'}
+          icon={<Award size={22} className={gananciaTotal < 0 ? 'text-red-600' : 'text-emerald-600'} />}
+          color={gananciaTotal < 0 ? 'bg-red-50 border-red-100' : 'bg-emerald-50'}
           delayClass="animate-fade-in-up animation-delay-200"
+        />
+        <KpiCard
+          title="Inversión en Inventario"
+          value={formatCurrency(costoTotalCompras)}
+          subtitle="Dinero gastado comprando a proveedores"
+          icon={<DollarSign size={22} className="text-blue-600" />}
+          color="bg-blue-50"
+          delayClass="animate-fade-in-up animation-delay-300"
         />
         <KpiCard
           title="Stock Crítico"
