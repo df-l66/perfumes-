@@ -25,7 +25,7 @@ function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }
   delayClass?: string;
 }) {
   return (
-    <div className={`bg-white rounded-xl border border-zinc-200 p-6 shadow-xs hover:shadow-lg hover:-tranzinc-y-1 hover:border-amber-100 transition-all duration-300 group cursor-pointer ${delayClass}`}>
+    <div className={`bg-white rounded-xl border border-zinc-200 p-6 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-amber-100 transition-all duration-300 group cursor-pointer ${delayClass}`}>
       <div className="flex items-start justify-between">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${color}`}>
           {icon}

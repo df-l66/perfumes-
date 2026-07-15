@@ -250,7 +250,7 @@ export function Productos() {
           {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
@@ -470,7 +470,7 @@ export function Productos() {
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex gap-3">
               <div className="relative w-64">
-                <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   value={kardexSearch}
                   onChange={e => setKardexSearch(e.target.value)}
@@ -565,7 +565,7 @@ export function Productos() {
           <div className="relative">
             <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Producto a Ajustar</label>
             <div className="relative">
-              <Search size={14} className="absolute left-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input 
                 required={!ajusteForm.producto_id}
                 placeholder="Escribe para buscar un producto..."
@@ -738,7 +738,7 @@ export function Productos() {
               {field('Volumen / Tamaño (Mililitros)', (
                 <div className="relative">
                   <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
-                  <span className="absolute right-3 top-1/2 -tranzinc-y-1/2 text-xs font-bold text-zinc-400">ml</span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">ml</span>
                 </div>
               ))}
             </div>

@@ -209,7 +209,7 @@ export function Configuracion() {
                       onChange={e => setForm(f => ({ ...f, iva_porcentaje: +e.target.value }))}
                       className={`${inp} pr-8`}
                     />
-                    <span className="absolute right-3 top-1/2 -tranzinc-y-1/2 text-xs font-bold text-zinc-400">%</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">%</span>
                   </div>
                 ))}
                 {field('Giro / Rubro Comercial', (

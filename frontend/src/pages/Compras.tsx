@@ -260,7 +260,7 @@ function NuevaCompraModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <p className="text-xs text-zinc-500">Busca y selecciona el proveedor al que le realizarás el reabastecimiento:</p>
                 <div className="relative w-full sm:w-64">
-                  <Search size={14} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input
                     value={searchProv}
                     onChange={e => setSearchProv(e.target.value)}
@@ -353,7 +353,7 @@ function NuevaCompraModal({
                     </button>
                   </div>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" size={14} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
                     <input
                       placeholder={`Buscar ${tipoItem === 'producto' ? 'producto' : 'materia prima'}...`}
                       value={searchProd}
@@ -818,7 +818,7 @@ export function Compras() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" size={15} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={15} />
               <input
                 placeholder="Buscar factura o proveedor..."
                 className={`${inp} pl-9 w-64`}

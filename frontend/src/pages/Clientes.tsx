@@ -173,7 +173,7 @@ export function Clientes() {
     >
       {/* Search */}
       <div className="relative mb-5 max-w-md">
-        <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}

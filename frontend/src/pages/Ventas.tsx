@@ -221,7 +221,7 @@ function NuevaVentaModal({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <p className="text-sm font-medium text-zinc-600">Selecciona el cliente para esta venta:</p>
                 <div className="relative w-full sm:w-64">
-                  <Search size={14} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input
                     value={searchCliente}
                     onChange={e => setSearchCliente(e.target.value)}
@@ -305,7 +305,7 @@ function NuevaVentaModal({
                 {/* Product picker */}
                 <div className="flex-1 min-w-0">
                   <div className="relative mb-2">
-                    <Search size={14} className="absolute left-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                     <input
                       value={searchProd}
                       onChange={e => setSearchProd(e.target.value)}
@@ -707,7 +707,7 @@ export function Ventas() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}

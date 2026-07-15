@@ -64,7 +64,7 @@ export function Sidebar() {
 
       <aside
         className={`flex flex-col fixed top-0 bottom-0 left-0 bg-zinc-950 text-zinc-100 border-r border-zinc-800/40 z-50 transition-all duration-300 ease-in-out select-none overflow-hidden overflow-y-auto ${
-          isHovered || mobileMenuOpen ? 'w-64 shadow-2xl shadow-zinc-950/80 tranzinc-x-0' : 'w-20 -tranzinc-x-full md:tranzinc-x-0'
+          isHovered || mobileMenuOpen ? 'w-64 shadow-2xl shadow-zinc-950/80 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'
         }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -148,7 +148,7 @@ export function Sidebar() {
                     isActive ? (
                       <ChevronRight size={14} className="text-amber-200 animate-pulse shrink-0" />
                     ) : (
-                      <ChevronRight size={14} className="opacity-0 -tranzinc-x-2 group-hover:opacity-100 group-hover:tranzinc-x-0 transition-all duration-200 text-zinc-500 shrink-0" />
+                      <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-zinc-500 shrink-0" />
                     )
                   )}
                 </>
@@ -165,7 +165,7 @@ export function Sidebar() {
               isHovered || mobileMenuOpen ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
             }`}
           >
-            <LogOut size={18} className="transition-transform group-hover:tranzinc-x-0.5 shrink-0" />
+            <LogOut size={18} className="transition-transform group-hover:translate-x-0.5 shrink-0" />
             <span className={`transition-all duration-300 origin-left whitespace-nowrap ${
               isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
             }`}>
