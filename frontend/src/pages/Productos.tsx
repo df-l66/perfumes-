@@ -322,7 +322,6 @@ export function Productos() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium text-slate-800 text-sm leading-tight max-w-[140px] sm:max-w-[200px]">{p.nombre}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 max-w-[140px] sm:max-w-[200px] leading-tight">{p.unidad} · {p.descripcion}</p>
                       </div>
                     </div>
                   </td>
