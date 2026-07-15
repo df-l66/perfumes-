@@ -169,20 +169,20 @@ export function MateriasPrimas() {
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b">
-                <th className="p-4 font-medium text-gray-600">Nombre</th>
-                <th className="p-4 font-medium text-gray-600 hidden md:table-cell">Tipo</th>
-                <th className="p-4 font-medium text-gray-600">Stock</th>
-                <th className="p-4 font-medium text-gray-600 hidden sm:table-cell">Unidad</th>
-                <th className="p-4 font-medium text-gray-600 hidden sm:table-cell">Costo Ref.</th>
-                <th className="p-4 font-medium text-gray-600 text-right">Acciones</th>
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Tipo</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Unidad</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Costo Ref.</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100">
               {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4">
+                <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                  <td className="px-3 sm:px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.tipo === 'esencia' ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
@@ -200,32 +200,32 @@ export function MateriasPrimas() {
                       <span className="font-medium text-slate-800">{p.nombre}</span>
                     </div>
                   </td>
-                  <td className="p-4 capitalize hidden md:table-cell">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+                  <td className="px-3 sm:px-4 py-3 capitalize hidden md:table-cell">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700 border border-purple-200' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
                       {p.tipo}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <span className={`font-semibold ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-green-600'}`}>
+                  <td className="px-3 sm:px-4 py-3">
+                    <span className={`font-bold text-xs sm:text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-slate-800'}`}>
                       {p.stock}
                     </span>
                   </td>
-                  <td className="p-4 text-gray-500 hidden sm:table-cell">{p.unidad_medida}</td>
-                  <td className="p-4 hidden sm:table-cell">{formatCurrency(p.costo_unitario)}</td>
-                  <td className="p-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setViewItem(p)} title="Ver detalles">
-                        <Eye className="w-4 h-4 text-slate-500" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openAjuste(p.id)} title="Ajustar Stock">
-                        <Package className="w-4 h-4 text-blue-600" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(p)} title="Editar">
-                        <Pencil className="w-4 h-4 text-primary" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)} title="Eliminar">
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </Button>
+                  <td className="px-3 sm:px-4 py-3 text-slate-500 hidden sm:table-cell text-xs">{p.unidad_medida}</td>
+                  <td className="px-3 sm:px-4 py-3 font-semibold text-slate-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
+                  <td className="px-3 sm:px-4 py-3">
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => setViewItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                        <Eye size={14} />
+                      </button>
+                      <button onClick={() => openAjuste(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
+                        <Package size={14} />
+                      </button>
+                      <button onClick={() => openEdit(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -404,7 +404,12 @@ export function MateriasPrimas() {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-gray-100">
+            <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-6">
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openAjuste(viewItem.id); }}>Ajuste</Button>
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openEdit(viewItem); }}>Editar</Button>
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); handleDelete(viewItem.id); }} className="text-red-600 hover:text-red-700 border-red-200 bg-red-50">Eliminar</Button>
+              </div>
               <Button onClick={() => setViewItem(null)}>Cerrar</Button>
             </div>
           </div>
