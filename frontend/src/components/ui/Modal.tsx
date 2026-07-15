@@ -58,7 +58,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
             </div>
           </div>
           {/* Body */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto flex-1 min-h-0 custom-scrollbar">
             {children}
           </div>
         </div>
