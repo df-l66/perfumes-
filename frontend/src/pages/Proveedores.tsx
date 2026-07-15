@@ -126,8 +126,58 @@ export function Proveedores() {
         />
       </div>
 
+      {/* Table view */}
       <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Cards */}
+        <div className="md:hidden divide-y divide-zinc-100">
+          {filtered.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <Truck size={32} className="mx-auto text-zinc-300 mb-3" />
+              <p className="text-zinc-400 text-sm">No se encontraron proveedores</p>
+            </div>
+          ) : paginated.map(p => (
+            <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
+              <div className="flex gap-3 items-start justify-between">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                    <Truck size={16} className="text-zinc-500" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-zinc-800 text-sm leading-tight">{p.nombre}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{p.nit} · {p.ciudad}</p>
+                  </div>
+                </div>
+                <Badge variant={p.estado} />
+              </div>
+
+              <div className="bg-zinc-50 rounded-lg p-2.5 border border-zinc-100 text-xs text-zinc-600 space-y-1">
+                <p><strong>Contacto:</strong> {p.contacto}</p>
+                <p><strong>Tel:</strong> {p.telefono}</p>
+                <p><strong>Email:</strong> {p.email}</p>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button onClick={() => setDetailItem(p)} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
+                  <Eye size={14} className="mr-1.5" /> Detalles
+                </button>
+                {isAdmin && (
+                  <>
+                    <button onClick={() => openEdit(p)} className="flex-1 py-2 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors">
+                      <Pencil size={14} className="mr-1.5" /> Editar
+                    </button>
+                    <button onClick={() => setDeleteConfirm(p)} className="px-3.5 py-2 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
@@ -174,8 +224,8 @@ export function Proveedores() {
                   <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={p.estado} /></td>
                   <td className="px-4 sm:px-5 py-3.5">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
-                        <Eye size={14} />
+                      <button onClick={() => setDetailItem(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
+                        <Eye size={16} />
                       </button>
                       {isAdmin && (
                         <>
@@ -184,13 +234,13 @@ export function Proveedores() {
                             className={`p-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-zinc-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Proveedor' : 'Inactivar Proveedor'}
                           >
-                            <Power size={14} />
+                            <Power size={16} />
                           </button>
                           <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
-                            <Pencil size={14} />
+                            <Pencil size={16} />
                           </button>
                           <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
-                            <Trash2 size={14} />
+                            <Trash2 size={16} />
                           </button>
                         </>
                       )}

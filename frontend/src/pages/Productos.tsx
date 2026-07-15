@@ -278,9 +278,65 @@ export function Productos() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table & Mobile Cards */}
       <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Cards (Visible solo en md e inferiores) */}
+        <div className="lg:hidden divide-y divide-zinc-100">
+          {filtered.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <Package size={32} className="mx-auto text-zinc-300 mb-3" />
+              <p className="text-zinc-400 text-sm">No se encontraron productos</p>
+            </div>
+          ) : paginated.map(p => (
+            <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
+              <div className="flex justify-between gap-2 items-start">
+                <div className="flex gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
+                    {p.imagen ? <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" /> : <Package size={20} className="text-zinc-400" />}
+                  </div>
+                  <div>
+                    <p className="font-bold text-zinc-800 text-sm leading-tight max-w-[200px]">{p.nombre}</p>
+                    <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{p.codigo} · {p.calidad || 'Original'}</p>
+                  </div>
+                </div>
+                <Badge variant={p.estado} />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 border border-zinc-100">
+                <div>
+                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Venta</span>
+                  <span className="font-bold text-zinc-800 text-sm">{formatCurrency(p.precio_venta)}</span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Stock</span>
+                  <span className={`font-bold text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-zinc-800'}`}>
+                    {p.stock} <span className="text-xs font-normal text-zinc-500">{p.unidad}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button onClick={() => setDetailItem(p)} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
+                  <Eye size={14} className="mr-1.5" /> Detalles
+                </button>
+                {isAdmin && (
+                  <>
+                    <button onClick={() => openEdit(p)} className="flex-1 py-2 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors">
+                      <Pencil size={14} className="mr-1.5" /> Editar
+                    </button>
+                    <button onClick={() => setDeleteConfirm(p)} className="px-3.5 py-2 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
@@ -346,23 +402,23 @@ export function Productos() {
                   <td className="px-2 sm:px-3 py-3 hidden md:table-cell"><Badge variant={p.estado} /></td>
                   <td className="px-2 sm:px-3 py-3">
                     <div className="flex justify-end gap-1 flex-nowrap">
-                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
-                        <Eye size={14} />
+                      <button onClick={() => setDetailItem(p)} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
+                        <Eye size={16} />
                       </button>
                       {isAdmin && (
                         <>
                           <button 
                             onClick={() => toggleEstado(p)} 
-                            className={`hidden xl:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-zinc-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
+                            className={`p-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-zinc-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Perfume' : 'Inactivar Perfume'}
                           >
-                            <Power size={14} />
+                            <Power size={16} />
                           </button>
-                          <button onClick={() => openEdit(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
-                            <Pencil size={14} />
+                          <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
+                            <Pencil size={16} />
                           </button>
-                          <button onClick={() => setDeleteConfirm(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
-                            <Trash2 size={14} />
+                          <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                            <Trash2 size={16} />
                           </button>
                         </>
                       )}

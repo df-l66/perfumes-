@@ -40,8 +40,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
       />
       {/* Modal Container */}
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <div className={`relative transform overflow-hidden w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-zinc-100 flex flex-col z-20 animate-scale-in sm:my-8 text-left`}>
+        <div className="flex min-h-[100dvh] items-end sm:items-center justify-center p-0 sm:p-4 text-center">
+          <div className={`relative transform overflow-hidden w-full ${sizes[size]} bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border-t border-x sm:border border-zinc-100 flex flex-col z-20 animate-scale-in text-left max-h-[95dvh] sm:max-h-[90vh]`}>
           {/* Header */}
           <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-100 bg-white z-20 shrink-0">
             <h2 className="text-lg font-semibold text-zinc-800">{title}</h2>
@@ -59,7 +59,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
             </div>
           </div>
           {/* Body */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto">
             {children}
           </div>
         </div>

@@ -167,7 +167,68 @@ export function MateriasPrimas() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Cards */}
+        <div className="md:hidden divide-y divide-zinc-100">
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center text-zinc-500">
+              No se encontraron materias primas.
+            </div>
+          ) : filtered.map(p => (
+            <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
+              <div className="flex gap-3 items-start justify-between">
+                <div className="flex gap-3 items-center">
+                  {p.tipo === 'esencia' ? (
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                      {p.imagen ? <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" /> : <Droplet className="w-5 h-5 text-purple-300" />}
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+                      {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold text-zinc-800 text-sm leading-tight">{p.nombre}</p>
+                    <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600'}`}>
+                      {p.tipo}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 border border-zinc-100">
+                <div>
+                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Stock Actual</span>
+                  <span className={`font-bold text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-zinc-800'}`}>
+                    {p.stock} <span className="text-xs font-normal text-zinc-500">{p.unidad_medida}</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Costo Unit.</span>
+                  <span className="font-bold text-zinc-800 text-sm">{formatCurrency(p.costo_unitario)}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button onClick={() => setViewItem(p)} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
+                  <Eye size={14} className="mr-1.5" /> Detalles
+                </button>
+                <button onClick={() => openAjuste(p.id)} className="flex-1 py-2 flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors">
+                  <Package size={14} className="mr-1.5" /> Ajustar
+                </button>
+                <button onClick={() => openEdit(p)} className="flex-1 py-2 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors">
+                  <Pencil size={14} className="mr-1.5" /> Editar
+                </button>
+                <button onClick={() => handleDelete(p.id)} className="px-3.5 py-2 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
@@ -214,17 +275,17 @@ export function MateriasPrimas() {
                   <td className="px-3 sm:px-4 py-3 font-semibold text-zinc-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
                   <td className="px-3 sm:px-4 py-3">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setViewItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
-                        <Eye size={14} />
+                      <button onClick={() => setViewItem(p)} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
+                        <Eye size={16} />
                       </button>
-                      <button onClick={() => openAjuste(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
-                        <Package size={14} />
+                      <button onClick={() => openAjuste(p.id)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
+                        <Package size={16} />
                       </button>
-                      <button onClick={() => openEdit(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
-                        <Pencil size={14} />
+                      <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
+                        <Pencil size={16} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
-                        <Trash2 size={14} />
+                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>

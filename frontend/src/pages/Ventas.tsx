@@ -742,9 +742,65 @@ export function Ventas() {
         </div>
       )}
 
-      {/* Table */}
+      {/* Table & Mobile Cards */}
       <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Cards */}
+        <div className="md:hidden divide-y divide-zinc-100">
+          {filtered.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <ShoppingCart size={32} className="mx-auto text-zinc-300 mb-3" />
+              <p className="text-zinc-400 text-sm">No se encontraron ventas</p>
+            </div>
+          ) : paginated.map(v => (
+            <div key={v.id} className={`p-4 space-y-3 hover:bg-zinc-50/60 transition-colors ${v.estado === 'anulada' ? 'opacity-60' : ''}`}>
+              <div className="flex justify-between items-start gap-2">
+                <div>
+                  <p className="font-bold text-zinc-800 text-sm">{v.cliente_nombre}</p>
+                  <p className="text-xs text-amber-600 font-mono font-semibold">{v.factura} <span className="text-zinc-400 font-sans font-normal">· {new Date(v.fecha).toLocaleDateString('es-CO')}</span></p>
+                </div>
+                <Badge variant={v.estado} />
+              </div>
+
+              <div className="bg-zinc-50 rounded-lg p-2.5 border border-zinc-100 text-xs text-zinc-600 flex justify-between items-center">
+                <div>
+                  <p className="text-zinc-400 text-[10px] uppercase font-bold">Vendedor</p>
+                  <p className="font-medium text-zinc-700">{v.vendedor_nombre}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-zinc-400 text-[10px] uppercase font-bold">{v.items.length} Ítems</p>
+                  <p className="font-bold text-zinc-800 text-sm">{formatCurrency(v.total)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setDetailVenta(v)}
+                  className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <FileText size={14} className="mr-1.5" /> Detalle
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDownloadPDF(v); }}
+                  className="flex-1 py-2 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors"
+                >
+                  <Download size={14} className="mr-1.5" /> PDF
+                </button>
+                {isAdmin && v.estado !== 'anulada' && (
+                  <button
+                    onClick={() => setAnularConfirm(v)}
+                    className="px-3.5 py-2 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                  >
+                    <XCircle size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
@@ -777,7 +833,7 @@ export function Ventas() {
                         className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                         title="Ver detalle"
                       >
-                        <FileText size={14} />
+                        <FileText size={16} />
                       </button>
                       <button
                         onClick={(e) => {
@@ -787,7 +843,7 @@ export function Ventas() {
                         className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                         title="Descargar comprobante"
                       >
-                        <Download size={14} />
+                        <Download size={16} />
                       </button>
                       {isAdmin && v.estado !== 'anulada' && (
                         <button
@@ -795,7 +851,7 @@ export function Ventas() {
                           className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
                           title="Anular venta"
                         >
-                          <XCircle size={14} />
+                          <XCircle size={16} />
                         </button>
                       )}
                     </div>

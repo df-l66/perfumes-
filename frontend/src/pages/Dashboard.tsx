@@ -226,15 +226,15 @@ export function Dashboard() {
       }
     >
       {/* Date Filter */}
-      <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-xl border border-zinc-200 w-max shadow-sm">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 bg-white p-3 rounded-xl border border-zinc-200 w-full sm:w-max shadow-sm">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           <label className="text-xs font-semibold text-zinc-500">Desde</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50" />
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50 flex-1 sm:flex-none text-right sm:text-left" />
         </div>
-        <div className="text-zinc-300">-</div>
-        <div className="flex items-center gap-2">
+        <div className="text-zinc-300 hidden sm:block">-</div>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
           <label className="text-xs font-semibold text-zinc-500">Hasta</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50" />
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50 flex-1 sm:flex-none text-right sm:text-left" />
         </div>
       </div>
 
