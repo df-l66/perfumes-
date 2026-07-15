@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, Truck, Users, ShoppingCart, ShoppingBag,
-  LogOut, ChevronRight, Building2, Settings, Wallet
+  LogOut, ChevronRight, Building2, Settings, Wallet, Menu, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -28,6 +28,7 @@ export function Sidebar() {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = React.useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = () => {
     logout();
@@ -38,53 +39,83 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sidebar */}
+      {/* Mobile Hamburger Button */}
+      <button
+        onClick={() => setMobileMenuOpen(true)}
+        className="md:hidden fixed top-[13px] sm:top-[17px] left-4 z-40 p-1.5 bg-white/50 backdrop-blur-sm border border-slate-200 rounded-lg text-slate-700 shadow-sm hover:bg-white transition-colors"
+      >
+        <Menu size={20} />
+      </button>
+
+      {/* Mobile Backdrop */}
+      {mobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Desktop Wrapper to preserve layout space */}
       <div
         className="hidden md:block w-20 shrink-0 min-h-screen relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-      >
+      />
+
       <aside
-        className={`flex flex-col fixed top-0 left-0 bottom-0 bg-slate-950 text-slate-100 border-r border-slate-800/40 z-30 transition-all duration-300 ease-in-out select-none overflow-hidden ${
-          isHovered ? 'w-64 shadow-2xl shadow-slate-950/80' : 'w-20'
+        className={`flex flex-col fixed top-0 bottom-0 left-0 bg-slate-950 text-slate-100 border-r border-slate-800/40 z-50 transition-all duration-300 ease-in-out select-none overflow-hidden overflow-y-auto ${
+          isHovered || mobileMenuOpen ? 'w-64 shadow-2xl shadow-slate-950/80 translate-x-0' : 'w-20 -translate-x-full md:translate-x-0'
         }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Logo */}
-        <div className={`flex items-center gap-3 py-6 border-b border-slate-800/60 transition-all duration-300 ${
-          isHovered ? 'px-6' : 'justify-center px-4'
+        <div className={`flex items-center justify-between py-6 border-b border-slate-800/60 transition-all duration-300 ${
+          isHovered || mobileMenuOpen ? 'px-6' : 'justify-center px-4'
         }`}>
-          <div className="w-9 h-9 rounded-xl bg-teal-500 flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/20">
-            <Building2 size={18} className="text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-500 flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/20">
+              <Building2 size={18} className="text-white" />
+            </div>
+            <div className={`transition-all duration-300 origin-left ${
+              isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
+            }`}>
+              <p className="font-bold text-white text-sm tracking-tight leading-none">GestiónPro</p>
+              <p className="text-slate-500 text-[9px] uppercase font-bold tracking-wider mt-1">Control Panel</p>
+            </div>
           </div>
-          <div className={`transition-all duration-300 origin-left ${
-            isHovered ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
-          }`}>
-            <p className="font-bold text-white text-sm tracking-tight leading-none">GestiónPro</p>
-            <p className="text-slate-500 text-[9px] uppercase font-bold tracking-wider mt-1">Control Panel</p>
-          </div>
+          {/* Close button on mobile */}
+          {mobileMenuOpen && (
+            <button 
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* User badge */}
-        <div className={`mx-3 mt-5 rounded-xl bg-slate-900/80 border border-slate-800/60 hover:border-slate-800 transition-all duration-300 ${
-          isHovered ? 'px-4 py-3.5' : 'p-2'
+        <div className={`mx-3 mt-5 rounded-xl bg-slate-900/80 border border-slate-800/60 hover:border-slate-800 transition-all duration-300 shrink-0 ${
+          isHovered || mobileMenuOpen ? 'px-4 py-3.5' : 'p-2 hidden md:block'
         }`}>
-          <div className={`flex items-center gap-3 ${!isHovered && 'justify-center'}`}>
+          <div className={`flex items-center gap-3 ${!(isHovered || mobileMenuOpen) && 'justify-center'}`}>
             <div className="w-9 h-9 rounded-full bg-linear-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-inner">
-              {user?.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
             </div>
             <div className={`min-w-0 transition-all duration-300 origin-left ${
-              isHovered ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
+              isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
             }`}>
-              <p className="text-white text-sm font-semibold truncate leading-none">{user?.name}</p>
-              <span className="inline-block text-[10px] text-teal-400 font-bold uppercase tracking-wider mt-1 leading-none">{user?.role}</span>
+              <p className="text-white text-sm font-semibold truncate leading-none">{user?.name || 'Usuario'}</p>
+              <span className="inline-block text-[10px] text-teal-400 font-bold uppercase tracking-wider mt-1 leading-none">{user?.role || 'rol'}</span>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 py-6 space-y-1 transition-all duration-300 ${isHovered ? 'px-3' : 'px-2'}`}>
+        <nav className={`flex-1 py-6 space-y-1 transition-all duration-300 ${isHovered || mobileMenuOpen ? 'px-3' : 'px-2'}`}>
           <p className={`text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2 transition-all duration-300 ${
-            isHovered ? 'px-3 opacity-100' : 'opacity-0 h-0 overflow-hidden'
+            isHovered || mobileMenuOpen ? 'px-3 opacity-100' : 'opacity-0 h-0 overflow-hidden'
           }`}>
             Módulos
           </p>
@@ -92,9 +123,10 @@ export function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
                 `flex items-center rounded-xl text-sm font-medium transition-all duration-200 group relative ${
-                  isHovered ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
+                  isHovered || mobileMenuOpen ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
                 } ${
                   isActive
                     ? 'bg-teal-600 text-white shadow-lg shadow-teal-600/10'
@@ -108,11 +140,11 @@ export function Sidebar() {
                     {item.icon}
                   </span>
                   <span className={`transition-all duration-300 origin-left flex-1 whitespace-nowrap truncate ${
-                    isHovered ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
+                    isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
                   }`}>
                     {item.label}
                   </span>
-                  {isHovered && (
+                  {(isHovered || mobileMenuOpen) && (
                     isActive ? (
                       <ChevronRight size={14} className="text-teal-200 animate-pulse shrink-0" />
                     ) : (
@@ -126,48 +158,22 @@ export function Sidebar() {
         </nav>
 
         {/* Logout */}
-        <div className="p-3 border-t border-slate-800/60">
+        <div className="p-3 border-t border-slate-800/60 mt-auto shrink-0">
           <button
             onClick={handleLogout}
             className={`w-full flex items-center rounded-xl text-sm font-medium text-slate-500 hover:bg-red-950/20 hover:text-red-400 transition-all duration-200 cursor-pointer active:scale-98 ${
-              isHovered ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
+              isHovered || mobileMenuOpen ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
             }`}
           >
             <LogOut size={18} className="transition-transform group-hover:translate-x-0.5 shrink-0" />
             <span className={`transition-all duration-300 origin-left whitespace-nowrap ${
-              isHovered ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
+              isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
             }`}>
               Cerrar Sesión
             </span>
           </button>
         </div>
       </aside>
-    </div>
-
-      {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950 border-t border-slate-800/60 z-40 flex items-center justify-around px-2 pb-safe">
-        {visibleItems.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
-                isActive ? 'text-teal-400' : 'text-slate-400 hover:text-white'
-              }`
-            }
-          >
-            {item.icon}
-            <span className="text-[9px] font-medium truncate w-full text-center px-1">{item.label}</span>
-          </NavLink>
-        ))}
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-slate-400 hover:text-red-400 transition-colors"
-        >
-          <LogOut size={18} />
-          <span className="text-[9px] font-medium truncate w-full text-center px-1">Salir</span>
-        </button>
-      </div>
     </>
   );
 }
