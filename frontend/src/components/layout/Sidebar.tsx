@@ -123,7 +123,7 @@ export function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => { setMobileMenuOpen(false); setIsHovered(false); }}
               className={({ isActive }) =>
                 `flex items-center rounded-xl text-sm font-medium transition-all duration-200 group relative ${
                   isHovered || mobileMenuOpen ? 'gap-3 px-3 py-2.5' : 'justify-center p-3'
