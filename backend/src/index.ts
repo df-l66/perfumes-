@@ -30,7 +30,14 @@ app.use(morgan('dev')); // Logger de peticiones HTTP
 
 const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 app.use(cors({
-  origin: allowedOrigin,
+  origin: function (origin, callback) {
+    // Permitir peticiones sin origen (como curl o Postman), localhost, cualquier subdominio de Vercel, y la URL configurada
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin === allowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('No permitido por CORS'));
+    }
+  },
   credentials: true,
 }));
 
