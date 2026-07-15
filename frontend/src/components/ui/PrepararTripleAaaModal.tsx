@@ -18,9 +18,28 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
   const [precio, setPrecio] = useState(0);
   const [error, setError] = useState<string | null>(null);
   
-  const [ingredientes, setIngredientes] = useState<{ id: string, materia_prima_id: string, cantidad: number }[]>([
-    { id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }
-  ]);
+  const [ingredientes, setIngredientes] = useState<{ id: string, materia_prima_id: string, cantidad: number }[]>(() => {
+    const saved = localStorage.getItem('tripleAaaDefaultFormula');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((ing: any) => ({ ...ing, id: Math.random().toString(36).substr(2, 9) }));
+        }
+      } catch (e) {}
+    }
+    return [{ id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }];
+  });
+
+  const handleSaveDefault = () => {
+    const recetaValida = ingredientes.filter(ing => ing.materia_prima_id && ing.cantidad > 0);
+    if (recetaValida.length === 0) {
+      setError("No hay insumos válidos para guardar en la fórmula.");
+      return;
+    }
+    localStorage.setItem('tripleAaaDefaultFormula', JSON.stringify(recetaValida));
+    alert('¡Fórmula Memorizada!\n\nLa próxima vez que abras esta ventana, estos insumos y cantidades aparecerán llenos automáticamente.');
+  };
 
   const materiasActivas = materiasPrimas.filter(m => m.estado !== 'inactivo');
 
@@ -70,6 +89,16 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
     // Reset
     setNombrePerfume('');
     setPrecio(0);
+    const saved = localStorage.getItem('tripleAaaDefaultFormula');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setIngredientes(parsed.map((ing: any) => ({ ...ing, id: Math.random().toString(36).substr(2, 9) })));
+          return;
+        }
+      } catch (e) {}
+    }
     setIngredientes([{ id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }]);
   };
 
@@ -146,6 +175,14 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
                 </button>
               </div>
             ))}
+          </div>
+          <div className="flex justify-between items-center mt-3">
+            <Button type="button" variant="secondary" size="sm" onClick={handleAddIngredient} className="flex items-center gap-1">
+              <Plus size={16} /> Agregar Insumo
+            </Button>
+            <button type="button" onClick={handleSaveDefault} className="text-xs text-amber-600 hover:text-amber-700 font-bold px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+              ⭐ Memorizar Fórmula
+            </button>
           </div>
         </div>
 
