@@ -153,6 +153,7 @@ export interface CompanyConfig {
   iva_porcentaje: number;
   resolucion: string;
   giro: BusinessGiro; // Giro o rubro comercial de la empresa
+  formula_triple_aaa?: { materia_prima_id: string; cantidad: number }[];
 }
 
 export interface Abono {

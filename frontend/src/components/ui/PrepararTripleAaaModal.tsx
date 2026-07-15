@@ -3,6 +3,7 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Plus, Trash2 } from 'lucide-react';
 import { useAppData } from '../../context/AppDataContext';
+import { useAuth } from '../../context/AuthContext';
 import type { VentaItem } from '../../types';
 
 interface Props {
@@ -12,33 +13,44 @@ interface Props {
 }
 
 export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
-  const { materiasPrimas } = useAppData();
+  const { materiasPrimas, configuracion, updateConfiguracion } = useAppData();
+  const { user } = useAuth();
   
   const [nombrePerfume, setNombrePerfume] = useState('');
   const [precio, setPrecio] = useState(0);
   const [error, setError] = useState<string | null>(null);
   
-  const [ingredientes, setIngredientes] = useState<{ id: string, materia_prima_id: string, cantidad: number }[]>(() => {
-    const saved = localStorage.getItem('tripleAaaDefaultFormula');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((ing: any) => ({ ...ing, id: Math.random().toString(36).substr(2, 9) }));
-        }
-      } catch (e) {}
-    }
-    return [{ id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }];
-  });
+  const [ingredientes, setIngredientes] = useState<{ id: string, materia_prima_id: string, cantidad: number }[]>([
+    { id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }
+  ]);
 
-  const handleSaveDefault = () => {
+  React.useEffect(() => {
+    if (isOpen) {
+      setNombrePerfume('');
+      setPrecio(0);
+      setError(null);
+      if (configuracion?.formula_triple_aaa && configuracion.formula_triple_aaa.length > 0) {
+        setIngredientes(configuracion.formula_triple_aaa.map(ing => ({ ...ing, id: Math.random().toString(36).substr(2, 9) })));
+      } else {
+        setIngredientes([{ id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }]);
+      }
+    }
+  }, [isOpen, configuracion]);
+
+  const handleSaveDefault = async () => {
+    if (!user) return;
     const recetaValida = ingredientes.filter(ing => ing.materia_prima_id && ing.cantidad > 0);
     if (recetaValida.length === 0) {
       setError("No hay insumos válidos para guardar en la fórmula.");
       return;
     }
-    localStorage.setItem('tripleAaaDefaultFormula', JSON.stringify(recetaValida));
-    alert('¡Fórmula Memorizada!\n\nLa próxima vez que abras esta ventana, estos insumos y cantidades aparecerán llenos automáticamente.');
+    
+    try {
+      await updateConfiguracion({ ...configuracion, formula_triple_aaa: recetaValida }, user.name, user.role);
+      alert('¡Fórmula Memorizada en la Nube!\n\nSe ha sincronizado para todos tus dispositivos.');
+    } catch (e) {
+      alert('Hubo un error al guardar la fórmula en la base de datos.');
+    }
   };
 
   const materiasActivas = materiasPrimas.filter(m => m.estado !== 'inactivo');
@@ -85,21 +97,8 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
       }))
     };
     onAdd(newItem);
+    // Reset handle manually only for inputs, ingredients reset is handled by useEffect
     onClose();
-    // Reset
-    setNombrePerfume('');
-    setPrecio(0);
-    const saved = localStorage.getItem('tripleAaaDefaultFormula');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setIngredientes(parsed.map((ing: any) => ({ ...ing, id: Math.random().toString(36).substr(2, 9) })));
-          return;
-        }
-      } catch (e) {}
-    }
-    setIngredientes([{ id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }]);
   };
 
   return (
