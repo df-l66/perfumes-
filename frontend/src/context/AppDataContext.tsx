@@ -16,6 +16,7 @@ import { fetchConfig, fetchUpdateConfig } from '../api/config';
 import { fetchCreateUser, fetchUsers, fetchUpdateUser } from '../api/auth';
 import { fetchLogs, fetchCreateLog } from '../api/logs';
 import { fetchMateriasPrimas, fetchCreateMateriaPrima, fetchUpdateMateriaPrima, fetchDeleteMateriaPrima, fetchMovimientosMateriasPrimas, fetchRegistrarMovimientoMateriaPrima } from '../api/materiasPrimas';
+import { useAuth } from './AuthContext';
 
 interface AppDataContextType {
   // Productos
@@ -115,6 +116,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<any[]>([]);
   const [materiasPrimas, setMateriasPrimas] = useState<MateriaPrima[]>([]);
   const [movimientosMateriasPrimas, setMovimientosMateriasPrimas] = useState<MovimientoMateriaPrima[]>([]);
+  const { user } = useAuth();
 
   const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
   const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
@@ -129,6 +131,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!user) return; // No intentar descargar si no hay sesión iniciada
+
     refrescarProductos();
     refrescarClientes();
     fetchProveedores().then(setProveedores).catch(console.error);
@@ -142,7 +146,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
     fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
     loadUsers();
-  }, []);
+  }, [user]);
   
   // Helper para insertar logs de auditoría
   const addLog = async (accion: string, modulo: ActivityLog['modulo'], autorNombre: string, autorRol: string) => {
