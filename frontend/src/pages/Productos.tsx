@@ -210,12 +210,12 @@ export function Productos() {
 
   const field = (label: string, children: React.ReactNode) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-zinc-600 mb-1.5">{label}</label>
       {children}
     </div>
   );
 
-  const inp = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white';
+  const inp = 'w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white';
   
   const productosFiltradosParaAjuste = useMemo(() => {
     if (!ajusteSearchProd) return productos;
@@ -230,16 +230,16 @@ export function Productos() {
       action={isAdmin ? <Button icon={<Plus size={16} />} onClick={openCreate}>Nuevo Producto</Button> : undefined}
     >
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 border-b border-slate-200">
+      <div className="mb-6 flex gap-2 border-b border-zinc-200">
         <button 
           onClick={() => setActiveTab('catalogo')}
-          className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'catalogo' ? 'border-teal-500 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'catalogo' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Catálogo de Productos
         </button>
         <button 
           onClick={() => setActiveTab('kardex')}
-          className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'kardex' ? 'border-teal-500 text-teal-700' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'kardex' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Kardex y Ajustes (Historial)
         </button>
@@ -250,12 +250,12 @@ export function Productos() {
           {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
             placeholder="Buscar por nombre, código o categoría…"
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
           />
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -265,8 +265,8 @@ export function Productos() {
               onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
               className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                 filterStatus === s
-                  ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
               }`}
             >
               {s === 'todos' ? 'Todos' : s === 'stock_bajo' ? 'Stock Bajo' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -279,10 +279,10 @@ export function Productos() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
                 {[
                   { label: 'Código', className: 'hidden sm:table-cell' }, 
@@ -296,72 +296,72 @@ export function Productos() {
                   { label: 'Estado', className: 'hidden md:table-cell' }, 
                   { label: 'Acciones', className: 'text-right' }
                 ].map(h => (
-                  <th key={h.label} className={`px-2 sm:px-3 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
+                  <th key={h.label} className={`px-2 sm:px-3 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-5 py-12 text-center">
-                    <Package size={32} className="mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-400 text-sm">No se encontraron productos</p>
+                    <Package size={32} className="mx-auto text-zinc-300 mb-3" />
+                    <p className="text-zinc-400 text-sm">No se encontraron productos</p>
                   </td>
                 </tr>
               ) : paginated.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-2 sm:px-3 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden sm:table-cell">{p.codigo}</td>
+                <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
+                  <td className="px-2 sm:px-3 py-3 font-mono text-xs text-zinc-500 whitespace-nowrap hidden sm:table-cell">{p.codigo}</td>
                   <td className="px-2 sm:px-3 py-3">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
                         {p.imagen ? (
                           <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
                         ) : (
-                          <Package size={16} className="text-slate-400" />
+                          <Package size={16} className="text-zinc-400" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-800 text-sm leading-tight max-w-36 sm:max-w-52">{p.nombre}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 max-w-36 sm:max-w-52 leading-tight truncate">{p.unidad} · {p.descripcion}</p>
+                        <p className="font-medium text-zinc-800 text-sm leading-tight max-w-36 sm:max-w-52">{p.nombre}</p>
+                        <p className="text-[10px] sm:text-xs text-zinc-400 mt-0.5 max-w-36 sm:max-w-52 leading-tight truncate">{p.unidad} · {p.descripcion}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-2 sm:px-3 py-3 text-slate-600 hidden md:table-cell text-xs">{p.categoria}</td>
+                  <td className="px-2 sm:px-3 py-3 text-zinc-600 hidden md:table-cell text-xs">{p.categoria}</td>
                   
                   {/* Columnas fijas de Perfumes */}
-                  <td className="px-2 sm:px-3 py-3 text-slate-600 whitespace-nowrap hidden lg:table-cell">
+                  <td className="px-2 sm:px-3 py-3 text-zinc-600 whitespace-nowrap hidden lg:table-cell">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium ${p.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
                       {p.calidad || 'Original'}
                     </span>
                   </td>
-                  <td className="px-2 sm:px-3 py-3 text-slate-500 whitespace-nowrap font-mono text-[10px] sm:text-[11px] hidden lg:table-cell">{p.mililitros || 100} ml</td>
+                  <td className="px-2 sm:px-3 py-3 text-zinc-500 whitespace-nowrap font-mono text-[10px] sm:text-[11px] hidden lg:table-cell">{p.mililitros || 100} ml</td>
 
-                  <td className="px-2 sm:px-3 py-3 font-semibold text-slate-800 whitespace-nowrap text-xs sm:text-sm">{formatCurrency(p.precio_venta)}</td>
+                  <td className="px-2 sm:px-3 py-3 font-semibold text-zinc-800 whitespace-nowrap text-xs sm:text-sm">{formatCurrency(p.precio_venta)}</td>
                   <td className="px-2 sm:px-3 py-3">
-                    <span className={`font-bold text-xs sm:text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
+                    <span className={`font-bold text-xs sm:text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-zinc-800'}`}>
                       {p.stock}
                     </span>
                   </td>
-                  <td className="px-2 sm:px-3 py-3 text-slate-500 hidden sm:table-cell text-xs">{p.stock_minimo}</td>
+                  <td className="px-2 sm:px-3 py-3 text-zinc-500 hidden sm:table-cell text-xs">{p.stock_minimo}</td>
                   <td className="px-2 sm:px-3 py-3 hidden md:table-cell"><Badge variant={p.estado} /></td>
                   <td className="px-2 sm:px-3 py-3">
                     <div className="flex justify-end gap-1 flex-nowrap">
-                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
                       {isAdmin && (
                         <>
                           <button 
                             onClick={() => toggleEstado(p)} 
-                            className={`hidden xl:inline-flex p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
+                            className={`hidden xl:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-zinc-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Perfume' : 'Inactivar Perfume'}
                           >
                             <Power size={14} />
                           </button>
-                          <button onClick={() => openEdit(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                          <button onClick={() => openEdit(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => setDeleteConfirm(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                          <button onClick={() => setDeleteConfirm(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                             <Trash2 size={14} />
                           </button>
                         </>
@@ -373,11 +373,11 @@ export function Productos() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+        <div className="px-5 py-3.5 border-t border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-medium">
           <div>
             {filtered.length > 0 ? (
               <span>
-                Mostrando <strong className="text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-slate-700">{filtered.length}</strong> perfumes
+                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> perfumes
               </span>
             ) : (
               <span>0 perfumes encontrados</span>
@@ -388,17 +388,17 @@ export function Productos() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Anterior
               </button>
-              <span className="font-semibold text-slate-500">
+              <span className="font-semibold text-zinc-500">
                 Pág. {currentPage} de {totalPages}
               </span>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Siguiente
               </button>
@@ -414,18 +414,18 @@ export function Productos() {
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex gap-3">
               <div className="relative w-64">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
                 <input
                   value={kardexSearch}
                   onChange={e => setKardexSearch(e.target.value)}
                   placeholder="Buscar producto o referencia..."
-                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
                 />
               </div>
               <select 
                 value={kardexFilterTipo} 
                 onChange={e => setKardexFilterTipo(e.target.value as any)}
-                className="w-40 px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+                className="w-40 px-3 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
               >
                 <option value="todos">Todos los tipos</option>
                 <option value="entrada">Entradas (Compras)</option>
@@ -440,10 +440,10 @@ export function Productos() {
             </Button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-bold uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Fecha</th>
                     <th className="py-3 px-4">Producto</th>
@@ -454,7 +454,7 @@ export function Productos() {
                     <th className="py-3 px-4">Responsable</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-100">
                   {kardex
                     .filter(k => 
                       (kardexFilterTipo === 'todos' || k.tipo === kardexFilterTipo) &&
@@ -463,9 +463,9 @@ export function Productos() {
                     )
                     .slice(0, 50)
                     .map(k => (
-                    <tr key={k.id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-4 text-slate-500">{new Date(k.fecha).toLocaleString('es-CO')}</td>
-                      <td className="py-3 px-4 font-semibold text-slate-800">{k.producto_nombre}</td>
+                    <tr key={k.id} className="hover:bg-zinc-50/50">
+                      <td className="py-3 px-4 text-zinc-500">{new Date(k.fecha).toLocaleString('es-CO')}</td>
+                      <td className="py-3 px-4 font-semibold text-zinc-800">{k.producto_nombre}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
                           ${k.tipo === 'entrada' ? 'bg-emerald-100 text-emerald-700' :
@@ -479,17 +479,17 @@ export function Productos() {
                       <td className={`py-3 px-4 text-right font-bold font-mono ${(k.tipo === 'entrada' || k.tipo === 'ajuste_entrada') ? 'text-emerald-600' : 'text-red-600'}`}>
                         {(k.tipo === 'entrada' || k.tipo === 'ajuste_entrada') ? '+' : '-'}{k.cantidad}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold font-mono text-slate-700">{k.stock_nuevo}</td>
+                      <td className="py-3 px-4 text-right font-bold font-mono text-zinc-700">{k.stock_nuevo}</td>
                       <td className="py-3 px-4">
-                        <span className="text-xs text-slate-600">{k.referencia}</span>
-                        {k.notas && <p className="text-[10px] text-slate-400 mt-0.5 truncate max-w-50">{k.notas}</p>}
+                        <span className="text-xs text-zinc-600">{k.referencia}</span>
+                        {k.notas && <p className="text-[10px] text-zinc-400 mt-0.5 truncate max-w-50">{k.notas}</p>}
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-500">{k.registrado_por}</td>
+                      <td className="py-3 px-4 text-xs text-zinc-500">{k.registrado_por}</td>
                     </tr>
                   ))}
                   {kardex.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">No hay movimientos en el Kardex todavía.</td>
+                      <td colSpan={7} className="py-8 text-center text-zinc-400">No hay movimientos en el Kardex todavía.</td>
                     </tr>
                   )}
                 </tbody>
@@ -507,9 +507,9 @@ export function Productos() {
           </AlertBox>
           
           <div className="relative">
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Producto a Ajustar</label>
+            <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Producto a Ajustar</label>
             <div className="relative">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={14} className="absolute left-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
               <input 
                 required={!ajusteForm.producto_id}
                 placeholder="Escribe para buscar un producto..."
@@ -525,9 +525,9 @@ export function Productos() {
             </div>
             
             {ajusteSearchFocused && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100">
+              <div className="absolute z-50 w-full mt-1 bg-white border border-zinc-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-zinc-100">
                 {productosFiltradosParaAjuste.length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500 text-center">No se encontraron productos</div>
+                  <div className="p-3 text-sm text-zinc-500 text-center">No se encontraron productos</div>
                 ) : (
                   productosFiltradosParaAjuste.map(p => (
                     <button
@@ -539,13 +539,13 @@ export function Productos() {
                         setAjusteForm({...ajusteForm, producto_id: p.id});
                         setAjusteSearchFocused(false);
                       }}
-                      className="w-full text-left px-3 py-2.5 hover:bg-teal-50 transition-colors flex items-center justify-between"
+                      className="w-full text-left px-3 py-2.5 hover:bg-amber-50 transition-colors flex items-center justify-between"
                     >
                       <div>
-                        <p className="text-sm font-medium text-slate-800">{p.nombre}</p>
-                        <p className="text-xs text-slate-500 font-mono mt-0.5">{p.codigo}</p>
+                        <p className="text-sm font-medium text-zinc-800">{p.nombre}</p>
+                        <p className="text-xs text-zinc-500 font-mono mt-0.5">{p.codigo}</p>
                       </div>
-                      <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-bold text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
                         Stock: {p.stock}
                       </span>
                     </button>
@@ -566,7 +566,7 @@ export function Productos() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Tipo de Ajuste</label>
+              <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Tipo de Ajuste</label>
               <select 
                 required
                 value={ajusteForm.tipo}
@@ -578,7 +578,7 @@ export function Productos() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Cantidad</label>
+              <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Cantidad</label>
               <input 
                 required
                 type="text"
@@ -594,7 +594,7 @@ export function Productos() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Justificación (Obligatoria)</label>
+            <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Justificación (Obligatoria)</label>
             <textarea 
               required
               minLength={5}
@@ -606,7 +606,7 @@ export function Productos() {
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">
             <Button type="button" variant="secondary" onClick={() => setAjusteModalOpen(false)}>Cancelar</Button>
             <Button type="submit">Aplicar Ajuste</Button>
           </div>
@@ -668,7 +668,7 @@ export function Productos() {
             {field('Stock Mínimo', <input type="number" step="any" min={0} required value={form.stock_minimo} onChange={e => setForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
           </div>
           {/* Campos específicos de Perfumería (Fijos) */}
-          <div className="p-4.5 bg-teal-50/30 rounded-xl border border-teal-100/50 space-y-4">
+          <div className="p-4.5 bg-amber-50/30 rounded-xl border border-amber-100/50 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {field('Calidad del Perfume', (
                 <select value={form.calidad || 'Original'} onChange={e => setForm((f: any) => ({ ...f, calidad: e.target.value }))} className={inp}>
@@ -682,7 +682,7 @@ export function Productos() {
               {field('Volumen / Tamaño (Mililitros)', (
                 <div className="relative">
                   <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ml</span>
+                  <span className="absolute right-3 top-1/2 -tranzinc-y-1/2 text-xs font-bold text-zinc-400">ml</span>
                 </div>
               ))}
             </div>
@@ -708,7 +708,7 @@ export function Productos() {
             ))}
             {field('URL de la Imagen', <input value={form.imagen || ''} onChange={e => setForm((f: any) => ({ ...f, imagen: e.target.value }))} className={inp} placeholder="https://ejemplo.com/perfume.jpg" />)}
           </div>
-          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit">{editItem ? 'Guardar Cambios' : 'Crear Producto'}</Button>
           </div>
@@ -730,23 +730,23 @@ export function Productos() {
       <Modal isOpen={!!detailItem} onClose={() => setDetailItem(null)} title="Detalles del Perfume" size="lg">
         {detailItem && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
-            <div className="rounded-xl overflow-hidden bg-slate-50 border border-slate-200/50 flex items-center justify-center min-h-64 max-h-80 shadow-inner">
+            <div className="rounded-xl overflow-hidden bg-zinc-50 border border-zinc-200/50 flex items-center justify-center min-h-64 max-h-80 shadow-inner">
               {detailItem.imagen ? (
                 <img src={detailItem.imagen} alt={detailItem.nombre} className="w-full h-full object-cover" />
               ) : (
-                <Package size={64} className="text-slate-300" />
+                <Package size={64} className="text-zinc-300" />
               )}
             </div>
             <div className="space-y-4">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nombre</span>
-                <h3 className="text-lg font-bold text-slate-800 leading-tight">{detailItem.nombre}</h3>
-                <p className="text-xs font-mono text-slate-400 mt-0.5">{detailItem.codigo} · {detailItem.unidad}</p>
+                <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Nombre</span>
+                <h3 className="text-lg font-bold text-zinc-800 leading-tight">{detailItem.nombre}</h3>
+                <p className="text-xs font-mono text-zinc-400 mt-0.5">{detailItem.codigo} · {detailItem.unidad}</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Calidad</span>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Calidad</span>
                   <div>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${detailItem.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
                       {detailItem.calidad || 'Original'}
@@ -754,9 +754,9 @@ export function Productos() {
                   </div>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Volumen</span>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Volumen</span>
                   <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 mt-1 font-mono">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200 mt-1 font-mono">
                       {detailItem.mililitros || 100} ml
                     </span>
                   </div>
@@ -765,12 +765,12 @@ export function Productos() {
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Categoría</span>
-                  <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.categoria}</p>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Categoría</span>
+                  <p className="text-sm font-semibold text-zinc-700 mt-1">{detailItem.categoria}</p>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Proveedor</span>
-                  <p className="text-sm font-semibold text-slate-700 mt-1">
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Proveedor</span>
+                  <p className="text-sm font-semibold text-zinc-700 mt-1">
                     {proveedores.find(pv => pv.id === detailItem.proveedor_id)?.nombre ?? 'Desconocido'}
                   </p>
                 </div>
@@ -778,25 +778,25 @@ export function Productos() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Género</span>
-                  <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.genero || 'Unisex'}</p>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Género</span>
+                  <p className="text-sm font-semibold text-zinc-700 mt-1">{detailItem.genero || 'Unisex'}</p>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Familia Olfativa</span>
-                  <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.familia_olfativa || 'No especificada'}</p>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Familia Olfativa</span>
+                  <p className="text-sm font-semibold text-zinc-700 mt-1">{detailItem.familia_olfativa || 'No especificada'}</p>
                 </div>
               </div>
 
-              <div className="border-t border-b border-slate-100 py-3">
+              <div className="border-t border-b border-zinc-100 py-3">
                 {isAdmin ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Costo</span>
-                      <p className="text-sm font-semibold text-slate-600 mt-0.5">{formatCurrency(detailItem.precio_costo)}</p>
+                      <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Costo</span>
+                      <p className="text-sm font-semibold text-zinc-600 mt-0.5">{formatCurrency(detailItem.precio_costo)}</p>
                     </div>
                     <div>
-                      <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Precio Venta</span>
-                      <p className="text-base font-extrabold text-teal-600 mt-0.5">{formatCurrency(detailItem.precio_venta)}</p>
+                      <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Precio Venta</span>
+                      <p className="text-base font-extrabold text-amber-600 mt-0.5">{formatCurrency(detailItem.precio_venta)}</p>
                     </div>
                     <div className="col-span-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2 flex items-center justify-between mt-1">
                       <span className="text-[9px] uppercase font-bold text-emerald-700 tracking-wider">Utilidad</span>
@@ -809,39 +809,39 @@ export function Productos() {
                   </div>
                 ) : (
                   <div>
-                    <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Precio Venta</span>
-                    <p className="text-base font-extrabold text-teal-600 mt-0.5">{formatCurrency(detailItem.precio_venta)}</p>
+                    <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Precio Venta</span>
+                    <p className="text-base font-extrabold text-amber-600 mt-0.5">{formatCurrency(detailItem.precio_venta)}</p>
                   </div>
                 )}
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Stock</span>
-                  <p className={`text-sm font-bold mt-1 ${detailItem.stock === 0 ? 'text-red-600' : detailItem.stock <= detailItem.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Stock</span>
+                  <p className={`text-sm font-bold mt-1 ${detailItem.stock === 0 ? 'text-red-600' : detailItem.stock <= detailItem.stock_minimo ? 'text-amber-600' : 'text-zinc-800'}`}>
                     {detailItem.stock}
                   </p>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Mínimo</span>
-                  <p className="text-sm font-semibold text-slate-700 mt-1">{detailItem.stock_minimo}</p>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Mínimo</span>
+                  <p className="text-sm font-semibold text-zinc-700 mt-1">{detailItem.stock_minimo}</p>
                 </div>
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Estado</span>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Estado</span>
                   <div className="mt-1"><Badge variant={detailItem.estado} /></div>
                 </div>
               </div>
 
               {detailItem.descripcion && (
                 <div className="pt-2">
-                  <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider">Descripción</span>
-                  <p className="text-xs text-slate-500 leading-relaxed mt-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">{detailItem.descripcion}</p>
+                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Descripción</span>
+                  <p className="text-xs text-zinc-500 leading-relaxed mt-1 bg-zinc-50 p-2.5 rounded-lg border border-zinc-100">{detailItem.descripcion}</p>
                 </div>
               )}
             </div>
           </div>
         )}
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-zinc-100">
           <div className="flex gap-2">
             {isAdmin && detailItem && (
                <>

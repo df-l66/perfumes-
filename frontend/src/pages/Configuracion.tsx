@@ -82,10 +82,10 @@ export function Configuracion() {
     }
   };
 
-  const inp = 'w-full px-3 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed';
+  const inp = 'w-full px-3 py-2.5 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white disabled:bg-zinc-100 disabled:text-zinc-400 disabled:cursor-not-allowed';
   const field = (label: string, children: React.ReactNode) => (
     <div className="space-y-1.5">
-      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">{label}</label>
+      <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">{label}</label>
       {children}
     </div>
   );
@@ -103,13 +103,13 @@ export function Configuracion() {
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 mb-6">
+        <div className="flex border-b border-zinc-200 mb-6">
           <button
             onClick={() => setActiveTab('parametros')}
             className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === 'parametros'
-                ? 'border-teal-600 text-teal-700'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                ? 'border-amber-600 text-amber-700'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
             }`}
           >
             <Building2 size={16} />
@@ -121,8 +121,8 @@ export function Configuracion() {
               onClick={() => setActiveTab('usuarios')}
               className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === 'usuarios'
-                  ? 'border-teal-600 text-teal-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  ? 'border-amber-600 text-amber-700'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300'
               }`}
             >
               <Users size={16} />
@@ -140,10 +140,10 @@ export function Configuracion() {
             )}
 
             {/* Card: Datos Corporativos */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <Building2 size={18} className="text-teal-600" />
-                <h2 className="text-sm font-bold text-slate-800">Información de la Empresa</h2>
+            <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-zinc-100">
+                <Building2 size={18} className="text-amber-600" />
+                <h2 className="text-sm font-bold text-zinc-800">Información de la Empresa</h2>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -190,10 +190,10 @@ export function Configuracion() {
             </div>
 
             {/* Card: Parámetros Fiscales */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-              <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
-                <Landmark size={18} className="text-teal-600" />
-                <h2 className="text-sm font-bold text-slate-800">Impuestos y Parámetros de Facturación</h2>
+            <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-4">
+              <div className="flex items-center gap-2.5 pb-3 border-b border-zinc-100">
+                <Landmark size={18} className="text-amber-600" />
+                <h2 className="text-sm font-bold text-zinc-800">Impuestos y Parámetros de Facturación</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -209,14 +209,14 @@ export function Configuracion() {
                       onChange={e => setForm(f => ({ ...f, iva_porcentaje: +e.target.value }))}
                       className={`${inp} pr-8`}
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    <span className="absolute right-3 top-1/2 -tranzinc-y-1/2 text-xs font-bold text-zinc-400">%</span>
                   </div>
                 ))}
                 {field('Giro / Rubro Comercial', (
                   <select
                     disabled={true}
                     value={form.giro}
-                    className={`${inp} bg-slate-50 cursor-not-allowed`}
+                    className={`${inp} bg-zinc-50 cursor-not-allowed`}
                   >
                     <option value="perfumeria">Perfumería y Fragancias (Fijo)</option>
                   </select>
@@ -246,7 +246,7 @@ export function Configuracion() {
 
             {isAdmin && (
               <div className="flex justify-end pt-2">
-                <Button type="submit" icon={<Save size={16} />} className="shadow-lg shadow-teal-600/10">
+                <Button type="submit" icon={<Save size={16} />} className="shadow-lg shadow-amber-600/10">
                   Guardar Configuración
                 </Button>
               </div>
@@ -255,13 +255,13 @@ export function Configuracion() {
         )}
 
         {activeTab === 'usuarios' && isAdmin && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">
-                <UserPlus size={18} className="text-teal-600" />
+                <UserPlus size={18} className="text-amber-600" />
                 <div>
-                  <h2 className="text-sm font-bold text-slate-800">Crear Nuevo Usuario</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Agrega vendedores o administradores al sistema</p>
+                  <h2 className="text-sm font-bold text-zinc-800">Crear Nuevo Usuario</h2>
+                  <p className="text-xs text-zinc-500 mt-0.5">Agrega vendedores o administradores al sistema</p>
                 </div>
               </div>
             </div>
@@ -331,7 +331,7 @@ export function Configuracion() {
                   type="submit" 
                   disabled={creatingUser} 
                   icon={<UserPlus size={16} />} 
-                  className="w-full sm:w-auto shadow-lg shadow-teal-600/10"
+                  className="w-full sm:w-auto shadow-lg shadow-amber-600/10"
                 >
                   {creatingUser ? 'Creando usuario...' : 'Registrar Usuario'}
                 </Button>
@@ -342,28 +342,28 @@ export function Configuracion() {
 
         {/* User List Table */}
         {activeTab === 'usuarios' && isAdmin && (
-          <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-sm font-bold text-slate-800">Usuarios Registrados</h2>
+          <div className="mt-6 bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-zinc-100 bg-zinc-50">
+              <h2 className="text-sm font-bold text-zinc-800">Usuarios Registrados</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                  <tr className="bg-zinc-50 border-b border-zinc-200 text-xs uppercase tracking-wider text-zinc-500 font-bold">
                     <th className="py-3 px-4">Nombre</th>
                     <th className="py-3 px-4">Correo</th>
                     <th className="py-3 px-4">Rol</th>
                     <th className="py-3 px-4 text-center">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-100">
                   {users.map(u => (
-                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-4 font-medium text-slate-800 text-sm">{u.nombre}</td>
-                      <td className="py-3 px-4 text-slate-600 text-sm">{u.email}</td>
+                    <tr key={u.id} className="hover:bg-zinc-50 transition-colors">
+                      <td className="py-3 px-4 font-medium text-zinc-800 text-sm">{u.nombre}</td>
+                      <td className="py-3 px-4 text-zinc-600 text-sm">{u.email}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                          u.rol === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700'
+                          u.rol === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'
                         }`}>
                           {u.rol}
                         </span>
@@ -371,7 +371,7 @@ export function Configuracion() {
                       <td className="py-3 px-4 text-center">
                         <button
                           onClick={() => openEditModal(u)}
-                          className="text-slate-400 hover:text-teal-600 transition-colors p-1"
+                          className="text-zinc-400 hover:text-amber-600 transition-colors p-1"
                           title="Editar usuario"
                         >
                           <Edit2 size={16} />
@@ -381,7 +381,7 @@ export function Configuracion() {
                   ))}
                   {users.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="py-6 text-center text-sm text-slate-500">
+                      <td colSpan={4} className="py-6 text-center text-sm text-zinc-500">
                         Cargando usuarios...
                       </td>
                     </tr>
@@ -395,21 +395,21 @@ export function Configuracion() {
 
       {/* Edit User Modal */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
                   <Edit2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-slate-800">Editar Usuario</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Modificando a {editingUser.nombre}</p>
+                  <h3 className="text-lg font-bold text-zinc-800">Editar Usuario</h3>
+                  <p className="text-xs text-zinc-500 mt-0.5">Modificando a {editingUser.nombre}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setEditingUser(null)}
-                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-full transition-colors"
+                className="text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 p-2 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -474,7 +474,7 @@ export function Configuracion() {
               </form>
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-3">
+            <div className="px-6 py-4 border-t border-zinc-100 bg-zinc-50 flex items-center justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => setEditingUser(null)}>
                 Cancelar
               </Button>

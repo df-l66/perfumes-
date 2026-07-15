@@ -203,10 +203,10 @@ function NuevaCompraModal({
     setSuccess(true);
   };
 
-  const inp = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white';
+  const inp = 'w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white';
   const field = (label: string, children: React.ReactNode) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
+      <label className="block text-xs font-semibold text-zinc-600 mb-1">{label}</label>
       {children}
     </div>
   );
@@ -216,7 +216,7 @@ function NuevaCompraModal({
       headerAction={
         <button
           onClick={reset}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           title="Limpiar formulario"
         >
           <RotateCcw size={16} />
@@ -229,15 +229,15 @@ function NuevaCompraModal({
             ✓
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-800">¡Compra Registrada Exitosamente!</h3>
-            <p className="text-xs text-slate-400 mt-1">El stock se ha reabastecido y los costos fueron actualizados.</p>
+            <h3 className="text-base font-bold text-zinc-800">¡Compra Registrada Exitosamente!</h3>
+            <p className="text-xs text-zinc-400 mt-1">El stock se ha reabastecido y los costos fueron actualizados.</p>
           </div>
           <Button onClick={handleClose} className="mx-auto">Cerrar</Button>
         </div>
       ) : (
         <>
           {/* Wizard Header Progress */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 select-none">
+          <div className="flex items-center justify-between border-b border-zinc-100 pb-4 mb-4 select-none">
             {[
               { key: 'proveedor', label: '1. Proveedor' },
               { key: 'productos', label: '2. Carrito de Compra' },
@@ -246,7 +246,7 @@ function NuevaCompraModal({
               <span 
                 key={s.key} 
                 className={`text-xs font-bold transition-colors ${
-                  step === s.key ? 'text-teal-600' : 'text-slate-400'
+                  step === s.key ? 'text-amber-600' : 'text-zinc-400'
                 }`}
               >
                 {s.label}
@@ -258,14 +258,14 @@ function NuevaCompraModal({
           {step === 'proveedor' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p className="text-xs text-slate-500">Busca y selecciona el proveedor al que le realizarás el reabastecimiento:</p>
+                <p className="text-xs text-zinc-500">Busca y selecciona el proveedor al que le realizarás el reabastecimiento:</p>
                 <div className="relative w-full sm:w-64">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
                   <input
                     value={searchProv}
                     onChange={e => setSearchProv(e.target.value)}
                     placeholder="Buscar proveedor..."
-                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white"
+                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-200 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white"
                   />
                 </div>
               </div>
@@ -273,51 +273,51 @@ function NuevaCompraModal({
               {/* Sin proveedor option */}
               <div
                 onClick={() => setProveedorId(SIN_PROVEEDOR_ID)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-slate-50 flex flex-col text-left ${
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-zinc-50 flex flex-col text-left ${
                   proveedorId === SIN_PROVEEDOR_ID
-                    ? 'border-teal-500 bg-teal-50/30 ring-2 ring-teal-500/10'
-                    : 'border-dashed border-slate-300 hover:border-teal-400 hover:bg-teal-50/30'
+                    ? 'border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/10'
+                    : 'border-dashed border-zinc-300 hover:border-amber-400 hover:bg-amber-50/30'
                 }`}
               >
                 <div className="flex justify-between items-start">
-                  <span className="font-bold text-sm text-slate-800 truncate pr-2">Sin Proveedor Registrado</span>
-                  {proveedorId === SIN_PROVEEDOR_ID && <CheckCircle2 size={16} className="text-teal-600 shrink-0" />}
+                  <span className="font-bold text-sm text-zinc-800 truncate pr-2">Sin Proveedor Registrado</span>
+                  {proveedorId === SIN_PROVEEDOR_ID && <CheckCircle2 size={16} className="text-amber-600 shrink-0" />}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1">Compra sin proveedor registrado en el sistema</span>
+                <span className="text-[10px] text-zinc-400 mt-1">Compra sin proveedor registrado en el sistema</span>
               </div>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-zinc-200" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-2 text-slate-400 font-medium">o proveedores registrados</span>
+                  <span className="bg-white px-2 text-zinc-400 font-medium">o proveedores registrados</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
                 {proveedoresFiltrados.length === 0 ? (
-                  <div className="col-span-full py-8 text-center text-xs text-slate-400">No se encontraron proveedores activos con esa búsqueda.</div>
+                  <div className="col-span-full py-8 text-center text-xs text-zinc-400">No se encontraron proveedores activos con esa búsqueda.</div>
                 ) : proveedoresFiltrados.map(p => (
                   <div 
                     key={p.id}
                     onClick={() => setProveedorId(p.id)}
-                    className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-slate-50 flex flex-col text-left ${
+                    className={`p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-zinc-50 flex flex-col text-left ${
                       proveedorId === p.id 
-                        ? 'border-teal-500 bg-teal-50/30 ring-2 ring-teal-500/10' 
-                        : 'border-slate-200 bg-white'
+                        ? 'border-amber-500 bg-amber-50/30 ring-2 ring-amber-500/10' 
+                        : 'border-zinc-200 bg-white'
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <span className="font-bold text-sm text-slate-800 truncate pr-2">{p.nombre}</span>
-                      {proveedorId === p.id && <CheckCircle2 size={16} className="text-teal-600 shrink-0" />}
+                      <span className="font-bold text-sm text-zinc-800 truncate pr-2">{p.nombre}</span>
+                      {proveedorId === p.id && <CheckCircle2 size={16} className="text-amber-600 shrink-0" />}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-mono mt-1">NIT: {p.nit}</span>
-                    <span className="text-[11px] text-slate-500 mt-2">Contacto: {p.contacto}</span>
+                    <span className="text-[10px] text-zinc-400 font-mono mt-1">NIT: {p.nit}</span>
+                    <span className="text-[11px] text-zinc-500 mt-2">Contacto: {p.contacto}</span>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end pt-2 border-t border-slate-100">
+              <div className="flex justify-end pt-2 border-t border-zinc-100">
                 <Button 
                   disabled={!proveedorId} 
                   onClick={() => setStep('productos')}
@@ -336,24 +336,24 @@ function NuevaCompraModal({
                 
                 {/* Catalog Picker */}
                 <div className="space-y-3">
-                  <div className="flex bg-slate-100 p-1 rounded-lg">
+                  <div className="flex bg-zinc-100 p-1 rounded-lg">
                     <button 
                       type="button" 
-                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'producto' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'producto' ? 'bg-white shadow-sm text-zinc-800' : 'text-zinc-500 hover:text-zinc-700'}`}
                       onClick={() => setTipoItem('producto')}
                     >
                       Productos
                     </button>
                     <button 
                       type="button"
-                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'materia_prima' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                      className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${tipoItem === 'materia_prima' ? 'bg-white shadow-sm text-zinc-800' : 'text-zinc-500 hover:text-zinc-700'}`}
                       onClick={() => setTipoItem('materia_prima')}
                     >
                       Materias Primas
                     </button>
                   </div>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                    <Search className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" size={14} />
                     <input
                       placeholder={`Buscar ${tipoItem === 'producto' ? 'producto' : 'materia prima'}...`}
                       value={searchProd}
@@ -362,35 +362,35 @@ function NuevaCompraModal({
                     />
                   </div>
                   
-                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-y-auto bg-white">
+                  <div className="border border-zinc-200 rounded-lg divide-y divide-zinc-100 max-h-64 overflow-y-auto bg-white">
                     {itemsFiltrados.length === 0 ? (
                       <div className="py-8 text-center">
-                        <Package size={24} className="mx-auto text-slate-300 mb-2" />
-                        <p className="text-xs text-slate-400">Sin resultados</p>
+                        <Package size={24} className="mx-auto text-zinc-300 mb-2" />
+                        <p className="text-xs text-zinc-400">Sin resultados</p>
                       </div>
                     ) : itemsFiltrados.map(p => (
                       <button
                         key={p._id}
                         type="button"
                         onClick={() => addToCart(p, 1, p._precio_costo)}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-teal-50 text-left transition-colors cursor-pointer group"
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors cursor-pointer group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
                             {(p as any).imagen ? (
                               <img src={(p as any).imagen} alt={p._nombre} className="w-full h-full object-cover" />
                             ) : (
-                              <Package size={14} className="text-slate-400" />
+                              <Package size={14} className="text-zinc-400" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-700 truncate">{p._nombre}</p>
-                            <p className="text-xs text-slate-400">{p._codigo} · stock: {p._stock}</p>
+                            <p className="text-sm font-medium text-zinc-700 truncate">{p._nombre}</p>
+                            <p className="text-xs text-zinc-400">{p._codigo} · stock: {p._stock}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-teal-600">{formatCurrency(p._precio_venta)}</p>
-                          <p className="text-xs text-slate-300 group-hover:text-teal-400 transition-colors">+ agregar</p>
+                          <p className="text-sm font-bold text-amber-600">{formatCurrency(p._precio_venta)}</p>
+                          <p className="text-xs text-zinc-300 group-hover:text-amber-400 transition-colors">+ agregar</p>
                         </div>
                       </button>
                     ))}
@@ -398,27 +398,27 @@ function NuevaCompraModal({
                 </div>
 
                 {/* Cart Preview */}
-                <div className="flex flex-col border border-slate-200 rounded-xl bg-slate-50/50 p-4">
-                  <div className="flex justify-between pb-2 border-b border-slate-200">
-                    <span className="text-xs font-bold text-slate-700">Artículos a comprar</span>
-                    <span className="text-xs font-mono font-bold text-slate-500">{carrito.length} Items</span>
+                <div className="flex flex-col border border-zinc-200 rounded-xl bg-zinc-50/50 p-4">
+                  <div className="flex justify-between pb-2 border-b border-zinc-200">
+                    <span className="text-xs font-bold text-zinc-700">Artículos a comprar</span>
+                    <span className="text-xs font-mono font-bold text-zinc-500">{carrito.length} Items</span>
                   </div>
 
                   <div className="flex-1 overflow-y-auto max-h-50 space-y-2 mt-3 pr-1">
                     {carrito.length === 0 ? (
-                      <div className="py-12 text-center text-slate-400 text-xs">
+                      <div className="py-12 text-center text-zinc-400 text-xs">
                         El carrito está vacío
                       </div>
                     ) : carrito.map(item => (
-                      <div key={getItemId(item)} className="p-3 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3 text-left relative">
+                      <div key={getItemId(item)} className="p-3 bg-white rounded-xl border border-zinc-200 shadow-sm flex flex-col gap-3 text-left relative">
                         {item.tipo_item === 'materia_prima' && (
                           <span className="absolute top-0 right-0 mt-2 mr-8 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Materia Prima</span>
                         )}
                         <div className="flex justify-between items-start">
-                          <p className="text-sm font-bold text-slate-800 truncate pr-2 w-3/4">{item.nombre}</p>
+                          <p className="text-sm font-bold text-zinc-800 truncate pr-2 w-3/4">{item.nombre}</p>
                           <button 
                             onClick={() => removeFromCart(getItemId(item))} 
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
                             title="Eliminar producto"
                           >
                             <Trash2 size={14} />
@@ -427,17 +427,17 @@ function NuevaCompraModal({
                         <div className="flex flex-col gap-3">
                           <div className="flex gap-3">
                             <div className="w-24 shrink-0">
-                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cant.</span>
+                              <span className="block text-[9px] uppercase font-bold text-zinc-400 mb-1">Cant.</span>
                               <input 
                                 type="number" 
                                 min={1} 
                                 value={item.cantidad} 
                                 onChange={e => updateCartQty(getItemId(item), +e.target.value)} 
-                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all text-center"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-center"
                               />
                             </div>
                             <div className="flex-1">
-                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">
+                              <span className="block text-[9px] uppercase font-bold text-zinc-400 mb-1">
                                 {item.tipo_item === 'materia_prima' ? 'Costo Total' : 'Costo Unit.'}
                               </span>
                               <input 
@@ -449,17 +449,17 @@ function NuevaCompraModal({
                                     updateCartCost(getItemId(item), e.target.value);
                                   }
                                 }} 
-                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
                               />
                             </div>
                           </div>
                           {item.tipo_item !== 'materia_prima' && (
                             <div>
-                              <span className="block text-[9px] uppercase font-bold text-slate-400 mb-1">Precio Venta Sugerido</span>
+                              <span className="block text-[9px] uppercase font-bold text-zinc-400 mb-1">Precio Venta Sugerido</span>
                               <input 
                                 value={formatNumberWithDots(item.precio_venta || 0)} 
                                 onChange={e => updateCartSalePrice(getItemId(item), e.target.value)} 
-                                className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-all"
+                                className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
                               />
                             </div>
                           )}
@@ -468,15 +468,15 @@ function NuevaCompraModal({
                     ))}
                   </div>
 
-                  <div className="pt-3 border-t border-slate-200 mt-3 flex justify-between font-bold text-slate-800 text-sm">
+                  <div className="pt-3 border-t border-zinc-200 mt-3 flex justify-between font-bold text-zinc-800 text-sm">
                     <span>Total estimado</span>
-                    <span className="font-mono text-teal-600">{formatCurrency(total)}</span>
+                    <span className="font-mono text-amber-600">{formatCurrency(total)}</span>
                   </div>
                 </div>
 
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-slate-100">
+              <div className="flex justify-between pt-2 border-t border-zinc-100">
                 <Button variant="secondary" onClick={() => setStep('proveedor')}>
                   <ArrowLeft size={14} />
                   Atrás
@@ -492,7 +492,7 @@ function NuevaCompraModal({
           {/* Step 3: Confirmar */}
           {step === 'confirmar' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-800 mb-3 text-left">Resumen de Confirmación</h3>
+              <h3 className="text-sm font-bold text-zinc-800 mb-3 text-left">Resumen de Confirmación</h3>
               
               {error && (
                 <AlertBox type="critical" title="Error de Validación">
@@ -504,45 +504,45 @@ function NuevaCompraModal({
                 Al confirmar la transacción, se incrementará el stock del catálogo y se actualizarán los precios de costo de compra unitarios automáticamente.
               </AlertBox>
 
-              <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 grid grid-cols-2 gap-4 text-left">
+              <div className="bg-zinc-50 rounded-lg border border-zinc-200 p-4 grid grid-cols-2 gap-4 text-left">
                 <div className="text-xs">
-                  <span className="block text-slate-400 uppercase font-bold text-[8px]">Proveedor</span>
-                  <span className="font-bold text-slate-800 block mt-0.5">{proveedorSeleccionado?.nombre}</span>
-                  {proveedorId !== SIN_PROVEEDOR_ID && <span className="text-[10px] text-slate-400 font-mono">NIT: {proveedorSeleccionado?.nit}</span>}
+                  <span className="block text-zinc-400 uppercase font-bold text-[8px]">Proveedor</span>
+                  <span className="font-bold text-zinc-800 block mt-0.5">{proveedorSeleccionado?.nombre}</span>
+                  {proveedorId !== SIN_PROVEEDOR_ID && <span className="text-[10px] text-zinc-400 font-mono">NIT: {proveedorSeleccionado?.nit}</span>}
                 </div>
                 <div className="text-xs">
-                  <span className="block text-slate-400 uppercase font-bold text-[8px]">Comprador Autorizado</span>
-                  <span className="font-bold text-slate-800 block mt-0.5">{user?.name} ({user?.role})</span>
-                  <span className="text-[10px] text-slate-400">Fecha: {new Date().toLocaleDateString('es-CO')}</span>
+                  <span className="block text-zinc-400 uppercase font-bold text-[8px]">Comprador Autorizado</span>
+                  <span className="font-bold text-zinc-800 block mt-0.5">{user?.name} ({user?.role})</span>
+                  <span className="text-[10px] text-zinc-400">Fecha: {new Date().toLocaleDateString('es-CO')}</span>
                 </div>
               </div>
 
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <div className="rounded-lg border border-zinc-200 overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-zinc-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Producto</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500">Cant.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Costo Unit.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Nuevo P. Venta</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Subtotal</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-500">Producto</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-zinc-500">Cant.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Costo Unit.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Nuevo P. Venta</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Subtotal</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
+                  <tbody className="divide-y divide-zinc-100 bg-white">
                     {carrito.map(item => (
                       <tr key={item.producto_id}>
-                        <td className="px-4 py-2.5 text-slate-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
-                        <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
-                        <td className="px-4 py-2.5 text-right text-slate-600">{formatCurrency(item.precio_costo)}</td>
-                        <td className="px-4 py-2.5 text-right text-teal-600 font-semibold">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
-                        <td className="px-4 py-2.5 text-right font-semibold text-slate-800">{formatCurrency(item.subtotal)}</td>
+                        <td className="px-4 py-2.5 text-zinc-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
+                        <td className="px-4 py-2.5 text-center text-zinc-600">{item.cantidad}</td>
+                        <td className="px-4 py-2.5 text-right text-zinc-600">{formatCurrency(item.precio_costo)}</td>
+                        <td className="px-4 py-2.5 text-right text-amber-600 font-semibold">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
+                        <td className="px-4 py-2.5 text-right font-semibold text-zinc-800">{formatCurrency(item.subtotal)}</td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-teal-50 border-t border-teal-200">
+                  <tfoot className="bg-amber-50 border-t border-amber-200">
                     <tr>
-                      <td colSpan={4} className="px-4 py-3 text-right font-bold text-teal-700 uppercase">TOTAL COMPRA</td>
-                      <td className="px-4 py-3 text-right font-bold text-teal-700 text-base font-mono">{formatCurrency(total)}</td>
+                      <td colSpan={4} className="px-4 py-3 text-right font-bold text-amber-700 uppercase">TOTAL COMPRA</td>
+                      <td className="px-4 py-3 text-right font-bold text-amber-700 text-base font-mono">{formatCurrency(total)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -558,7 +558,7 @@ function NuevaCompraModal({
                 />
               ))}
 
-              <div className="flex justify-between pt-2 border-t border-slate-100">
+              <div className="flex justify-between pt-2 border-t border-zinc-100">
                 <Button variant="secondary" onClick={() => setStep('productos')}>
                   <ArrowLeft size={14} />
                   Atrás
@@ -726,7 +726,7 @@ export function Compras() {
     }
   };
 
-  const inp = 'px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white';
+  const inp = 'px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 bg-white';
 
   return (
     <Layout
@@ -735,30 +735,30 @@ export function Compras() {
     >
       {/* Printable Invoice Container (CSS media print will target this) */}
       {detailCompra && (
-        <div id="printable-invoice" className="hidden print:block p-8 bg-white text-slate-800 text-xs font-sans leading-relaxed text-left">
-          <div className="flex justify-between items-start border-b-2 border-slate-200 pb-5 mb-5">
+        <div id="printable-invoice" className="hidden print:block p-8 bg-white text-zinc-800 text-xs font-sans leading-relaxed text-left">
+          <div className="flex justify-between items-start border-b-2 border-zinc-200 pb-5 mb-5">
             <div>
-              <h1 className="text-xl font-bold text-slate-900 uppercase tracking-tight">{configuracion.nombre}</h1>
-              <p className="text-[10px] text-slate-400 mt-1">NIT: {configuracion.nit} · Tel: {configuracion.telefono}</p>
-              <p className="text-[10px] text-slate-400">{configuracion.direccion}</p>
+              <h1 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">{configuracion.nombre}</h1>
+              <p className="text-[10px] text-zinc-400 mt-1">NIT: {configuracion.nit} · Tel: {configuracion.telefono}</p>
+              <p className="text-[10px] text-zinc-400">{configuracion.direccion}</p>
             </div>
             <div className="text-right">
-              <h2 className="text-lg font-bold text-teal-600">COMPRA DE MERCANCÍA</h2>
+              <h2 className="text-lg font-bold text-amber-600">COMPRA DE MERCANCÍA</h2>
               <p className="text-sm font-mono font-bold mt-1">{detailCompra.factura_compra}</p>
-              <p className="text-[9px] text-slate-400">Fecha registro: {detailCompra.fecha}</p>
+              <p className="text-[9px] text-zinc-400">Fecha registro: {detailCompra.fecha}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <span className="block text-[8px] font-bold text-slate-400 uppercase">PROVEEDOR</span>
-              <p className="font-bold text-slate-800 mt-0.5">{detailCompra.proveedor_nombre}</p>
-              <p className="text-[10px] text-slate-400 mt-1">Asociado en base de datos</p>
+            <div className="p-3 bg-zinc-50 rounded-lg">
+              <span className="block text-[8px] font-bold text-zinc-400 uppercase">PROVEEDOR</span>
+              <p className="font-bold text-zinc-800 mt-0.5">{detailCompra.proveedor_nombre}</p>
+              <p className="text-[10px] text-zinc-400 mt-1">Asociado en base de datos</p>
             </div>
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <span className="block text-[8px] font-bold text-slate-400 uppercase">METADATA COMPRADOR</span>
-              <p className="font-bold text-slate-800 mt-0.5">{detailCompra.comprador_nombre}</p>
-              <p className="text-[10px] text-slate-400 mt-1">Estado de Factura: <strong className="uppercase">{detailCompra.estado}</strong></p>
+            <div className="p-3 bg-zinc-50 rounded-lg">
+              <span className="block text-[8px] font-bold text-zinc-400 uppercase">METADATA COMPRADOR</span>
+              <p className="font-bold text-zinc-800 mt-0.5">{detailCompra.comprador_nombre}</p>
+              <p className="text-[10px] text-zinc-400 mt-1">Estado de Factura: <strong className="uppercase">{detailCompra.estado}</strong></p>
             </div>
           </div>
 
@@ -771,7 +771,7 @@ export function Compras() {
               <col className="w-[16%]" />
             </colgroup>
             <thead>
-              <tr className="border-b border-slate-300 bg-slate-100 font-bold text-slate-700">
+              <tr className="border-b border-zinc-300 bg-zinc-100 font-bold text-zinc-700">
                 <th className="py-2 px-3 text-left">Ítem / Producto</th>
                 <th className="py-2 px-3 text-center">Cantidad</th>
                 <th className="py-2 px-3 text-right">Costo Unit.</th>
@@ -779,33 +779,33 @@ export function Compras() {
                 <th className="py-2 px-3 text-right">Subtotal</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100">
               {detailCompra.items.map(item => (
                 <tr key={item.producto_id}>
-                  <td className="py-2.5 px-3 text-slate-800 text-left">{item.nombre}</td>
-                  <td className="py-2.5 px-3 text-center text-slate-600">{item.cantidad}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-600">{formatCurrency(item.precio_costo)}</td>
-                  <td className="py-2.5 px-3 text-right text-slate-600">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
-                  <td className="py-2.5 px-3 text-right font-bold text-slate-800">{formatCurrency(item.subtotal)}</td>
+                  <td className="py-2.5 px-3 text-zinc-800 text-left">{item.nombre}</td>
+                  <td className="py-2.5 px-3 text-center text-zinc-600">{item.cantidad}</td>
+                  <td className="py-2.5 px-3 text-right text-zinc-600">{formatCurrency(item.precio_costo)}</td>
+                  <td className="py-2.5 px-3 text-right text-zinc-600">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
+                  <td className="py-2.5 px-3 text-right font-bold text-zinc-800">{formatCurrency(item.subtotal)}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-slate-300 font-bold text-slate-900 text-sm">
+              <tr className="border-t-2 border-zinc-300 font-bold text-zinc-900 text-sm">
                 <td colSpan={4} className="py-3 px-3 text-right uppercase">TOTAL PAGADO</td>
-                <td className="py-3 px-3 text-right font-mono text-teal-600">{formatCurrency(detailCompra.total)}</td>
+                <td className="py-3 px-3 text-right font-mono text-amber-600">{formatCurrency(detailCompra.total)}</td>
               </tr>
             </tfoot>
           </table>
 
           {detailCompra.notas && (
-            <div className="p-3 border border-slate-200 rounded-lg">
-              <span className="block text-[8px] font-bold text-slate-400 uppercase mb-1">Notas Administrativas</span>
-              <p className="text-slate-600 font-medium">{detailCompra.notas}</p>
+            <div className="p-3 border border-zinc-200 rounded-lg">
+              <span className="block text-[8px] font-bold text-zinc-400 uppercase mb-1">Notas Administrativas</span>
+              <p className="text-zinc-600 font-medium">{detailCompra.notas}</p>
             </div>
           )}
 
-          <div className="mt-12 text-center text-[10px] text-slate-400 border-t border-slate-100 pt-6">
+          <div className="mt-12 text-center text-[10px] text-zinc-400 border-t border-zinc-100 pt-6">
             Comprobante oficial generado por el sistema administrativo de inventarios de {configuracion.nombre}.
           </div>
         </div>
@@ -815,10 +815,10 @@ export function Compras() {
       <div className="print:hidden space-y-6">
         
         {/* Top Control Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+              <Search className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" size={15} />
               <input
                 placeholder="Buscar factura o proveedor..."
                 className={`${inp} pl-9 w-64`}
@@ -846,10 +846,10 @@ export function Compras() {
         </div>
 
         {/* History Table */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-zinc-50 border-b border-zinc-200">
                 <tr>
                 {[
                   { label: 'Nro. Factura', className: '' }, 
@@ -860,45 +860,45 @@ export function Compras() {
                   { label: 'Estado', className: 'hidden md:table-cell' }, 
                   { label: 'Acción', className: 'text-right' }
                 ].map(h => (
-                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-zinc-100">
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-5 py-12 text-center">
-                      <ShoppingBag size={32} className="mx-auto text-slate-300 mb-3" />
-                      <p className="text-slate-400 text-sm">No se encontraron facturas de compras</p>
+                      <ShoppingBag size={32} className="mx-auto text-zinc-300 mb-3" />
+                      <p className="text-zinc-400 text-sm">No se encontraron facturas de compras</p>
                     </td>
                   </tr>
                 ) : paginated.map(c => (
                   <tr 
                     key={c.id} 
-                    className="hover:bg-slate-50/50 transition-colors"
+                    className="hover:bg-zinc-50/50 transition-colors"
                   >
-                    <td className="px-4 sm:px-5 py-4 font-mono text-[10px] sm:text-xs font-bold text-teal-600 whitespace-nowrap">{c.factura_compra}</td>
+                    <td className="px-4 sm:px-5 py-4 font-mono text-[10px] sm:text-xs font-bold text-amber-600 whitespace-nowrap">{c.factura_compra}</td>
                     <td className="px-4 sm:px-5 py-4">
-                      <span className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.proveedor_nombre}</span>
-                      <span className="text-[10px] sm:hidden text-slate-500">{c.fecha}</span>
+                      <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.proveedor_nombre}</span>
+                      <span className="text-[10px] sm:hidden text-zinc-500">{c.fecha}</span>
                     </td>
-                    <td className="px-4 sm:px-5 py-4 text-slate-500 whitespace-nowrap hidden sm:table-cell">{c.fecha}</td>
-                    <td className="px-4 sm:px-5 py-4 text-slate-600 whitespace-nowrap hidden md:table-cell">{c.comprador_nombre}</td>
-                    <td className="px-4 sm:px-5 py-4 font-semibold text-slate-800 whitespace-nowrap font-mono text-sm">{formatCurrency(c.total)}</td>
+                    <td className="px-4 sm:px-5 py-4 text-zinc-500 whitespace-nowrap hidden sm:table-cell">{c.fecha}</td>
+                    <td className="px-4 sm:px-5 py-4 text-zinc-600 whitespace-nowrap hidden md:table-cell">{c.comprador_nombre}</td>
+                    <td className="px-4 sm:px-5 py-4 font-semibold text-zinc-800 whitespace-nowrap font-mono text-sm">{formatCurrency(c.total)}</td>
                     <td className="px-4 sm:px-5 py-4 whitespace-nowrap hidden md:table-cell">
                       <Badge variant={c.estado} />
                     </td>
                     <td className="px-4 sm:px-5 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <button
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                           title="Ver detalles"
                           onClick={() => setDetailCompra(c)}
                         >
                           <Eye size={15} />
                         </button>
                         <button
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                           title="Descargar comprobante"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -914,11 +914,11 @@ export function Compras() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+          <div className="px-5 py-3.5 border-t border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-medium">
             <div>
               {filtered.length > 0 ? (
                 <span>
-                  Mostrando <strong className="text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-slate-700">{filtered.length}</strong> compras
+                  Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> compras
                 </span>
               ) : (
                 <span>0 compras registradas</span>
@@ -929,17 +929,17 @@ export function Compras() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   Anterior
                 </button>
-                <span className="font-semibold text-slate-500">
+                <span className="font-semibold text-zinc-500">
                   Pág. {currentPage} de {totalPages}
                 </span>
                 <button
                   disabled={currentPage === totalPages}
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   Siguiente
                 </button>
@@ -961,58 +961,58 @@ export function Compras() {
           <div className="space-y-6 text-left">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="text-xs space-y-1">
-                <span className="block text-slate-400 uppercase font-bold text-[8px]">Proveedor</span>
-                <span className="font-bold text-slate-800 text-sm block">{detailCompra.proveedor_nombre}</span>
-                <span className="text-[10px] text-slate-400">Fecha de compra: {detailCompra.fecha}</span>
+                <span className="block text-zinc-400 uppercase font-bold text-[8px]">Proveedor</span>
+                <span className="font-bold text-zinc-800 text-sm block">{detailCompra.proveedor_nombre}</span>
+                <span className="text-[10px] text-zinc-400">Fecha de compra: {detailCompra.fecha}</span>
               </div>
               <div className="text-xs space-y-1 text-right">
-                <span className="block text-slate-400 uppercase font-bold text-[8px]">Responsable Registro</span>
-                <span className="font-bold text-slate-800 text-sm block">{detailCompra.comprador_nombre}</span>
+                <span className="block text-zinc-400 uppercase font-bold text-[8px]">Responsable Registro</span>
+                <span className="font-bold text-zinc-800 text-sm block">{detailCompra.comprador_nombre}</span>
                 <div className="mt-1 flex justify-end">
                   <Badge variant={detailCompra.estado} />
                 </div>
               </div>
             </div>
 
-            <div className="rounded-lg border border-slate-200 overflow-hidden">
+            <div className="rounded-lg border border-zinc-200 overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50">
+                <thead className="bg-zinc-50">
                   <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Producto</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500">Cantidad</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Costo Unit.</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">P. Venta</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Subtotal</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-500">Producto</th>
+                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-zinc-500">Cantidad</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Costo Unit.</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">P. Venta</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-zinc-100 bg-white">
                   {detailCompra.items.map(item => (
                     <tr key={item.producto_id}>
-                      <td className="px-4 py-2.5 text-slate-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
-                      <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
-                      <td className="px-4 py-2.5 text-right text-slate-600 font-mono">{formatCurrency(item.precio_costo)}</td>
-                      <td className="px-4 py-2.5 text-right text-slate-500 font-mono">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-slate-800 font-mono">{formatCurrency(item.subtotal)}</td>
+                      <td className="px-4 py-2.5 text-zinc-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
+                      <td className="px-4 py-2.5 text-center text-zinc-600">{item.cantidad}</td>
+                      <td className="px-4 py-2.5 text-right text-zinc-600 font-mono">{formatCurrency(item.precio_costo)}</td>
+                      <td className="px-4 py-2.5 text-right text-zinc-500 font-mono">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
+                      <td className="px-4 py-2.5 text-right font-semibold text-zinc-800 font-mono">{formatCurrency(item.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-teal-50 border-t border-teal-200 font-bold">
+                <tfoot className="bg-amber-50 border-t border-amber-200 font-bold">
                   <tr>
-                    <td colSpan={4} className="px-4 py-3.5 text-right text-teal-700">TOTAL PAGADO</td>
-                    <td className="px-4 py-3.5 text-right text-teal-700 text-base font-mono">{formatCurrency(detailCompra.total)}</td>
+                    <td colSpan={4} className="px-4 py-3.5 text-right text-amber-700">TOTAL PAGADO</td>
+                    <td className="px-4 py-3.5 text-right text-amber-700 text-base font-mono">{formatCurrency(detailCompra.total)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
             {detailCompra.notas && (
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <span className="block text-[8px] font-bold text-slate-400 uppercase mb-1">Notas Administrativas</span>
-                <p className="text-xs text-slate-600 leading-relaxed">{detailCompra.notas}</p>
+              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
+                <span className="block text-[8px] font-bold text-zinc-400 uppercase mb-1">Notas Administrativas</span>
+                <p className="text-xs text-zinc-600 leading-relaxed">{detailCompra.notas}</p>
               </div>
             )}
 
-              <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-zinc-100">
                 {isAdmin && detailCompra.estado === 'completada' ? (
                   <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
                     Anular Compra

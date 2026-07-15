@@ -35,22 +35,22 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
+        className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
         onClick={onClose}
       />
       {/* Modal Container */}
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-          <div className={`relative transform overflow-hidden w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-slate-100 flex flex-col z-20 animate-scale-in sm:my-8 text-left`}>
+          <div className={`relative transform overflow-hidden w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-zinc-100 flex flex-col z-20 animate-scale-in sm:my-8 text-left`}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-white z-20 shrink-0">
-            <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-100 bg-white z-20 shrink-0">
+            <h2 className="text-lg font-semibold text-zinc-800">{title}</h2>
             <div className="flex items-center gap-1 ml-auto">
               {headerAction}
               {!hideCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
                   aria-label="Cerrar"
                 >
                   <X size={18} />

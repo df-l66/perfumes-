@@ -4,21 +4,21 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-red-100">
         <div className="flex justify-center mb-4">
           <div className="bg-red-100 p-3 rounded-full">
             <AlertTriangle className="h-10 w-10 text-red-600" />
           </div>
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">¡Ups! Algo salió mal</h2>
-        <p className="text-slate-600 mb-6">
+        <h2 className="text-2xl font-bold text-zinc-800 mb-2">¡Ups! Algo salió mal</h2>
+        <p className="text-zinc-600 mb-6">
           Ha ocurrido un error inesperado. Por favor, intenta recargar la página.
         </p>
         
         {/* Solo en desarrollo, mostramos el error técnico */}
         {import.meta.env.DEV && (
-          <div className="bg-slate-100 p-4 rounded text-left overflow-auto mb-6 max-h-40 text-xs text-red-800 font-mono">
+          <div className="bg-zinc-100 p-4 rounded text-left overflow-auto mb-6 max-h-40 text-xs text-red-800 font-mono">
             {error instanceof Error ? error.message : String(error)}
           </div>
         )}

@@ -183,7 +183,7 @@ function NuevaVentaModal({
       headerAction={
         <button
           onClick={reset}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
           title="Limpiar formulario"
         >
           <RotateCcw size={16} />
@@ -196,8 +196,8 @@ function NuevaVentaModal({
             <CheckCircle2 size={32} className="text-emerald-500" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-slate-800">¡Venta registrada!</p>
-            <p className="text-sm text-slate-500 mt-1">El stock ha sido descontado correctamente.</p>
+            <p className="text-lg font-bold text-zinc-800">¡Venta registrada!</p>
+            <p className="text-sm text-zinc-500 mt-1">El stock ha sido descontado correctamente.</p>
           </div>
           <Button onClick={reset} className="mt-4">Nueva Venta</Button>
         </div>
@@ -207,10 +207,10 @@ function NuevaVentaModal({
           <div className="flex items-center gap-2 mb-6">
             {steps.map((s, i) => (
               <React.Fragment key={s}>
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${i <= currentIdx ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${i <= currentIdx ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-400'}`}>
                   {stepLabels[s]}
                 </div>
-                {i < steps.length - 1 && <ChevronRight size={14} className="text-slate-300" />}
+                {i < steps.length - 1 && <ChevronRight size={14} className="text-zinc-300" />}
               </React.Fragment>
             ))}
           </div>
@@ -219,14 +219,14 @@ function NuevaVentaModal({
           {step === 'cliente' && (
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p className="text-sm font-medium text-slate-600">Selecciona el cliente para esta venta:</p>
+                <p className="text-sm font-medium text-zinc-600">Selecciona el cliente para esta venta:</p>
                 <div className="relative w-full sm:w-64">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Search size={14} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
                   <input
                     value={searchCliente}
                     onChange={e => setSearchCliente(e.target.value)}
                     placeholder="Buscar cliente por nombre, doc. o ciudad..."
-                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white"
+                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-200 text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white"
                   />
                 </div>
               </div>
@@ -236,56 +236,56 @@ function NuevaVentaModal({
                 onClick={() => setClienteId(WALK_IN_ID)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer ${
                   clienteId === WALK_IN_ID
-                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-500/10'
-                    : 'border-dashed border-slate-300 hover:border-teal-400 hover:bg-teal-50/30'
+                    ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/10'
+                    : 'border-dashed border-zinc-300 hover:border-amber-400 hover:bg-amber-50/30'
                 }`}
               >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${clienteId === WALK_IN_ID ? 'bg-teal-500' : 'bg-slate-100'}`}>
-                  <span className={`text-xs font-bold ${clienteId === WALK_IN_ID ? 'text-white' : 'text-slate-500'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${clienteId === WALK_IN_ID ? 'bg-amber-500' : 'bg-zinc-100'}`}>
+                  <span className={`text-xs font-bold ${clienteId === WALK_IN_ID ? 'text-white' : 'text-zinc-500'}`}>
                     <ShoppingCart size={14} />
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <p className={`text-sm font-semibold ${clienteId === WALK_IN_ID ? 'text-teal-700' : 'text-slate-700'}`}>Cliente No Registrado</p>
-                  <p className="text-xs text-slate-400">Venta sin identificación de cliente · No afecta cartera</p>
+                  <p className={`text-sm font-semibold ${clienteId === WALK_IN_ID ? 'text-amber-700' : 'text-zinc-700'}`}>Cliente No Registrado</p>
+                  <p className="text-xs text-zinc-400">Venta sin identificación de cliente · No afecta cartera</p>
                 </div>
               </button>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className="w-full border-t border-zinc-200" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-2 text-slate-400 font-medium">o clientes registrados</span>
+                  <span className="bg-white px-2 text-zinc-400 font-medium">o clientes registrados</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-1">
                 {clientesFiltrados.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-slate-400">No se encontraron clientes con esa búsqueda.</p>
+                  <p className="py-6 text-center text-xs text-zinc-400">No se encontraron clientes con esa búsqueda.</p>
                 ) : clientesFiltrados.map(c => (
                   <button
                     key={c.id}
                     onClick={() => setClienteId(c.id)}
                     className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer ${
                       clienteId === c.id
-                        ? 'border-teal-500 bg-teal-50'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${clienteId === c.id ? 'bg-teal-500' : 'bg-slate-100'}`}>
-                      <span className={`text-xs font-bold ${clienteId === c.id ? 'text-white' : 'text-slate-500'}`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${clienteId === c.id ? 'bg-amber-500' : 'bg-zinc-100'}`}>
+                      <span className={`text-xs font-bold ${clienteId === c.id ? 'text-white' : 'text-zinc-500'}`}>
                         {c.nombre[0]}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold ${clienteId === c.id ? 'text-teal-700' : 'text-slate-700'}`}>{c.nombre}</p>
-                      <p className="text-xs text-slate-400">{c.tipo === 'empresa' ? 'NIT' : 'CC'}: {c.documento} · {c.ciudad}</p>
+                      <p className={`text-sm font-semibold ${clienteId === c.id ? 'text-amber-700' : 'text-zinc-700'}`}>{c.nombre}</p>
+                      <p className="text-xs text-zinc-400">{c.tipo === 'empresa' ? 'NIT' : 'CC'}: {c.documento} · {c.ciudad}</p>
                     </div>
                   </button>
                 ))}
               </div>
-              <div className="flex justify-end pt-2 border-t border-slate-100">
+              <div className="flex justify-end pt-2 border-t border-zinc-100">
                 <Button disabled={!clienteId} onClick={() => setStep('productos')}>
                   Siguiente <ChevronRight size={14} />
                 </Button>
@@ -305,42 +305,42 @@ function NuevaVentaModal({
                 {/* Product picker */}
                 <div className="flex-1 min-w-0">
                   <div className="relative mb-2">
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={14} className="absolute left-2.5 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
                     <input
                       value={searchProd}
                       onChange={e => setSearchProd(e.target.value)}
                       placeholder="Buscar producto…"
-                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+                      className="w-full pl-8 pr-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
                     />
                   </div>
-                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-64 overflow-y-auto">
+                  <div className="border border-zinc-200 rounded-lg divide-y divide-zinc-100 max-h-64 overflow-y-auto">
                     {productosDisponibles.length === 0 ? (
                       <div className="py-6 text-center">
-                        <Package size={24} className="mx-auto text-slate-300 mb-2" />
-                        <p className="text-xs text-slate-400">Sin resultados</p>
+                        <Package size={24} className="mx-auto text-zinc-300 mb-2" />
+                        <p className="text-xs text-zinc-400">Sin resultados</p>
                       </div>
                     ) : productosDisponibles.map(p => (
                       <button
                         key={p.id}
                         onClick={() => agregarProducto(p)}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-teal-50 text-left transition-colors cursor-pointer group"
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors cursor-pointer group"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-8 h-8 rounded-md overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
                             {p.imagen ? (
                               <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
                             ) : (
-                              <Package size={14} className="text-slate-400" />
+                              <Package size={14} className="text-zinc-400" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-700 truncate">{p.nombre}</p>
-                            <p className="text-xs text-slate-400">{p.codigo} · stock: {p.stock} {p.mililitros ? `· ${p.mililitros}ml` : ''}</p>
+                            <p className="text-sm font-medium text-zinc-700 truncate">{p.nombre}</p>
+                            <p className="text-xs text-zinc-400">{p.codigo} · stock: {p.stock} {p.mililitros ? `· ${p.mililitros}ml` : ''}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-teal-600">{formatCurrency(p.precio_venta)}</p>
-                          <p className="text-xs text-slate-300 group-hover:text-teal-400 transition-colors">+ agregar</p>
+                          <p className="text-sm font-bold text-amber-600">{formatCurrency(p.precio_venta)}</p>
+                          <p className="text-xs text-zinc-300 group-hover:text-amber-400 transition-colors">+ agregar</p>
                         </div>
                       </button>
                     ))}
@@ -350,22 +350,22 @@ function NuevaVentaModal({
                 {/* Cart */}
                 <div className="w-64 shrink-0">
                   <div className="flex items-center gap-2 mb-2">
-                    <ShoppingCart size={14} className="text-slate-500" />
-                    <span className="text-sm font-semibold text-slate-600">Carrito ({carrito.length})</span>
+                    <ShoppingCart size={14} className="text-zinc-500" />
+                    <span className="text-sm font-semibold text-zinc-600">Carrito ({carrito.length})</span>
                   </div>
-                  <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 min-h-32 max-h-64 overflow-y-auto">
+                  <div className="border border-zinc-200 rounded-lg divide-y divide-zinc-100 min-h-32 max-h-64 overflow-y-auto">
                     {carrito.length === 0 ? (
                       <div className="py-8 text-center">
-                        <ShoppingCart size={20} className="mx-auto text-slate-300 mb-1" />
-                        <p className="text-xs text-slate-400">Carrito vacío</p>
+                        <ShoppingCart size={20} className="mx-auto text-zinc-300 mb-1" />
+                        <p className="text-xs text-zinc-400">Carrito vacío</p>
                       </div>
                     ) : carrito.map(item => {
                       const prod = productos.find(p => p.id === item.producto_id)!;
                       return (
                         <div key={item.producto_id} className="p-2.5">
                           <div className="flex items-start justify-between gap-1">
-                            <p className="text-xs font-medium text-slate-700 leading-tight">{item.nombre} {prod?.mililitros ? `(${prod.mililitros}ml)` : ''}</p>
-                            <button onClick={() => quitarProducto(item.producto_id)} className="text-slate-300 hover:text-red-500 transition-colors shrink-0 cursor-pointer">
+                            <p className="text-xs font-medium text-zinc-700 leading-tight">{item.nombre} {prod?.mililitros ? `(${prod.mililitros}ml)` : ''}</p>
+                            <button onClick={() => quitarProducto(item.producto_id)} className="text-zinc-300 hover:text-red-500 transition-colors shrink-0 cursor-pointer">
                               <Trash2 size={12} />
                             </button>
                           </div>
@@ -373,32 +373,32 @@ function NuevaVentaModal({
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => cambiarCantidad(item.producto_id, item.cantidad - 1, prod?.stock ?? 99)}
-                                className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                                className="w-5 h-5 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                               >−</button>
-                              <span className="text-xs font-semibold text-slate-700 w-5 text-center">{item.cantidad}</span>
+                              <span className="text-xs font-semibold text-zinc-700 w-5 text-center">{item.cantidad}</span>
                               <button
                                 onClick={() => cambiarCantidad(item.producto_id, item.cantidad + 1, prod?.stock ?? 99)}
-                                className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold cursor-pointer"
+                                className="w-5 h-5 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                               >+</button>
                             </div>
-                            <span className="text-xs font-bold text-teal-600">{formatCurrency(item.subtotal)}</span>
+                            <span className="text-xs font-bold text-amber-600">{formatCurrency(item.subtotal)}</span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
                   {carrito.length > 0 && (
-                    <div className="mt-2 p-2.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="mt-2 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-500 font-medium">Total</span>
-                        <span className="text-base font-bold text-teal-600">{formatCurrency(total)}</span>
+                        <span className="text-xs text-zinc-500 font-medium">Total</span>
+                        <span className="text-base font-bold text-amber-600">{formatCurrency(total)}</span>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-slate-100">
+              <div className="flex justify-between pt-2 border-t border-zinc-100">
                 <Button variant="secondary" onClick={() => setStep('cliente')}>Atrás</Button>
                 <Button disabled={carrito.length === 0} onClick={() => setStep('confirmar')}>
                   Revisar <ChevronRight size={14} />
@@ -414,24 +414,24 @@ function NuevaVentaModal({
                 Al confirmar se descuenta el stock de cada producto automáticamente.
               </AlertBox>
 
-              <div className="bg-slate-50 rounded-lg border border-slate-200 p-4 space-y-3">
+              <div className="bg-zinc-50 rounded-lg border border-zinc-200 p-4 space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Cliente</span>
-                  <span className="font-semibold text-slate-800">{clienteSeleccionado?.nombre}</span>
+                  <span className="text-zinc-500">Cliente</span>
+                  <span className="font-semibold text-zinc-800">{clienteSeleccionado?.nombre}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Vendedor</span>
-                  <span className="font-semibold text-slate-800">{user?.name}</span>
+                  <span className="text-zinc-500">Vendedor</span>
+                  <span className="font-semibold text-zinc-800">{user?.name}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-500">Fecha</span>
-                  <span className="font-semibold text-slate-800">{new Date().toLocaleDateString('es-CO')}</span>
+                  <span className="text-zinc-500">Fecha</span>
+                  <span className="font-semibold text-zinc-800">{new Date().toLocaleDateString('es-CO')}</span>
                 </div>
               </div>
 
               {/* Método de Pago */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700">Método de Pago</label>
+                <label className="block text-sm font-medium text-zinc-700">Método de Pago</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2">
                     <input 
@@ -440,9 +440,9 @@ function NuevaVentaModal({
                       value="contado" 
                       checked={metodoPago === 'contado'} 
                       onChange={() => setMetodoPago('contado')}
-                      className="text-teal-600 focus:ring-teal-500"
+                      className="text-amber-600 focus:ring-amber-500"
                     />
-                    <span className="text-sm text-slate-700">De Contado</span>
+                    <span className="text-sm text-zinc-700">De Contado</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input 
@@ -452,9 +452,9 @@ function NuevaVentaModal({
                       disabled={clienteId === 'walk-in'}
                       checked={metodoPago === 'credito'} 
                       onChange={() => setMetodoPago('credito')}
-                      className="text-teal-600 focus:ring-teal-500 disabled:opacity-50"
+                      className="text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                     />
-                    <span className={`text-sm ${clienteId === 'walk-in' ? 'text-slate-400' : 'text-slate-700'}`}>A Crédito</span>
+                    <span className={`text-sm ${clienteId === 'walk-in' ? 'text-zinc-400' : 'text-zinc-700'}`}>A Crédito</span>
                   </label>
                 </div>
                 
@@ -477,36 +477,36 @@ function NuevaVentaModal({
                 )}
               </div>
 
-              <div className="rounded-lg border border-slate-200 overflow-hidden">
+              <div className="rounded-lg border border-zinc-200 overflow-hidden">
                 <table className="w-full text-sm">
-                  <thead className="bg-slate-50">
+                  <thead className="bg-zinc-50">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-slate-500">Producto</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-slate-500">Cant.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">P. Unit.</th>
-                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Subtotal</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-500">Producto</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-zinc-500">Cant.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">P. Unit.</th>
+                      <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Subtotal</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-zinc-100">
                     {carrito.map(item => (
                       <tr key={item.producto_id}>
-                        <td className="px-4 py-2.5 text-slate-700 truncate max-w-0" title={item.nombre}>{item.nombre}</td>
-                        <td className="px-4 py-2.5 text-center text-slate-600">{item.cantidad}</td>
-                        <td className="px-4 py-2.5 text-right text-slate-600">{formatCurrency(item.precio_unitario)}</td>
-                        <td className="px-4 py-2.5 text-right font-semibold text-slate-800">{formatCurrency(item.subtotal)}</td>
+                        <td className="px-4 py-2.5 text-zinc-700 truncate max-w-0" title={item.nombre}>{item.nombre}</td>
+                        <td className="px-4 py-2.5 text-center text-zinc-600">{item.cantidad}</td>
+                        <td className="px-4 py-2.5 text-right text-zinc-600">{formatCurrency(item.precio_unitario)}</td>
+                        <td className="px-4 py-2.5 text-right font-semibold text-zinc-800">{formatCurrency(item.subtotal)}</td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="border-t border-slate-200 bg-slate-50">
-                    <tr className="bg-teal-50 border-t-2 border-teal-200">
-                      <td colSpan={3} className="px-4 py-2.5 text-right font-bold text-teal-700">TOTAL NETO</td>
-                      <td className="px-4 py-2.5 text-right font-bold text-teal-700 text-base font-mono">{formatCurrency(total)}</td>
+                  <tfoot className="border-t border-zinc-200 bg-zinc-50">
+                    <tr className="bg-amber-50 border-t-2 border-amber-200">
+                      <td colSpan={3} className="px-4 py-2.5 text-right font-bold text-amber-700">TOTAL NETO</td>
+                      <td className="px-4 py-2.5 text-right font-bold text-amber-700 text-base font-mono">{formatCurrency(total)}</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
-              <div className="flex justify-between pt-2 border-t border-slate-100">
+              <div className="flex justify-between pt-2 border-t border-zinc-100">
                 <Button variant="secondary" onClick={() => setStep('productos')}>Atrás</Button>
                 <Button 
                   onClick={handleConfirm}
@@ -707,12 +707,12 @@ export function Ventas() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
             placeholder="Buscar por factura, cliente o vendedor…"
-            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+            className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
           />
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -722,8 +722,8 @@ export function Ventas() {
               onClick={() => { setFilterEstado(s); setCurrentPage(1); }}
               className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                 filterEstado === s
-                  ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
               }`}
             >
               {s === 'todos' ? 'Todos' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -737,44 +737,44 @@ export function Ventas() {
 
       {/* Summary */}
       {filtered.length > 0 && (
-        <div className="mb-4 text-sm text-slate-500">
-          Total completadas en filtro: <span className="font-bold text-teal-600">{formatCurrency(totalVisibles)}</span>
+        <div className="mb-4 text-sm text-zinc-500">
+          Total completadas en filtro: <span className="font-bold text-amber-600">{formatCurrency(totalVisibles)}</span>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
                 {['Factura', 'Cliente', 'Vendedor', 'Fecha', 'Ítems', 'Total', 'Estado', 'Acciones'].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-5 py-12 text-center">
-                    <ShoppingCart size={32} className="mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-400 text-sm">No se encontraron ventas</p>
+                    <ShoppingCart size={32} className="mx-auto text-zinc-300 mb-3" />
+                    <p className="text-zinc-400 text-sm">No se encontraron ventas</p>
                   </td>
                 </tr>
               ) : paginated.map(v => (
-                <tr key={v.id} className={`hover:bg-slate-50/60 transition-colors ${v.estado === 'anulada' ? 'opacity-60' : ''}`}>
-                  <td className="px-5 py-3.5 font-mono text-xs text-teal-600 font-semibold">{v.factura}</td>
-                  <td className="px-5 py-3.5 font-medium text-slate-800">{v.cliente_nombre}</td>
-                  <td className="px-5 py-3.5 text-slate-600">{v.vendedor_nombre}</td>
-                  <td className="px-5 py-3.5 text-slate-600 whitespace-nowrap">{new Date(v.fecha).toLocaleDateString('es-CO')}</td>
-                  <td className="px-5 py-3.5 text-slate-500">{v.items.length} ítem(s)</td>
-                  <td className="px-5 py-3.5 font-semibold text-slate-800 whitespace-nowrap">{formatCurrency(v.total)}</td>
+                <tr key={v.id} className={`hover:bg-zinc-50/60 transition-colors ${v.estado === 'anulada' ? 'opacity-60' : ''}`}>
+                  <td className="px-5 py-3.5 font-mono text-xs text-amber-600 font-semibold">{v.factura}</td>
+                  <td className="px-5 py-3.5 font-medium text-zinc-800">{v.cliente_nombre}</td>
+                  <td className="px-5 py-3.5 text-zinc-600">{v.vendedor_nombre}</td>
+                  <td className="px-5 py-3.5 text-zinc-600 whitespace-nowrap">{new Date(v.fecha).toLocaleDateString('es-CO')}</td>
+                  <td className="px-5 py-3.5 text-zinc-500">{v.items.length} ítem(s)</td>
+                  <td className="px-5 py-3.5 font-semibold text-zinc-800 whitespace-nowrap">{formatCurrency(v.total)}</td>
                   <td className="px-5 py-3.5"><Badge variant={v.estado} /></td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setDetailVenta(v)}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                         title="Ver detalle"
                       >
                         <FileText size={14} />
@@ -784,7 +784,7 @@ export function Ventas() {
                           e.stopPropagation();
                           handleDownloadPDF(v);
                         }}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer"
                         title="Descargar comprobante"
                       >
                         <Download size={14} />
@@ -792,7 +792,7 @@ export function Ventas() {
                       {isAdmin && v.estado !== 'anulada' && (
                         <button
                           onClick={() => setAnularConfirm(v)}
-                          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer"
                           title="Anular venta"
                         >
                           <XCircle size={14} />
@@ -805,11 +805,11 @@ export function Ventas() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+        <div className="px-5 py-3.5 border-t border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-medium">
           <div>
             {filtered.length > 0 ? (
               <span>
-                Mostrando <strong className="text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-slate-700">{filtered.length}</strong> ventas
+                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> ventas
               </span>
             ) : (
               <span>0 ventas registradas</span>
@@ -820,17 +820,17 @@ export function Ventas() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Anterior
               </button>
-              <span className="font-semibold text-slate-500">
+              <span className="font-semibold text-zinc-500">
                 Pág. {currentPage} de {totalPages}
               </span>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Siguiente
               </button>
@@ -852,79 +852,79 @@ export function Ventas() {
           return (
             <div className="space-y-6">
               {/* Printable Invoice Container */}
-              <div id="printable-invoice" className="bg-white border border-slate-200 rounded-xl p-6 space-y-5 print:border-0 print:p-0 print:shadow-none">
+              <div id="printable-invoice" className="bg-white border border-zinc-200 rounded-xl p-6 space-y-5 print:border-0 print:p-0 print:shadow-none">
                 
                 {/* Invoice Header */}
-                <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-slate-100 pb-4">
+                <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-zinc-100 pb-4">
                   <div className="flex items-start gap-4">
                     <img src="/logo.jpg" alt="Logo" className="w-16 h-16 object-contain print:w-16 print:h-16 rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
                     <div className="space-y-1">
-                      <h3 className="font-extrabold text-slate-800 text-lg leading-tight">{configuracion.nombre}</h3>
-                      <p className="text-xs text-slate-500 font-medium">NIT: {configuracion.nit}</p>
-                      <p className="text-xs text-slate-400">{configuracion.direccion}</p>
-                      <p className="text-xs text-slate-400">Tel: {configuracion.telefono}</p>
+                      <h3 className="font-extrabold text-zinc-800 text-lg leading-tight">{configuracion.nombre}</h3>
+                      <p className="text-xs text-zinc-500 font-medium">NIT: {configuracion.nit}</p>
+                      <p className="text-xs text-zinc-400">{configuracion.direccion}</p>
+                      <p className="text-xs text-zinc-400">Tel: {configuracion.telefono}</p>
                     </div>
                   </div>
                   <div className="text-left sm:text-right space-y-1 shrink-0">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Factura de Venta</span>
-                    <h4 className="text-xl font-mono font-bold text-teal-600">{detailVenta.factura}</h4>
-                    <p className="text-xs text-slate-500">Fecha: {new Date(detailVenta.fecha).toLocaleDateString('es-CO')}</p>
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Factura de Venta</span>
+                    <h4 className="text-xl font-mono font-bold text-amber-600">{detailVenta.factura}</h4>
+                    <p className="text-xs text-zinc-500">Fecha: {new Date(detailVenta.fecha).toLocaleDateString('es-CO')}</p>
                     <Badge variant={detailVenta.estado} className="mt-1" />
                   </div>
                 </div>
 
                 {/* Cliente / Vendedor Metadata */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100 print:bg-white print:border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-zinc-50 p-3 rounded-lg border border-zinc-100 print:bg-white print:border-zinc-200">
                   <div>
-                    <p className="text-slate-400 font-bold uppercase tracking-wider">Adquiriente</p>
-                    <p className="font-bold text-slate-800 mt-1">{detailVenta.cliente_nombre}</p>
+                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Adquiriente</p>
+                    <p className="font-bold text-zinc-800 mt-1">{detailVenta.cliente_nombre}</p>
                   </div>
                   <div>
-                    <p className="text-slate-400 font-bold uppercase tracking-wider">Cajero / Vendedor</p>
-                    <p className="font-bold text-slate-800 mt-1">{detailVenta.vendedor_nombre}</p>
+                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Cajero / Vendedor</p>
+                    <p className="font-bold text-zinc-800 mt-1">{detailVenta.vendedor_nombre}</p>
                   </div>
                 </div>
 
                 {/* Items Table */}
-                <div className="rounded-lg border border-slate-200 overflow-hidden print:border-slate-300">
+                <div className="rounded-lg border border-zinc-200 overflow-hidden print:border-zinc-300">
                   <table className="w-full text-xs">
-                    <thead className="bg-slate-50 border-b border-slate-200 print:bg-slate-100">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
                       <tr>
-                        <th className="px-4 py-2.5 text-left font-bold text-slate-600">Descripción del Producto</th>
-                        <th className="px-4 py-2.5 text-center font-bold text-slate-600">Cant.</th>
-                        <th className="px-4 py-2.5 text-right font-bold text-slate-600">P. Unit.</th>
-                        <th className="px-4 py-2.5 text-right font-bold text-slate-600">Subtotal</th>
+                        <th className="px-4 py-2.5 text-left font-bold text-zinc-600">Descripción del Producto</th>
+                        <th className="px-4 py-2.5 text-center font-bold text-zinc-600">Cant.</th>
+                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">P. Unit.</th>
+                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">Subtotal</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-zinc-100">
                       {detailVenta.items.map(item => (
-                        <tr key={item.producto_id} className="hover:bg-slate-50/20">
-                          <td className="px-4 py-2.5 text-slate-700 font-medium truncate max-w-0" title={item.nombre}>{item.nombre}</td>
-                          <td className="px-4 py-2.5 text-center text-slate-600 font-mono">{item.cantidad}</td>
-                          <td className="px-4 py-2.5 text-right text-slate-600 font-mono">{formatCurrency(item.precio_unitario)}</td>
-                          <td className="px-4 py-2.5 text-right font-bold text-slate-800 font-mono">{formatCurrency(item.subtotal)}</td>
+                        <tr key={item.producto_id} className="hover:bg-zinc-50/20">
+                          <td className="px-4 py-2.5 text-zinc-700 font-medium truncate max-w-0" title={item.nombre}>{item.nombre}</td>
+                          <td className="px-4 py-2.5 text-center text-zinc-600 font-mono">{item.cantidad}</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-600 font-mono">{formatCurrency(item.precio_unitario)}</td>
+                          <td className="px-4 py-2.5 text-right font-bold text-zinc-800 font-mono">{formatCurrency(item.subtotal)}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t border-slate-200 bg-slate-50/50 print:bg-slate-50">
+                    <tfoot className="border-t border-zinc-200 bg-zinc-50/50 print:bg-zinc-50">
 
-                      <tr className="bg-teal-50/50 border-t border-teal-100 print:bg-teal-50">
-                        <td colSpan={3} className="px-4 py-3 text-right font-extrabold text-teal-800 text-sm">TOTAL NETO</td>
-                        <td className="px-4 py-3 text-right font-extrabold text-teal-800 text-sm font-mono">{formatCurrency(detailVenta.total)}</td>
+                      <tr className="bg-amber-50/50 border-t border-amber-100 print:bg-amber-50">
+                        <td colSpan={3} className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm">TOTAL NETO</td>
+                        <td className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm font-mono">{formatCurrency(detailVenta.total)}</td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
 
                 {/* Resolution Footnote */}
-                <div className="border-t border-slate-100 pt-3 text-[10px] text-slate-400 leading-normal">
+                <div className="border-t border-zinc-100 pt-3 text-[10px] text-zinc-400 leading-normal">
                   <p className="font-medium">Detalle DIAN:</p>
                   <p className="mt-0.5">{configuracion.resolucion}</p>
                 </div>
               </div>
 
               {/* Detail Buttons (Hidden on Print) */}
-              <div className="flex justify-between items-center gap-3 pt-2 border-t border-slate-100 print:hidden">
+              <div className="flex justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
                 <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()}>
                   Descargar Comprobante
                 </Button>

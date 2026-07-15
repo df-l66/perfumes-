@@ -5,7 +5,7 @@ type BadgeVariant = 'activo' | 'inactivo' | 'stock_bajo' | 'completada' | 'pendi
 
 const variants: Record<BadgeVariant, string> = {
   activo:     'bg-emerald-100 text-emerald-700 border border-emerald-200',
-  inactivo:   'bg-slate-100 text-slate-500 border border-slate-200',
+  inactivo:   'bg-zinc-100 text-zinc-500 border border-zinc-200',
   stock_bajo: 'bg-amber-100 text-amber-700 border border-amber-200',
   completada: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
   pendiente:  'bg-amber-100 text-amber-700 border border-amber-200',
@@ -33,7 +33,7 @@ interface BadgeProps {
 export function Badge({ variant, className = '' }: BadgeProps) {
   const v = variant as BadgeVariant;
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[v] ?? 'bg-slate-100 text-slate-600'} ${className}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[v] ?? 'bg-zinc-100 text-zinc-600'} ${className}`}>
       {labels[v] ?? variant}
     </span>
   );

@@ -139,13 +139,13 @@ export function MateriasPrimas() {
     setAjusteModalOpen(true);
   };
 
-  const inp = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 bg-white transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
+  const inp = 'w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 bg-white transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
   return (
     <Layout title="Materias Primas">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div className="relative flex-1 w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Buscar materia prima..."
@@ -169,19 +169,19 @@ export function MateriasPrimas() {
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Stock</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Unidad</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Costo Ref.</th>
-                <th className="px-3 sm:px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Acciones</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Nombre</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">Tipo</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Stock</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Unidad</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Costo Ref.</th>
+                <th className="px-3 sm:px-4 py-3 text-right text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100">
               {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
                   <td className="px-3 sm:px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.tipo === 'esencia' ? (
@@ -193,37 +193,37 @@ export function MateriasPrimas() {
                           )}
                         </div>
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                          {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-slate-300" />}
+                        <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+                          {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
                         </div>
                       )}
-                      <span className="font-medium text-slate-800">{p.nombre}</span>
+                      <span className="font-medium text-zinc-800">{p.nombre}</span>
                     </div>
                   </td>
                   <td className="px-3 sm:px-4 py-3 capitalize hidden md:table-cell">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700 border border-purple-200' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600 border border-slate-200'}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700 border border-purple-200' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'}`}>
                       {p.tipo}
                     </span>
                   </td>
                   <td className="px-3 sm:px-4 py-3">
-                    <span className={`font-bold text-xs sm:text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-slate-800'}`}>
+                    <span className={`font-bold text-xs sm:text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-zinc-800'}`}>
                       {p.stock}
                     </span>
                   </td>
-                  <td className="px-3 sm:px-4 py-3 text-slate-500 hidden sm:table-cell text-xs">{p.unidad_medida}</td>
-                  <td className="px-3 sm:px-4 py-3 font-semibold text-slate-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
+                  <td className="px-3 sm:px-4 py-3 text-zinc-500 hidden sm:table-cell text-xs">{p.unidad_medida}</td>
+                  <td className="px-3 sm:px-4 py-3 font-semibold text-zinc-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
                   <td className="px-3 sm:px-4 py-3">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setViewItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                      <button onClick={() => setViewItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
-                      <button onClick={() => openAjuste(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
+                      <button onClick={() => openAjuste(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
                         <Package size={14} />
                       </button>
-                      <button onClick={() => openEdit(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                      <button onClick={() => openEdit(p)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                      <button onClick={() => handleDelete(p.id)} className="hidden sm:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -404,7 +404,7 @@ export function MateriasPrimas() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-6">
+            <div className="flex justify-between items-center pt-4 border-t border-zinc-100 mt-6">
               <div className="flex gap-2">
                 <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openAjuste(viewItem.id); }}>Ajuste</Button>
                 <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openEdit(viewItem); }}>Editar</Button>

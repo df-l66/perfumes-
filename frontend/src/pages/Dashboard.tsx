@@ -25,7 +25,7 @@ function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }
   delayClass?: string;
 }) {
   return (
-    <div className={`bg-white rounded-xl border border-slate-200 p-6 shadow-xs hover:shadow-lg hover:-translate-y-1 hover:border-teal-100 transition-all duration-300 group cursor-pointer ${delayClass}`}>
+    <div className={`bg-white rounded-xl border border-zinc-200 p-6 shadow-xs hover:shadow-lg hover:-tranzinc-y-1 hover:border-amber-100 transition-all duration-300 group cursor-pointer ${delayClass}`}>
       <div className="flex items-start justify-between">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ${color}`}>
           {icon}
@@ -38,10 +38,10 @@ function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }
         )}
       </div>
       <div className="mt-5">
-        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">{value}</p>
-        <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-teal-500 transition-colors" />
+        <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">{title}</p>
+        <p className="text-3xl font-extrabold text-zinc-900 mt-1 tracking-tight">{value}</p>
+        <p className="text-xs text-zinc-500 mt-1.5 flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 group-hover:bg-amber-500 transition-colors" />
           {subtitle}
         </p>
       </div>
@@ -55,10 +55,10 @@ const formatCurrency = (v: number) =>
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3">
-        <p className="text-xs font-semibold text-slate-600 mb-1">{label}</p>
-        <p className="text-sm font-bold text-teal-600">{formatCurrency(payload[0].value)}</p>
-        <p className="text-xs text-slate-400">{payload[1]?.value ?? 0} venta(s)</p>
+      <div className="bg-white border border-zinc-200 rounded-lg shadow-lg p-3">
+        <p className="text-xs font-semibold text-zinc-600 mb-1">{label}</p>
+        <p className="text-sm font-bold text-amber-600">{formatCurrency(payload[0].value)}</p>
+        <p className="text-xs text-zinc-400">{payload[1]?.value ?? 0} venta(s)</p>
       </div>
     );
   }
@@ -226,15 +226,15 @@ export function Dashboard() {
       }
     >
       {/* Date Filter */}
-      <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-xl border border-slate-200 w-max shadow-sm">
+      <div className="flex items-center gap-3 mb-6 bg-white p-3 rounded-xl border border-zinc-200 w-max shadow-sm">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500">Desde</label>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="text-sm border-none bg-slate-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-teal-500/50" />
+          <label className="text-xs font-semibold text-zinc-500">Desde</label>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
-        <div className="text-slate-300">-</div>
+        <div className="text-zinc-300">-</div>
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500">Hasta</label>
-          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="text-sm border-none bg-slate-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-teal-500/50" />
+          <label className="text-xs font-semibold text-zinc-500">Hasta</label>
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="text-sm border-none bg-zinc-50 px-2 py-1 rounded outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
       </div>
 
@@ -244,9 +244,9 @@ export function Dashboard() {
           title="Ventas Reales (Pagadas)"
           value={formatCurrency(totalVentas)}
           subtitle={`${ventasCompletadas.length} transacciones concretadas`}
-          icon={<TrendingUp size={22} className="text-teal-600 animate-pulse" />}
+          icon={<TrendingUp size={22} className="text-amber-600 animate-pulse" />}
           trend="+12% mes"
-          color="bg-teal-50"
+          color="bg-amber-50"
           delayClass="animate-fade-in-up"
         />
         <KpiCard
@@ -304,15 +304,15 @@ export function Dashboard() {
       {/* Sales Chart + Recent Sales */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Chart */}
-        <div className="xl:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+        <div className="xl:col-span-2 bg-white rounded-xl border border-zinc-200 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-base font-semibold text-slate-800">Ventas Diarias</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Últimos 14 días</p>
+              <h2 className="text-base font-semibold text-zinc-800">Ventas Diarias</h2>
+              <p className="text-xs text-zinc-400 mt-0.5">Últimos 14 días</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-teal-500" />
-              <span className="text-xs text-slate-500">Ingresos (COP)</span>
+              <div className="w-3 h-3 rounded-full bg-amber-500" />
+              <span className="text-xs text-zinc-500">Ingresos (COP)</span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
@@ -339,37 +339,37 @@ export function Dashboard() {
         </div>
 
         {/* Right Sidebar: Performance Leaders & Recent Sales */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col space-y-6">
+        <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm flex flex-col space-y-6">
           
           {/* Section 1: Performance Leaders */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <Award size={16} className="text-teal-600 animate-pulse" />
-              <h2 className="text-sm font-bold text-slate-800">Líderes de Desempeño</h2>
+            <div className="flex items-center gap-2 pb-2 border-b border-zinc-100">
+              <Award size={16} className="text-amber-600 animate-pulse" />
+              <h2 className="text-sm font-bold text-zinc-800">Líderes de Desempeño</h2>
             </div>
             
             <div className="space-y-3">
               {/* Top Seller */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                   ★
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">Vendedor Estrella</p>
-                  <p className="text-xs font-bold text-slate-800 truncate mt-0.5">{vendedorEstrella.nombre}</p>
-                  <p className="text-[10px] text-slate-400 font-medium">Facturado: {formatCurrency(vendedorEstrella.total)} · {vendedorEstrella.cantidad} ventas</p>
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Vendedor Estrella</p>
+                  <p className="text-xs font-bold text-zinc-800 truncate mt-0.5">{vendedorEstrella.nombre}</p>
+                  <p className="text-[10px] text-zinc-400 font-medium">Facturado: {formatCurrency(vendedorEstrella.total)} · {vendedorEstrella.cantidad} ventas</p>
                 </div>
               </div>
 
               {/* Most Sold Product */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
+              <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-100 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                   ⚡
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Producto Más Vendido</p>
-                  <p className="text-xs font-bold text-slate-800 truncate mt-0.5">{productoMasVendido.nombre}</p>
-                  <p className="text-[10px] text-slate-400 font-medium">{productoMasVendido.codigo} · {productoMasVendido.cantidad} unidades vendidas</p>
+                  <p className="text-xs font-bold text-zinc-800 truncate mt-0.5">{productoMasVendido.nombre}</p>
+                  <p className="text-[10px] text-zinc-400 font-medium">{productoMasVendido.codigo} · {productoMasVendido.cantidad} unidades vendidas</p>
                 </div>
               </div>
             </div>
@@ -377,21 +377,21 @@ export function Dashboard() {
 
           {/* Section 2: Recent Sales */}
           <div className="space-y-3 flex-1">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
               <div className="flex items-center gap-2">
-                <ShoppingCart size={15} className="text-slate-400" />
-                <h2 className="text-sm font-bold text-slate-800">Ventas Recientes</h2>
+                <ShoppingCart size={15} className="text-zinc-400" />
+                <h2 className="text-sm font-bold text-zinc-800">Ventas Recientes</h2>
               </div>
             </div>
             <div className="space-y-2.5">
               {ventas.slice(0, 4).map(v => (
-                <div key={v.id} className="flex items-start justify-between gap-3 pb-2.5 border-b border-slate-100 last:border-0 last:pb-0">
+                <div key={v.id} className="flex items-start justify-between gap-3 pb-2.5 border-b border-zinc-100 last:border-0 last:pb-0">
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate">{v.cliente_nombre}</p>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{v.factura} · {v.fecha}</p>
+                    <p className="text-xs font-bold text-zinc-800 truncate">{v.cliente_nombre}</p>
+                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{v.factura} · {v.fecha}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-bold text-slate-800">{formatCurrency(v.total)}</p>
+                    <p className="text-xs font-bold text-zinc-800">{formatCurrency(v.total)}</p>
                     <Badge variant={v.estado} className="scale-90 mt-0.5" />
                   </div>
                 </div>
@@ -406,15 +406,15 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         
         {/* Low Stock Panel */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 flex flex-col">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-100">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
                 <AlertTriangle size={15} className="animate-pulse" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-800">Alertas de Inventario</h2>
-                <p className="text-[10px] text-slate-400">Productos críticos bajo el mínimo</p>
+                <h2 className="text-sm font-bold text-zinc-800">Alertas de Inventario</h2>
+                <p className="text-[10px] text-zinc-400">Productos críticos bajo el mínimo</p>
               </div>
             </div>
             {productosStockBajo.length > 0 && (
@@ -426,7 +426,7 @@ export function Dashboard() {
 
           <div className="flex-1 space-y-3 overflow-y-auto max-h-75 pr-1">
             {productosStockBajo.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 text-xs">
+              <div className="py-12 text-center text-zinc-400 text-xs">
                 <p className="font-medium text-emerald-600">✓ Todos los stocks están en niveles óptimos</p>
               </div>
             ) : productosStockBajo.map(p => {
@@ -434,17 +434,17 @@ export function Dashboard() {
               const esCritico = p.stock === 0;
 
               return (
-                <div key={p.id} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-xs transition-all duration-200">
+                <div key={p.id} className="p-3.5 rounded-xl border border-zinc-100 bg-zinc-50/50 hover:bg-white hover:shadow-xs transition-all duration-200">
                   <div className="flex justify-between items-start gap-2 mb-2">
-                    <span className="font-semibold text-slate-800 text-xs truncate max-w-42.5">{p.nombre}</span>
+                    <span className="font-semibold text-zinc-800 text-xs truncate max-w-42.5">{p.nombre}</span>
                     <Badge variant={esCritico ? 'inactivo' : 'stock_bajo'} className="scale-90" />
                   </div>
-                  <div className="space-y-1.5 text-[10px] text-slate-500">
+                  <div className="space-y-1.5 text-[10px] text-zinc-500">
                     <div className="flex justify-between">
                       <span>Stock: <strong>{p.stock}</strong> / Mínimo: {p.stock_minimo}</span>
                       <span>{porcentaje.toFixed(0)}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                       <div
                         style={{ width: `${porcentaje}%` }}
                         className={`h-full rounded-full ${esCritico ? 'bg-red-500' : 'bg-amber-500'}`}
@@ -458,29 +458,29 @@ export function Dashboard() {
         </div>
 
         {/* Audit Log Panel */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
+        <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-6 flex flex-col">
+          <div className="flex items-center justify-between pb-4 mb-4 border-b border-zinc-100">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                 <Activity size={15} />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-slate-800">Bitácora de Auditoría</h2>
-                <p className="text-[10px] text-slate-400">Historial reciente de actividades</p>
+                <h2 className="text-sm font-bold text-zinc-800">Bitácora de Auditoría</h2>
+                <p className="text-[10px] text-zinc-400">Historial reciente de actividades</p>
               </div>
             </div>
           </div>
 
           <div className="flex-1 space-y-3 overflow-y-auto max-h-75 pr-1">
             {logs.slice(0, 6).map(log => (
-              <div key={log.id} className="p-3 rounded-lg bg-slate-50/50 border border-slate-100 flex items-start gap-3">
+              <div key={log.id} className="p-3 rounded-lg bg-zinc-50/50 border border-zinc-100 flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-slate-700 truncate">{log.usuario_nombre} ({log.rol})</span>
-                    <span className="text-[9px] text-slate-400 shrink-0">{log.fecha}</span>
+                    <span className="text-[10px] font-bold text-zinc-700 truncate">{log.usuario_nombre} ({log.rol})</span>
+                    <span className="text-[9px] text-zinc-400 shrink-0">{log.fecha}</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-normal">{log.accion}</p>
-                  <span className="inline-block text-[9px] font-semibold text-teal-600 bg-teal-50 border border-teal-100/50 px-1.5 py-0.2 rounded-md mt-1 uppercase tracking-wider">
+                  <p className="text-xs text-zinc-600 leading-normal">{log.accion}</p>
+                  <span className="inline-block text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-100/50 px-1.5 py-0.2 rounded-md mt-1 uppercase tracking-wider">
                     {log.modulo}
                   </span>
                 </div>

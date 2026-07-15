@@ -99,10 +99,10 @@ export function Proveedores() {
     setTimeout(() => setSuccessToast(null), 3000);
   };
 
-  const inp = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-colors bg-white';
+  const inp = 'w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white';
   const field = (label: string, children: React.ReactNode) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1.5">{label}</label>
+      <label className="block text-xs font-semibold text-zinc-600 mb-1.5">{label}</label>
       {children}
     </div>
   );
@@ -117,19 +117,19 @@ export function Proveedores() {
     >
       {/* Search */}
       <div className="relative mb-5 max-w-md">
-        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={15} className="absolute left-3 top-1/2 -tranzinc-y-1/2 text-zinc-400" />
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           placeholder="Buscar por nombre, NIT, contacto o ciudad…"
-          className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400"
+          className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
         />
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
                 {[
                   { label: 'Nombre / Empresa', className: '' }, 
@@ -141,55 +141,55 @@ export function Proveedores() {
                   { label: 'Estado', className: 'hidden md:table-cell' }, 
                   { label: 'Acciones', className: 'text-right' }
                 ].map(h => (
-                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
+                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100">
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-5 py-12 text-center">
-                    <Truck size={32} className="mx-auto text-slate-300 mb-3" />
-                    <p className="text-slate-400 text-sm">No se encontraron proveedores</p>
+                    <Truck size={32} className="mx-auto text-zinc-300 mb-3" />
+                    <p className="text-zinc-400 text-sm">No se encontraron proveedores</p>
                   </td>
                 </tr>
               ) : paginated.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
                   <td className="px-4 sm:px-5 py-3.5">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                        <Truck size={14} className="text-slate-500" />
+                      <div className="w-8 h-8 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                        <Truck size={14} className="text-zinc-500" />
                       </div>
                       <div className="min-w-0">
-                        <span className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{p.nombre}</span>
-                        <span className="text-[10px] sm:hidden text-slate-500">{p.nit}</span>
+                        <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{p.nombre}</span>
+                        <span className="text-[10px] sm:hidden text-zinc-500">{p.nit}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-slate-500 hidden sm:table-cell">{p.nit}</td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-700 hidden md:table-cell">{p.contacto}</td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden sm:table-cell">{p.telefono}</td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 hidden lg:table-cell">{p.email}</td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 hidden sm:table-cell">{p.ciudad}</td>
+                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-zinc-500 hidden sm:table-cell">{p.nit}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-zinc-700 hidden md:table-cell">{p.contacto}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-zinc-600 whitespace-nowrap hidden sm:table-cell">{p.telefono}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-zinc-600 hidden lg:table-cell">{p.email}</td>
+                  <td className="px-4 sm:px-5 py-3.5 text-zinc-600 hidden sm:table-cell">{p.ciudad}</td>
                   <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={p.estado} /></td>
                   <td className="px-4 sm:px-5 py-3.5">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
                       {isAdmin && (
                         <>
                           <button 
                             onClick={() => toggleEstado(p)} 
-                            className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
+                            className={`p-1.5 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-zinc-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Proveedor' : 'Inactivar Proveedor'}
                           >
                             <Power size={14} />
                           </button>
-                          <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                          <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                          <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                             <Trash2 size={14} />
                           </button>
                         </>
@@ -201,11 +201,11 @@ export function Proveedores() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+        <div className="px-5 py-3.5 border-t border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-medium">
           <div>
             {filtered.length > 0 ? (
               <span>
-                Mostrando <strong className="text-slate-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-slate-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-slate-700">{filtered.length}</strong> proveedores
+                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> proveedores
               </span>
             ) : (
               <span>0 proveedores encontrados</span>
@@ -216,17 +216,17 @@ export function Proveedores() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Anterior
               </button>
-              <span className="font-semibold text-slate-500">
+              <span className="font-semibold text-zinc-500">
                 Pág. {currentPage} de {totalPages}
               </span>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                className="px-2.5 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
               >
                 Siguiente
               </button>
@@ -258,7 +258,7 @@ export function Proveedores() {
             {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm((f: any) => ({ ...f, telefono: e.target.value }))} className={inp} />)}
             {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className={inp} />)}
           </div>
-          <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+          <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit">{editItem ? 'Guardar' : 'Crear'}</Button>
           </div>
@@ -287,13 +287,13 @@ export function Proveedores() {
 
           return (
             <div className="space-y-6 p-1">
-              <div className="flex items-center gap-4 bg-slate-50 p-4.5 rounded-2xl border border-slate-200/60 shadow-inner">
-                <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-4 bg-zinc-50 p-4.5 rounded-2xl border border-zinc-200/60 shadow-inner">
+                <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
                   <Truck size={24} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-800 leading-tight">{detailItem.nombre}</h3>
-                  <p className="text-xs font-mono text-slate-400 mt-0.5">NIT: {detailItem.nit}</p>
+                  <h3 className="text-base font-bold text-zinc-800 leading-tight">{detailItem.nombre}</h3>
+                  <p className="text-xs font-mono text-zinc-400 mt-0.5">NIT: {detailItem.nit}</p>
                 </div>
                 <div className="ml-auto">
                   <Badge variant={detailItem.estado} />
@@ -302,32 +302,32 @@ export function Proveedores() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Contacto Principal</span>
+                  <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Contacto Principal</span>
                   <div className="flex items-center gap-2 mt-1">
-                    <User size={13} className="text-slate-400 shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700">{detailItem.contacto}</span>
+                    <User size={13} className="text-zinc-400 shrink-0" />
+                    <span className="text-sm font-semibold text-zinc-700">{detailItem.contacto}</span>
                   </div>
                 </div>
                 <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Ciudad</span>
+                  <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Ciudad</span>
                   <div className="flex items-center gap-2 mt-1">
-                    <MapPin size={13} className="text-slate-400 shrink-0" />
-                    <span className="text-sm font-semibold text-slate-700">{detailItem.ciudad}</span>
+                    <MapPin size={13} className="text-zinc-400 shrink-0" />
+                    <span className="text-sm font-semibold text-zinc-700">{detailItem.ciudad}</span>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Teléfono de Contacto</span>
-                  <a href={`tel:${detailItem.telefono}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50/20 text-slate-700 hover:text-teal-600 transition-all font-semibold text-xs w-fit">
+                  <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Teléfono de Contacto</span>
+                  <a href={`tel:${detailItem.telefono}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-zinc-100 hover:border-amber-200 hover:bg-amber-50/20 text-zinc-700 hover:text-amber-600 transition-all font-semibold text-xs w-fit">
                     <Phone size={13} className="shrink-0" />
                     {detailItem.telefono}
                   </a>
                 </div>
                 <div>
-                  <span className="block text-[9px] uppercase font-bold text-slate-400 tracking-wider">Correo Electrónico</span>
-                  <a href={`mailto:${detailItem.email}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50/20 text-slate-700 hover:text-teal-600 transition-all font-semibold text-xs w-fit">
+                  <span className="block text-[9px] uppercase font-bold text-zinc-400 tracking-wider">Correo Electrónico</span>
+                  <a href={`mailto:${detailItem.email}`} className="flex items-center gap-2 mt-1.5 px-3 py-2 rounded-xl border border-zinc-100 hover:border-amber-200 hover:bg-amber-50/20 text-zinc-700 hover:text-amber-600 transition-all font-semibold text-xs w-fit">
                     <Mail size={13} className="shrink-0" />
                     {detailItem.email}
                   </a>
@@ -335,40 +335,40 @@ export function Proveedores() {
               </div>
 
               {/* Estadísticas de Compras (Métricas) */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-3">Métricas de Abastecimiento</span>
+              <div className="border-t border-zinc-100 pt-4">
+                <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-3">Métricas de Abastecimiento</span>
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-center">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider">Compras</span>
-                    <p className="text-lg font-extrabold text-slate-700 mt-1 font-mono">{supplierPurchases.length}</p>
+                  <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl text-center">
+                    <span className="block text-[8px] font-bold text-zinc-400 uppercase tracking-wider">Compras</span>
+                    <p className="text-lg font-extrabold text-zinc-700 mt-1 font-mono">{supplierPurchases.length}</p>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-center">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider">Total Invertido</span>
-                    <p className="text-sm font-bold text-teal-600 mt-1.5 font-mono">{formatCurrency(totalInverted)}</p>
+                  <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl text-center">
+                    <span className="block text-[8px] font-bold text-zinc-400 uppercase tracking-wider">Total Invertido</span>
+                    <p className="text-sm font-bold text-amber-600 mt-1.5 font-mono">{formatCurrency(totalInverted)}</p>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-center">
-                    <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider">Última Transac.</span>
-                    <p className="text-xs font-semibold text-slate-600 mt-2">{lastPurchase}</p>
+                  <div className="p-3 bg-zinc-50 border border-zinc-100 rounded-xl text-center">
+                    <span className="block text-[8px] font-bold text-zinc-400 uppercase tracking-wider">Última Transac.</span>
+                    <p className="text-xs font-semibold text-zinc-600 mt-2">{lastPurchase}</p>
                   </div>
                 </div>
               </div>
 
               {/* Historial de Compras */}
-              <div className="border-t border-slate-100 pt-4">
-                <span className="block text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-2.5">Historial de Compras Realizadas</span>
+              <div className="border-t border-zinc-100 pt-4">
+                <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider mb-2.5">Historial de Compras Realizadas</span>
                 {(() => {
                   const allSupplierPurchases = compras
                     .filter(c => c.proveedor_id === detailItem.id)
                     .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
                   if (allSupplierPurchases.length === 0) {
-                    return <p className="text-xs text-slate-400 italic">No se han registrado compras con este proveedor.</p>;
+                    return <p className="text-xs text-zinc-400 italic">No se han registrado compras con este proveedor.</p>;
                   }
 
                   return (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden max-h-48 overflow-y-auto">
+                    <div className="rounded-xl border border-zinc-200 overflow-hidden max-h-48 overflow-y-auto">
                       <table className="w-full text-[11px] text-left">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider sticky top-0">
+                        <thead className="bg-zinc-50 border-b border-zinc-200 text-zinc-500 font-bold uppercase tracking-wider sticky top-0">
                           <tr>
                             <th className="py-2 px-3">Factura</th>
                             <th className="py-2 px-3">Fecha</th>
@@ -377,10 +377,10 @@ export function Proveedores() {
                             <th className="py-2 px-3 text-center">Estado</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-600 bg-white">
+                        <tbody className="divide-y divide-zinc-100 text-zinc-600 bg-white">
                           {allSupplierPurchases.map(c => (
-                            <tr key={c.id} className="hover:bg-slate-50/50">
-                              <td className="py-2 px-3 font-mono font-bold text-teal-600">{c.factura_compra}</td>
+                            <tr key={c.id} className="hover:bg-zinc-50/50">
+                              <td className="py-2 px-3 font-mono font-bold text-amber-600">{c.factura_compra}</td>
                               <td className="py-2 px-3">{new Date(c.fecha).toLocaleDateString('es-CO')}</td>
                               <td className="py-2 px-3">{c.items.length} ítems</td>
                               <td className="py-2 px-3 text-right font-semibold font-mono">{formatCurrency(c.total)}</td>
@@ -398,7 +398,7 @@ export function Proveedores() {
             </div>
           );
         })()}
-        <div className="flex justify-end gap-3 mt-6 pt-3 border-t border-slate-100">
+        <div className="flex justify-end gap-3 mt-6 pt-3 border-t border-zinc-100">
           <Button variant="secondary" onClick={() => setDetailItem(null)}>Cerrar</Button>
         </div>
       </Modal>

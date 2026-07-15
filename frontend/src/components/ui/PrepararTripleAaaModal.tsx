@@ -48,7 +48,7 @@ function SearchableSelect({
   return (
     <div className="relative flex-1" ref={wrapperRef}>
       <input
-        className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+        className="w-full p-2 text-sm border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
         placeholder="Buscar insumo..."
         value={query}
         onFocus={() => setIsOpen(true)}
@@ -59,19 +59,19 @@ function SearchableSelect({
         }}
       />
       {isOpen && filtered.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-xl">
+        <ul className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-zinc-200 rounded-lg shadow-xl">
           {filtered.map(o => (
             <li 
               key={o.id}
-              className="px-3 py-2 text-sm hover:bg-amber-50 cursor-pointer border-b border-slate-50 last:border-0"
+              className="px-3 py-2 text-sm hover:bg-amber-50 cursor-pointer border-b border-zinc-50 last:border-0"
               onClick={() => {
                 onChange(o.id);
                 setQuery(o.label);
                 setIsOpen(false);
               }}
             >
-              <div className="font-medium text-slate-800">{o.label}</div>
-              {o.extra && <div className="text-xs text-slate-400">{o.extra}</div>}
+              <div className="font-medium text-zinc-800">{o.label}</div>
+              {o.extra && <div className="text-xs text-zinc-400">{o.extra}</div>}
             </li>
           ))}
         </ul>
@@ -179,21 +179,21 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Referencia</label>
-            <input required type="text" className="w-full p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" placeholder="Ej: Perfume Invictus 100ml" value={nombrePerfume} onChange={e => setNombrePerfume(e.target.value)} />
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Nombre Referencia</label>
+            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" placeholder="Ej: Perfume Invictus 100ml" value={nombrePerfume} onChange={e => setNombrePerfume(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Precio de Venta</label>
-            <input required type="text" className="w-full p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" value={formatNumberWithDots(precio)} onChange={e => {
+            <label className="block text-sm font-medium text-zinc-700 mb-1">Precio de Venta</label>
+            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" value={formatNumberWithDots(precio)} onChange={e => {
               const cleaned = e.target.value.replace(/\D/g, '');
               setPrecio(cleaned === '' ? 0 : Number(cleaned));
             }} />
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-100">
+        <div className="pt-4 border-t border-zinc-100">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="font-semibold text-slate-700 text-sm">Receta (Materias Primas Gastadas)</h4>
+            <h4 className="font-semibold text-zinc-700 text-sm">Receta (Materias Primas Gastadas)</h4>
             <Button type="button" size="sm" variant="secondary" onClick={handleAddIngredient}>
               <Plus className="w-4 h-4 mr-1" /> Añadir
             </Button>
@@ -201,8 +201,8 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
           
           <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2">
             {ingredientes.map((ing, idx) => (
-              <div key={ing.id} className="flex gap-2 items-center bg-slate-50 p-2 rounded-lg border border-slate-100 shadow-sm">
-                <span className="text-xs font-bold text-slate-400 w-4 text-center">{idx + 1}.</span>
+              <div key={ing.id} className="flex gap-2 items-center bg-zinc-50 p-2 rounded-lg border border-zinc-100 shadow-sm">
+                <span className="text-xs font-bold text-zinc-400 w-4 text-center">{idx + 1}.</span>
                 <SearchableSelect 
                   valueId={ing.materia_prima_id} 
                   onChange={(id) => handleIngredientChange(ing.id, 'materia_prima_id', id)} 
@@ -214,13 +214,13 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
                   step="0.01"
                   min="0.01" 
                   placeholder="Cant."
-                  className="w-24 p-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400" 
+                  className="w-24 p-2 text-sm border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400" 
                   value={ing.cantidad || ''} 
                   onChange={e => handleIngredientChange(ing.id, 'cantidad', Number(e.target.value))} 
                 />
                 <button 
                   type="button" 
-                  className="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                  className="p-2 text-zinc-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                   onClick={() => handleRemoveIngredient(ing.id)}
                   disabled={ingredientes.length === 1}
                 >
