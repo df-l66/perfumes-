@@ -278,82 +278,9 @@ export function Productos() {
         </div>
       </div>
 
-      {/* Table & Cards Container */}
+      {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        
-        {/* Mobile Cards View */}
-        <div className="md:hidden divide-y divide-slate-100">
-          {filtered.length === 0 ? (
-            <div className="px-5 py-12 text-center">
-              <Package size={32} className="mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-400 text-sm">No se encontraron productos</p>
-            </div>
-          ) : paginated.map(p => (
-            <div key={p.id} className="p-4 hover:bg-slate-50 transition-colors">
-              <div className="flex gap-3 mb-3">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
-                  {p.imagen ? (
-                    <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
-                  ) : (
-                    <Package size={20} className="text-slate-400" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start gap-2">
-                    <p className="font-bold text-slate-800 text-sm leading-tight truncate">{p.nombre}</p>
-                    <Badge variant={p.estado} />
-                  </div>
-                  <p className="text-[11px] text-slate-400 font-mono mt-1">{p.codigo} · {p.unidad}</p>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">{p.descripcion}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-2 mb-3 bg-slate-50/80 rounded-lg p-2.5 border border-slate-100">
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Precio Venta</p>
-                  <p className="text-sm font-black text-teal-600">{formatCurrency(p.precio_venta)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Stock / Mínimo</p>
-                  <p className="text-sm font-bold text-slate-700">
-                    <span className={p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : ''}>{p.stock}</span> 
-                    <span className="text-slate-400 font-normal"> / {p.stock_minimo}</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Categoría</p>
-                  <p className="text-xs font-semibold text-slate-600">{p.categoria}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Variante</p>
-                  <p className="text-xs font-semibold text-slate-600">{p.calidad} {p.mililitros ? `- ${p.mililitros}ml` : ''}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button onClick={() => setDetailItem(p)} className="flex-1 flex justify-center items-center gap-1.5 py-2 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-xs transition-colors">
-                  <Eye size={14} /> Detalles
-                </button>
-                {isAdmin && (
-                  <>
-                    <button onClick={() => toggleEstado(p)} className={`p-2 rounded-lg transition-colors ${p.estado === 'inactivo' ? 'bg-slate-100 text-emerald-600' : 'bg-slate-100 text-red-500'}`}>
-                      <Power size={14} />
-                    </button>
-                    <button onClick={() => openEdit(p)} className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
-                      <Pencil size={14} />
-                    </button>
-                    <button onClick={() => setDeleteConfirm(p)} className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors">
-                      <Trash2 size={14} />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -369,7 +296,7 @@ export function Productos() {
                   { label: 'Estado', className: 'hidden md:table-cell' }, 
                   { label: 'Acciones', className: 'text-right' }
                 ].map(h => (
-                  <th key={h.label} className={`px-4 sm:px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
+                  <th key={h.label} className={`px-2 sm:px-3 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${h.className}`}>{h.label}</th>
                 ))}
               </tr>
             </thead>
@@ -383,8 +310,8 @@ export function Productos() {
                 </tr>
               ) : paginated.map(p => (
                 <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="px-4 sm:px-5 py-3.5 font-mono text-xs text-slate-500 whitespace-nowrap hidden sm:table-cell">{p.codigo}</td>
-                  <td className="px-4 sm:px-5 py-3.5">
+                  <td className="px-2 sm:px-3 py-3 font-mono text-xs text-slate-500 whitespace-nowrap hidden sm:table-cell">{p.codigo}</td>
+                  <td className="px-2 sm:px-3 py-3">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200/60 shrink-0 flex items-center justify-center">
                         {p.imagen ? (
@@ -394,47 +321,47 @@ export function Productos() {
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-800 text-sm truncate max-w-[120px] sm:max-w-xs">{p.nombre}</p>
-                        <p className="text-[10px] sm:text-xs text-slate-400 truncate max-w-[120px] sm:max-w-xs">{p.unidad} · {p.descripcion}</p>
+                        <p className="font-medium text-slate-800 text-sm leading-tight max-w-[140px] sm:max-w-[200px]">{p.nombre}</p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 max-w-[140px] sm:max-w-[200px] leading-tight">{p.unidad} · {p.descripcion}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden md:table-cell">{p.categoria}</td>
+                  <td className="px-2 sm:px-3 py-3 text-slate-600 hidden md:table-cell text-xs">{p.categoria}</td>
                   
                   {/* Columnas fijas de Perfumes */}
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-600 whitespace-nowrap hidden lg:table-cell">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium scale-90 ${p.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                  <td className="px-2 sm:px-3 py-3 text-slate-600 whitespace-nowrap hidden lg:table-cell">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium ${p.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
                       {p.calidad || 'Original'}
                     </span>
                   </td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-500 whitespace-nowrap font-mono text-[10px] sm:text-xs hidden lg:table-cell">{p.mililitros || 100} ml</td>
+                  <td className="px-2 sm:px-3 py-3 text-slate-500 whitespace-nowrap font-mono text-[10px] sm:text-[11px] hidden lg:table-cell">{p.mililitros || 100} ml</td>
 
-                  <td className="px-4 sm:px-5 py-3.5 font-semibold text-slate-800 whitespace-nowrap text-sm">{formatCurrency(p.precio_venta)}</td>
-                  <td className="px-4 sm:px-5 py-3.5">
-                    <span className={`font-bold text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
+                  <td className="px-2 sm:px-3 py-3 font-semibold text-slate-800 whitespace-nowrap text-xs sm:text-sm">{formatCurrency(p.precio_venta)}</td>
+                  <td className="px-2 sm:px-3 py-3">
+                    <span className={`font-bold text-xs sm:text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-slate-800'}`}>
                       {p.stock}
                     </span>
                   </td>
-                  <td className="px-4 sm:px-5 py-3.5 text-slate-500 hidden sm:table-cell">{p.stock_minimo}</td>
-                  <td className="px-4 sm:px-5 py-3.5 hidden md:table-cell"><Badge variant={p.estado} /></td>
-                  <td className="px-4 sm:px-5 py-3.5">
-                    <div className="flex justify-end gap-1">
-                      <button onClick={() => setDetailItem(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
+                  <td className="px-2 sm:px-3 py-3 text-slate-500 hidden sm:table-cell text-xs">{p.stock_minimo}</td>
+                  <td className="px-2 sm:px-3 py-3 hidden md:table-cell"><Badge variant={p.estado} /></td>
+                  <td className="px-2 sm:px-3 py-3">
+                    <div className="flex justify-end gap-1 flex-nowrap">
+                      <button onClick={() => setDetailItem(p)} className="p-1 sm:p-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={14} />
                       </button>
                       {isAdmin && (
                         <>
                           <button 
                             onClick={() => toggleEstado(p)} 
-                            className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
+                            className={`hidden xl:inline-flex p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer ${p.estado === 'inactivo' ? 'text-slate-400 hover:text-emerald-600' : 'text-emerald-600 hover:text-red-500'}`} 
                             title={p.estado === 'inactivo' ? 'Activar Perfume' : 'Inactivar Perfume'}
                           >
                             <Power size={14} />
                           </button>
-                          <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
+                          <button onClick={() => openEdit(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-teal-600 transition-colors cursor-pointer" title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => setDeleteConfirm(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                          <button onClick={() => setDeleteConfirm(p)} className="hidden lg:inline-flex p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
                             <Trash2 size={14} />
                           </button>
                         </>
