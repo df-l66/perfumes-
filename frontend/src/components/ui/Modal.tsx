@@ -65,5 +65,6 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', headerAct
         </div>
       </div>
     </div>
+    </div>
   );
 }
