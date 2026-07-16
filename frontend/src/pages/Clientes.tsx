@@ -397,7 +397,7 @@ export function Clientes() {
         <AlertBox type="critical" title="Acción irreversible">
           ¿Eliminar a <strong>{deleteConfirm?.nombre}</strong>?
         </AlertBox>
-        <div className="flex justify-end gap-3 mt-5">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-100">
           <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
           <Button variant="danger" onClick={() => { deleteCliente(deleteConfirm!.id, user?.name || 'Usuario', user?.role || 'admin'); setDeleteConfirm(null); }}>Eliminar</Button>
         </div>

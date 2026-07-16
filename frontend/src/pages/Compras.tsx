@@ -999,80 +999,111 @@ export function Compras() {
       </div>
 
       {/* Detail Modal */}
-      {detailCompra && (
-        <Modal 
-          isOpen={!!detailCompra} 
-          onClose={() => setDetailCompra(null)} 
-          title={`Detalle de Compra: ${detailCompra.factura_compra}`} 
-          size="xl"
-        >
-          <div className="space-y-6 text-left">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="text-xs space-y-1">
-                <span className="block text-zinc-400 uppercase font-bold text-[8px]">Proveedor</span>
-                <span className="font-bold text-zinc-800 text-sm block">{detailCompra.proveedor_nombre}</span>
-                <span className="text-[10px] text-zinc-400">Fecha de compra: {detailCompra.fecha}</span>
+      <Modal 
+        isOpen={!!detailCompra} 
+        onClose={() => setDetailCompra(null)} 
+        title={`Comprobante de Compra — ${detailCompra?.factura_compra}`} 
+        size="xl"
+      >
+        {detailCompra && (() => {
+          return (
+            <div className="space-y-6">
+              {/* Printable Purchase Container */}
+              <div id="printable-purchase" className="bg-white border border-zinc-200 rounded-xl p-6 space-y-5 print:border-0 print:p-0 print:shadow-none">
+                
+                {/* Invoice Header */}
+                <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-zinc-100 pb-4">
+                  <div className="flex items-start gap-4">
+                    <img src="/logo.jpg" alt="Logo" className="w-16 h-16 object-contain print:w-16 print:h-16 rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <div className="space-y-1">
+                      <h3 className="font-extrabold text-zinc-800 text-lg leading-tight">{configuracion.nombre}</h3>
+                      <p className="text-xs text-zinc-500 font-medium">NIT: {configuracion.nit}</p>
+                      <p className="text-xs text-zinc-400">{configuracion.direccion}</p>
+                      <p className="text-xs text-zinc-400">Tel: {configuracion.telefono}</p>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right space-y-1 shrink-0">
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Factura de Compra</span>
+                    <h4 className="text-xl font-mono font-bold text-amber-600">{detailCompra.factura_compra}</h4>
+                    <p className="text-xs text-zinc-500">Fecha: {new Date(detailCompra.fecha).toLocaleDateString('es-CO')}</p>
+                    <Badge variant={detailCompra.estado} className="mt-1" />
+                  </div>
+                </div>
+
+                {/* Proveedor / Comprador Metadata */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-zinc-50 p-3 rounded-lg border border-zinc-100 print:bg-white print:border-zinc-200">
+                  <div>
+                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Proveedor</p>
+                    <p className="font-bold text-zinc-800 mt-1">{detailCompra.proveedor_nombre}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Responsable de Registro</p>
+                    <p className="font-bold text-zinc-800 mt-1">{detailCompra.comprador_nombre}</p>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                <div className="rounded-lg border border-zinc-200 overflow-hidden print:border-zinc-300">
+                  <table className="w-full text-xs">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
+                      <tr>
+                        <th className="px-4 py-2.5 text-left font-bold text-zinc-600">Descripción del Producto</th>
+                        <th className="px-4 py-2.5 text-center font-bold text-zinc-600">Cant.</th>
+                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">Costo Unit.</th>
+                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">P. Venta</th>
+                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {detailCompra.items.map(item => (
+                        <tr key={item.producto_id} className="hover:bg-zinc-50/20">
+                          <td className="px-4 py-2.5 text-zinc-700 font-medium truncate max-w-0" title={item.nombre}>{item.nombre}</td>
+                          <td className="px-4 py-2.5 text-center text-zinc-600 font-mono">{item.cantidad}</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-600 font-mono">{formatCurrency(item.precio_costo)}</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-500 font-mono">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
+                          <td className="px-4 py-2.5 text-right font-bold text-zinc-800 font-mono">{formatCurrency(item.subtotal)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="border-t border-zinc-200 bg-zinc-50/50 print:bg-zinc-50">
+                      <tr className="bg-amber-50/50 border-t border-amber-100 print:bg-amber-50">
+                        <td colSpan={4} className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm">TOTAL PAGADO</td>
+                        <td className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm font-mono">{formatCurrency(detailCompra.total)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                {detailCompra.notas && (
+                  <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl print:bg-white print:border-zinc-300">
+                    <span className="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Notas Administrativas</span>
+                    <p className="text-xs text-zinc-600 leading-relaxed">{detailCompra.notas}</p>
+                  </div>
+                )}
               </div>
-              <div className="text-xs space-y-1 text-right">
-                <span className="block text-zinc-400 uppercase font-bold text-[8px]">Responsable Registro</span>
-                <span className="font-bold text-zinc-800 text-sm block">{detailCompra.comprador_nombre}</span>
-                <div className="mt-1 flex justify-end">
-                  <Badge variant={detailCompra.estado} />
+
+              {/* Detail Buttons (Hidden on Print) */}
+              <div className="flex justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
+                <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()}>
+                  Descargar Comprobante
+                </Button>
+                <div className="flex items-center gap-3">
+                  {isAdmin && detailCompra.estado === 'completada' ? (
+                    <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
+                      Anular Compra
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
+                  <Button variant="ghost" onClick={() => setDetailCompra(null)}>
+                    Cerrar
+                  </Button>
                 </div>
               </div>
             </div>
-
-            <div className="rounded-lg border border-zinc-200 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50">
-                  <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-zinc-500">Producto</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-zinc-500">Cantidad</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Costo Unit.</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">P. Venta</th>
-                    <th className="px-4 py-2.5 text-right text-xs font-semibold text-zinc-500">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 bg-white">
-                  {detailCompra.items.map(item => (
-                    <tr key={item.producto_id}>
-                      <td className="px-4 py-2.5 text-zinc-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
-                      <td className="px-4 py-2.5 text-center text-zinc-600">{item.cantidad}</td>
-                      <td className="px-4 py-2.5 text-right text-zinc-600 font-mono">{formatCurrency(item.precio_costo)}</td>
-                      <td className="px-4 py-2.5 text-right text-zinc-500 font-mono">{item.precio_venta ? formatCurrency(item.precio_venta) : 'Sin cambios'}</td>
-                      <td className="px-4 py-2.5 text-right font-semibold text-zinc-800 font-mono">{formatCurrency(item.subtotal)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-amber-50 border-t border-amber-200 font-bold">
-                  <tr>
-                    <td colSpan={4} className="px-4 py-3.5 text-right text-amber-700">TOTAL PAGADO</td>
-                    <td className="px-4 py-3.5 text-right text-amber-700 text-base font-mono">{formatCurrency(detailCompra.total)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-
-            {detailCompra.notas && (
-              <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
-                <span className="block text-[8px] font-bold text-zinc-400 uppercase mb-1">Notas Administrativas</span>
-                <p className="text-xs text-zinc-600 leading-relaxed">{detailCompra.notas}</p>
-              </div>
-            )}
-
-              <div className="flex items-center justify-between gap-3 pt-4 border-t border-zinc-100">
-                {isAdmin && detailCompra.estado === 'completada' ? (
-                  <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
-                    Anular Compra
-                  </Button>
-                ) : (
-                  <div />
-                )}
-                <Button variant="secondary" onClick={() => setDetailCompra(null)}>Cerrar</Button>
-              </div>
-          </div>
-        </Modal>
-      )}
+          );
+        })()}
+      </Modal>
 
       {/* Modal for creating a new purchase */}
       <NuevaCompraModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
