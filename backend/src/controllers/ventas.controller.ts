@@ -203,8 +203,8 @@ export const anularVenta = async (req: Request, res: Response) => {
           .single();
 
         if (mp) {
-          const nuevoStock = mp.stock + mov.cantidad;
-          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= mp.stock_minimo ? 'stock_bajo' : 'activo';
+          const nuevoStock = Number(mp.stock) + Number(mov.cantidad);
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
 
           await supabase.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', mov.materia_prima_id);
           
