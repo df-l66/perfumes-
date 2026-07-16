@@ -150,16 +150,12 @@ export const anularVenta = async (req: Request, res: Response) => {
     if (fetchError || !venta) throw new Error('Venta no encontrada');
     if (venta.estado === 'anulada') throw new Error('La venta ya estaba anulada');
 
-    // Cambiar estado a anulada
-    const { error: updateError } = await supabase
-      .from('ventas')
-      .update({ estado: 'anulada' })
-      .eq('id', id);
-
-    if (updateError) throw updateError;
+    // We will update the status to anulada AT THE END of the function
+    // to avoid partial updates if an error occurs during stock restoration.
 
     // Devolver el stock de cada producto
     for (const item of venta.venta_detalles) {
+      if (!item.producto_id) continue; // Skip prepared items that don't have a product ID
       const { data: prod } = await supabase
         .from('productos')
         .select('stock, stock_minimo')
@@ -241,6 +237,13 @@ export const anularVenta = async (req: Request, res: Response) => {
           .eq('id', venta.cliente_id);
       }
     }
+    // Cambiar estado a anulada al final, si todo salió bien
+    const { error: updateError } = await supabase
+      .from('ventas')
+      .update({ estado: 'anulada' })
+      .eq('id', id);
+
+    if (updateError) throw updateError;
 
     res.status(200).json({ message: 'Venta anulada correctamente' });
   } catch (error: any) {
