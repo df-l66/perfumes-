@@ -997,7 +997,7 @@ export function Ventas() {
       <Modal isOpen={!!anularConfirm} onClose={() => setAnularConfirm(null)} title="Anular Venta" size="sm">
         <AlertBox type="warning" title="Anular venta">
           ¿Anular la venta <strong>{anularConfirm?.factura}</strong> de {formatCurrency(anularConfirm?.total ?? 0)}?
-          Esta acción no restaura el stock automáticamente.
+          Esta acción devolverá automáticamente los productos y materias primas al inventario.
         </AlertBox>
         <div className="flex justify-end gap-3 mt-5">
           <Button variant="secondary" onClick={() => setAnularConfirm(null)}>Cancelar</Button>
