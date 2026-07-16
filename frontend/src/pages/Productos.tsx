@@ -296,7 +296,7 @@ export function Productos() {
                     {p.imagen ? <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" /> : <Package size={20} className="text-zinc-400" />}
                   </div>
                   <div>
-                    <p className="font-bold text-zinc-800 text-sm leading-tight max-w-[200px]">{p.nombre}</p>
+                    <p className="font-bold text-zinc-800 text-sm leading-tight max-w-50">{p.nombre}</p>
                     <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{p.codigo} · {p.calidad || 'Original'}</p>
                   </div>
                 </div>

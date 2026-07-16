@@ -100,20 +100,26 @@ export function Clientes() {
     }
 
     // Validar límite de crédito
-    const limite = form.limite_credito || 0;
-    const deuda = form.credito_usado || 0;
-    if (deuda > limite) {
+    const limite = form.limite_credito === '' ? 0 : Number(form.limite_credito);
+    const deuda = form.credito_usado === '' ? 0 : Number(form.credito_usado);
+    if (deuda > limite && limite > 0) {
       setError(`La deuda actual (${formatCurrency(deuda)}) no puede ser mayor que el límite de crédito asignado (${formatCurrency(limite)}).`);
       return;
     }
 
+    const payload = {
+      ...form,
+      limite_credito: limite,
+      credito_usado: deuda
+    };
+
     const uName = user?.name || 'Usuario';
     const uRole = user?.role || 'admin';
     if (editItem) {
-      updateCliente({ ...form, id: editItem.id }, uName, uRole);
+      updateCliente({ ...payload, id: editItem.id }, uName, uRole);
       setSuccessToast('¡Cliente actualizado con éxito!');
     } else {
-      addCliente(form, uName, uRole);
+      addCliente(payload, uName, uRole);
       setSuccessToast('¡Cliente registrado con éxito!');
     }
     setModalOpen(false);
@@ -275,7 +281,7 @@ export function Clientes() {
                         {c.tipo === 'empresa' ? <Building2 size={14} /> : <User size={14} />}
                       </div>
                       <div className="min-w-0">
-                        <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.nombre}</span>
+                        <span className="font-medium text-zinc-800 text-sm truncate max-w-30 sm:max-w-xs block">{c.nombre}</span>
                         <span className="text-[10px] sm:hidden text-zinc-500">{c.documento}</span>
                       </div>
                     </div>

@@ -42,7 +42,7 @@ export function Sidebar() {
       {/* Mobile Hamburger Button */}
       <button
         onClick={() => setMobileMenuOpen(true)}
-        className="md:hidden fixed top-[13px] sm:top-[17px] left-4 z-40 p-1.5 bg-white/50 backdrop-blur-sm border border-zinc-200 rounded-lg text-zinc-700 shadow-sm hover:bg-white transition-colors"
+        className="md:hidden fixed top-3.25 sm:top-4.25 left-4 z-40 p-1.5 bg-white/50 backdrop-blur-sm border border-zinc-200 rounded-lg text-zinc-700 shadow-sm hover:bg-white transition-colors"
       >
         <Menu size={20} />
       </button>

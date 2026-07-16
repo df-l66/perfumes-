@@ -211,7 +211,7 @@ export function Proveedores() {
                         <Truck size={14} className="text-zinc-500" />
                       </div>
                       <div className="min-w-0">
-                        <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{p.nombre}</span>
+                        <span className="font-medium text-zinc-800 text-sm truncate max-w-30 sm:max-w-xs block">{p.nombre}</span>
                         <span className="text-[10px] sm:hidden text-zinc-500">{p.nit}</span>
                       </div>
                     </div>

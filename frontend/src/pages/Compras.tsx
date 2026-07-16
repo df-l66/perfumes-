@@ -927,7 +927,7 @@ export function Compras() {
                   >
                     <td className="px-4 sm:px-5 py-4 font-mono text-[10px] sm:text-xs font-bold text-amber-600 whitespace-nowrap">{c.factura_compra}</td>
                     <td className="px-4 sm:px-5 py-4">
-                      <span className="font-medium text-zinc-800 text-sm truncate max-w-[120px] sm:max-w-xs block">{c.proveedor_nombre}</span>
+                      <span className="font-medium text-zinc-800 text-sm truncate max-w-30 sm:max-w-xs block">{c.proveedor_nombre}</span>
                       <span className="text-[10px] sm:hidden text-zinc-500">{c.fecha}</span>
                     </td>
                     <td className="px-4 sm:px-5 py-4 text-zinc-500 whitespace-nowrap hidden sm:table-cell">{c.fecha}</td>

@@ -120,6 +120,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
   const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
+  const refrescarMateriasPrimas = () => {
+    fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
+    fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
+  };
 
   const loadUsers = async () => {
     try {
@@ -371,6 +375,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const nuevaVenta = await fetchCreateVenta(payload);
       setVentas(prev => [nuevaVenta, ...prev]);
       refrescarProductos();
+      refrescarMateriasPrimas(); // Sincronizar stock de materias primas por si hubo perfumes triple AAA
       if (metodoPago === 'credito') refrescarClientes(); // Sincronizar stock
 
       if (metodoPago === 'credito' && clienteId !== 'walk-in') {
@@ -392,6 +397,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await fetchAnularVenta(id, autorNombre, autorId);
       setVentas(prev => prev.map(v => v.id === id ? { ...v, estado: 'anulada' } : v));
       refrescarProductos();
+      refrescarMateriasPrimas(); // Sincronizar stock de materias primas restaurado
       if (vnt.metodo_pago === 'credito') refrescarClientes(); // Sincronizar stock restaurado
 
       if (vnt.metodo_pago === 'credito' && vnt.cliente_id) {

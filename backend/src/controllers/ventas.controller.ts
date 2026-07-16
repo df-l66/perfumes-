@@ -191,6 +191,41 @@ export const anularVenta = async (req: Request, res: Response) => {
         }]);
       }
     }
+
+    // Devolver stock de materias primas descontadas en esta venta
+    const { data: movsMp } = await supabase
+      .from('movimientos_materias_primas')
+      .select('*')
+      .eq('referencia', `Venta ${venta.factura}`);
+
+    if (movsMp && movsMp.length > 0) {
+      for (const mov of movsMp) {
+        const { data: mp } = await supabase
+          .from('materias_primas')
+          .select('stock, stock_minimo')
+          .eq('id', mov.materia_prima_id)
+          .single();
+
+        if (mp) {
+          const nuevoStock = mp.stock + mov.cantidad;
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= mp.stock_minimo ? 'stock_bajo' : 'activo';
+
+          await supabase.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', mov.materia_prima_id);
+          
+          await supabase.from('movimientos_materias_primas').insert([{
+            materia_prima_id: mov.materia_prima_id,
+            materia_prima_nombre: mov.materia_prima_nombre,
+            tipo: 'entrada',
+            cantidad: mov.cantidad,
+            stock_anterior: mp.stock,
+            stock_nuevo: nuevoStock,
+            referencia: `Anulación de Venta ${venta.factura}`,
+            registrado_por: autorId
+          }]);
+        }
+      }
+    }
+
     // Devolver crédito al cliente si la venta era a crédito
     if (venta.metodo_pago === 'credito' && venta.cliente_id) {
       const { data: cliente } = await supabase
