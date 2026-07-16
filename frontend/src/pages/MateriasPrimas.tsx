@@ -414,7 +414,7 @@ export function MateriasPrimas() {
       </Modal>
 
       {/* View Details Modal */}
-      <Modal isOpen={!!viewItem} onClose={() => setViewItem(null)} title="Detalles de Materia Prima">
+      <Modal isOpen={!!viewItem} onClose={() => setViewItem(null)} title="Detalles e Historial de Materia Prima" size="xl">
         {viewItem && (
           <div className="space-y-6">
             {viewItem.imagen && viewItem.tipo === 'esencia' && (
@@ -425,37 +425,31 @@ export function MateriasPrimas() {
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Nombre</p>
-                <p className="font-semibold text-gray-900">{viewItem.nombre}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+              <div className="col-span-2 sm:col-span-4">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Nombre</p>
+                <p className="font-extrabold text-gray-900 text-lg">{viewItem.nombre}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Tipo</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Tipo</p>
                 <p className="font-semibold text-gray-900 capitalize">{viewItem.tipo}</p>
               </div>
-              
               <div>
-                <p className="text-xs text-gray-500 font-medium">Stock Actual</p>
-                <div className="flex items-center gap-2">
-                  <p className={`font-semibold ${viewItem.stock <= viewItem.stock_minimo ? 'text-red-600' : 'text-green-600'}`}>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Stock Actual</p>
+                <div className="flex items-center gap-1">
+                  <p className={`font-bold ${viewItem.stock <= viewItem.stock_minimo ? 'text-red-600' : 'text-green-600'}`}>
                     {viewItem.stock}
                   </p>
-                  <span className="text-sm text-gray-500">{viewItem.unidad_medida}</span>
+                  <span className="text-xs font-semibold text-gray-500">{viewItem.unidad_medida}</span>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Stock Mínimo</p>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Stock Mínimo</p>
                 <p className="font-semibold text-gray-900">{viewItem.stock_minimo} {viewItem.unidad_medida}</p>
               </div>
-
               <div>
-                <p className="text-xs text-gray-500 font-medium">Costo Referencia</p>
-                <p className="font-semibold text-gray-900">{formatCurrency(viewItem.costo_unitario)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Estado</p>
-                <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-xs font-medium ${
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Estado</p>
+                <span className={`inline-flex mt-0.5 items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${
                   viewItem.estado === 'activo' ? 'bg-green-100 text-green-800' :
                   viewItem.estado === 'stock_bajo' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
@@ -465,13 +459,60 @@ export function MateriasPrimas() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-zinc-100 mt-6">
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openAjuste(viewItem.id); }}>Ajuste</Button>
-                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openEdit(viewItem); }}>Editar</Button>
-                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); handleDelete(viewItem.id); }} className="text-red-600 hover:text-red-700 border-red-200 bg-red-50">Eliminar</Button>
+            <div className="mt-4">
+              <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <Package size={16} className="text-amber-500" /> Historial de Movimientos
+              </h4>
+              <div className="rounded-lg border border-gray-200 overflow-x-auto max-h-60 overflow-y-auto">
+                <table className="w-full text-xs min-w-125">
+                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2.5 text-left font-bold text-gray-600">Fecha</th>
+                      <th className="px-3 py-2.5 text-left font-bold text-gray-600">Tipo</th>
+                      <th className="px-3 py-2.5 text-left font-bold text-gray-600">Referencia</th>
+                      <th className="px-3 py-2.5 text-center font-bold text-gray-600">Cant.</th>
+                      <th className="px-3 py-2.5 text-right font-bold text-gray-600">Stock Final</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {movimientosMateriasPrimas.filter(m => m.materia_prima_id === viewItem.id).length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-6 text-center text-gray-500 italic">No hay movimientos registrados para este insumo.</td>
+                      </tr>
+                    ) : (
+                      movimientosMateriasPrimas
+                        .filter(m => m.materia_prima_id === viewItem.id)
+                        .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                        .map(m => (
+                          <tr key={m.id} className="hover:bg-gray-50/50">
+                            <td className="px-3 py-2 text-gray-500 whitespace-nowrap">{new Date(m.fecha).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-flex px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider ${
+                                m.tipo.includes('entrada') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                              }`}>
+                                {m.tipo.replace('_', ' ')}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-gray-800 font-semibold truncate max-w-35" title={m.referencia}>{m.referencia || '-'}</td>
+                            <td className={`px-3 py-2 text-center font-mono font-bold ${m.tipo.includes('entrada') ? 'text-green-600' : 'text-red-600'}`}>
+                              {m.tipo.includes('entrada') ? '+' : '-'}{m.cantidad}
+                            </td>
+                            <td className="px-3 py-2 text-right font-mono font-bold text-gray-600">{m.stock_nuevo}</td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <Button onClick={() => setViewItem(null)}>Cerrar</Button>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3 pt-4 border-t border-zinc-100 mt-6">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openAjuste(viewItem.id); }} className="w-full sm:w-auto justify-center">Ajuste</Button>
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); openEdit(viewItem); }} className="w-full sm:w-auto justify-center">Editar</Button>
+                <Button variant="secondary" size="sm" onClick={() => { setViewItem(null); handleDelete(viewItem.id); }} className="w-full sm:w-auto justify-center text-red-600 hover:text-red-700 border-red-200 bg-red-50">Eliminar</Button>
+              </div>
+              <Button onClick={() => setViewItem(null)} className="w-full sm:w-auto justify-center">Cerrar</Button>
             </div>
           </div>
         )}

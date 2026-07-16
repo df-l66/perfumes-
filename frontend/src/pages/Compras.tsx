@@ -1043,8 +1043,8 @@ export function Compras() {
                 </div>
 
                 {/* Items Table */}
-                <div className="rounded-lg border border-zinc-200 overflow-hidden print:border-zinc-300">
-                  <table className="w-full text-xs">
+                <div className="rounded-lg border border-zinc-200 overflow-x-auto print:border-zinc-300">
+                  <table className="w-full text-xs min-w-125">
                     <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
                       <tr>
                         <th className="px-4 py-2.5 text-left font-bold text-zinc-600">Descripción del Producto</th>
@@ -1083,19 +1083,19 @@ export function Compras() {
               </div>
 
               {/* Detail Buttons (Hidden on Print) */}
-              <div className="flex justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
-                <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()}>
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
+                <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()} className="w-full sm:w-auto justify-center">
                   Descargar Comprobante
                 </Button>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                   {isAdmin && detailCompra.estado === 'completada' ? (
-                    <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular}>
+                    <Button variant="danger" icon={<XCircle size={15} />} onClick={handleAnular} className="w-full sm:w-auto justify-center">
                       Anular Compra
                     </Button>
                   ) : (
                     <div />
                   )}
-                  <Button variant="ghost" onClick={() => setDetailCompra(null)}>
+                  <Button variant="ghost" onClick={() => setDetailCompra(null)} className="w-full sm:w-auto justify-center">
                     Cerrar
                   </Button>
                 </div>
