@@ -1014,7 +1014,7 @@ export function Compras() {
                 {/* Invoice Header */}
                 <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-zinc-100 pb-4">
                   <div className="flex items-start gap-4">
-                    <img src="/logo.jpg" alt="Logo" className="w-16 h-16 object-contain print:w-16 print:h-16 rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <img src="/logo.png" alt="Logo" className="w-44 h-44 object-contain print:w-44 print:h-44 scale-125 origin-center rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
                     <div className="space-y-1">
                       <h3 className="font-extrabold text-zinc-800 text-lg leading-tight">{configuracion.nombre}</h3>
                       <p className="text-xs text-zinc-500 font-medium">NIT: {configuracion.nit}</p>

@@ -74,14 +74,14 @@ export function Sidebar() {
           isHovered || mobileMenuOpen ? 'px-6' : 'justify-center px-4'
         }`}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/20">
-              <Building2 size={18} className="text-white" />
+            <div className="w-10 h-10 rounded-xl bg-transparent flex items-center justify-center shrink-0 overflow-hidden">
+              <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.insertAdjacentHTML('beforeend', '<div class="w-full h-full bg-amber-500 flex items-center justify-center rounded-xl"><span class="text-white font-bold text-xs">FMC</span></div>'); }} />
             </div>
             <div className={`transition-all duration-300 origin-left ${
               isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
             }`}>
-              <p className="font-bold text-white text-sm tracking-tight leading-none">GestiónPro</p>
-              <p className="text-zinc-500 text-[9px] uppercase font-bold tracking-wider mt-1">Control Panel</p>
+              <p className="font-bold text-amber-500 text-sm tracking-tight leading-none">Fragancias MC</p>
+              <p className="text-zinc-500 text-[8px] uppercase font-bold tracking-wider mt-1 whitespace-nowrap">Tu esencia, nuestra pasión</p>
             </div>
           </div>
           {/* Close button on mobile */}

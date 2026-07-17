@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Pencil, Trash2, Beaker, FileDown, Eye, Droplet, Package } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Beaker, FileDown, Eye, Droplet, Package, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -22,6 +22,31 @@ const formatNumberWithDots = (val: number | string) => {
   return new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(+numStr);
 };
 
+const AutoSlider = ({ images, alt }: { images: string[], alt: string }) => {
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (images.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % images.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [images.length]);
+
+  return (
+    <div className="w-full h-full relative">
+      {images.map((img, i) => (
+        <img
+          key={i}
+          src={img}
+          alt={alt}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === index ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+    </div>
+  );
+};
+
 export function MateriasPrimas() {
   const { materiasPrimas, addMateriaPrima, updateMateriaPrima, deleteMateriaPrima, registrarMovimientoMateriaPrima, movimientosMateriasPrimas } = useAppData();
   const { user } = useAuth();
@@ -34,6 +59,7 @@ export function MateriasPrimas() {
   const [viewItem, setViewItem] = useState<MateriaPrima | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [ajusteError, setAjusteError] = useState<string | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
   
   const [ajusteForm, setAjusteForm] = useState({
     materia_prima_id: '',
@@ -56,7 +82,8 @@ export function MateriasPrimas() {
 
   const openEdit = (p: MateriaPrima) => {
     setEditItem(p);
-    setForm({ ...p });
+    const images = p.imagen ? p.imagen.split(',') : [''];
+    setForm({ ...p, imagen: images[0] || '', imagen2: images[1] || '' });
     setError(null);
     setModalOpen(true);
   };
@@ -87,10 +114,18 @@ export function MateriasPrimas() {
       return;
     }
 
-    if (editItem) {
-      updateMateriaPrima(editItem.id, form, user?.name || '', user?.role || '');
+    const finalForm = { ...form };
+    if (form.tipo === 'esencia') {
+      finalForm.imagen = [form.imagen, form.imagen2].filter(Boolean).join(',');
     } else {
-      addMateriaPrima(form, user?.name || '', user?.role || '');
+      finalForm.imagen = form.imagen || '';
+    }
+    delete finalForm.imagen2;
+
+    if (editItem) {
+      updateMateriaPrima(editItem.id, finalForm, user?.name || '', user?.role || '');
+    } else {
+      addMateriaPrima(finalForm, user?.name || '', user?.role || '');
     }
     setModalOpen(false);
   };
@@ -180,7 +215,7 @@ export function MateriasPrimas() {
                 <div className="flex gap-3 items-center">
                   {p.tipo === 'esencia' ? (
                     <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                      {p.imagen ? <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" /> : <Droplet className="w-5 h-5 text-purple-300" />}
+                      {p.imagen ? <AutoSlider images={p.imagen.split(',')} alt={p.nombre} /> : <Droplet className="w-5 h-5 text-purple-300" />}
                     </div>
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
@@ -210,7 +245,7 @@ export function MateriasPrimas() {
               </div>
 
               <div className="flex items-center gap-2 pt-1">
-                <button onClick={() => setViewItem(p)} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
+                <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
                   <Eye size={14} className="mr-1.5" /> Detalles
                 </button>
                 <button onClick={() => openAjuste(p.id)} className="flex-1 py-2 flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors">
@@ -248,7 +283,7 @@ export function MateriasPrimas() {
                       {p.tipo === 'esencia' ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
                           {p.imagen ? (
-                            <img src={p.imagen} alt={p.nombre} className="w-full h-full object-cover" />
+                            <AutoSlider images={p.imagen.split(',')} alt={p.nombre} />
                           ) : (
                             <Droplet className="w-5 h-5 text-purple-300" />
                           )}
@@ -275,7 +310,7 @@ export function MateriasPrimas() {
                   <td className="px-3 sm:px-4 py-3 font-semibold text-zinc-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
                   <td className="px-3 sm:px-4 py-3">
                     <div className="flex justify-end gap-1">
-                      <button onClick={() => setViewItem(p)} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
+                      <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
                         <Eye size={16} />
                       </button>
                       <button onClick={() => openAjuste(p.id)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
@@ -350,14 +385,27 @@ export function MateriasPrimas() {
             <input required type="text" className={inp} value={formatNumberWithDots(form.costo_unitario)} onChange={e => handlePriceChange('costo_unitario', e.target.value)} />
           </div>
           {form.tipo === 'esencia' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">URL de Imagen (Opcional)</label>
-              <input type="url" placeholder="https://ejemplo.com/imagen.jpg" className={inp} value={form.imagen || ''} onChange={e => setForm({...form, imagen: e.target.value})} />
-              {form.imagen && (
-                <div className="mt-2 w-16 h-16 rounded-md overflow-hidden border border-gray-200">
-                  <img src={form.imagen} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              )}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">URL de Imagen 1 (Opcional)</label>
+                <input type="url" placeholder="https://ejemplo.com/imagen.jpg" className={inp} value={form.imagen || ''} onChange={e => setForm({...form, imagen: e.target.value})} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">URL de Imagen 2 (Opcional)</label>
+                <input type="url" placeholder="https://ejemplo.com/imagen2.jpg" className={inp} value={form.imagen2 || ''} onChange={e => setForm({...form, imagen2: e.target.value})} />
+              </div>
+              <div className="flex gap-4">
+                {form.imagen && (
+                  <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                    <img src={form.imagen} alt="Preview 1" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {form.imagen2 && (
+                  <div className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                    <img src={form.imagen2} alt="Preview 2" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <div className="flex justify-end gap-2 pt-4">
@@ -418,10 +466,27 @@ export function MateriasPrimas() {
         {viewItem && (
           <div className="space-y-6">
             {viewItem.imagen && viewItem.tipo === 'esencia' && (
-              <div className="flex justify-center">
-                <div className="w-40 h-40 rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white p-2">
-                  <img src={viewItem.imagen} alt={viewItem.nombre} className="w-full h-full object-contain" />
+              <div className="flex justify-center relative group pb-4">
+                <div className="w-40 h-40 rounded-xl overflow-hidden shadow-sm border border-gray-100 bg-white p-2 relative">
+                  <img src={viewItem.imagen.split(',')[activeSlide] || viewItem.imagen.split(',')[0]} alt={viewItem.nombre} className="w-full h-full object-contain" />
+                  {viewItem.imagen.includes(',') && (
+                    <>
+                      <button onClick={() => setActiveSlide(s => s === 0 ? 1 : 0)} className="absolute left-1 top-1/2 -translate-y-1/2 p-1 bg-white/80 hover:bg-white rounded-full shadow-sm text-zinc-700 transition-all opacity-0 group-hover:opacity-100">
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button onClick={() => setActiveSlide(s => s === 0 ? 1 : 0)} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 bg-white/80 hover:bg-white rounded-full shadow-sm text-zinc-700 transition-all opacity-0 group-hover:opacity-100">
+                        <ChevronRight size={16} />
+                      </button>
+                    </>
+                  )}
                 </div>
+                {viewItem.imagen.includes(',') && (
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {[0, 1].map(i => (
+                      <button key={i} onClick={() => setActiveSlide(i)} className={`w-2 h-2 rounded-full transition-all ${activeSlide === i ? 'bg-amber-500 scale-125' : 'bg-gray-300'}`} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             
