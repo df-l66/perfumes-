@@ -51,11 +51,11 @@ export function Login() {
         <div className="absolute bottom-1/4 right-0 w-64 h-64 bg-amber-400/5 rounded-full blur-2xl animate-pulse-subtle" />
 
         <div className="relative animate-fade-in-up">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 rounded-xl bg-transparent flex items-center justify-center overflow-hidden">
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-2xl bg-transparent flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.classList.add('bg-amber-500'); }} />
             </div>
-            <span className="text-amber-500 font-bold text-2xl tracking-tight">JM</span>
+            <span className="text-amber-500 font-extrabold text-3xl tracking-tight">Fragancias JM</span>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ export function Login() {
         </div>
 
         <div className="relative animate-fade-in-up animation-delay-300">
-          <p className="text-zinc-600 text-xs font-medium">© 2026 JM · Entorno Seguro</p>
+          <p className="text-zinc-600 text-xs font-medium">© 2026 Fragancias JM · Entorno Seguro</p>
         </div>
       </div>
 
@@ -96,11 +96,11 @@ export function Login() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600/5 rounded-full blur-3xl" />
         <div className="w-full max-w-md relative z-10 animate-fade-in-up">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-lg bg-transparent overflow-hidden flex items-center justify-center">
+          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
+            <div className="w-20 h-20 rounded-xl bg-transparent overflow-hidden flex items-center justify-center">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.classList.add('bg-amber-500'); }} />
             </div>
-            <span className="text-amber-600 font-bold text-xl">JM</span>
+            <span className="text-amber-600 font-bold text-2xl">Fragancias JM</span>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl shadow-zinc-200/80 border border-zinc-100 p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-zinc-200">

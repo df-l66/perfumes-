@@ -13,6 +13,7 @@ import configRoutes from './routes/config.routes';
 import logsRoutes from './routes/logs.routes';
 import authRoutes from './routes/auth.routes';
 import materiasPrimasRoutes from './routes/materias_primas.routes';
+import publicRoutes from './routes/public.routes';
 import { authMiddleware, adminMiddleware } from './middlewares/auth.middleware';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -45,6 +46,9 @@ app.use(express.json());
 
 // Limitar peticiones a todas las rutas de /api
 app.use('/api/', apiLimiter);
+
+// Rutas públicas (No requieren autenticación)
+app.use('/api/public', publicRoutes);
 
 // Rutas protegidas (Todos los usuarios autenticados)
 app.use('/api/productos', authMiddleware, productosRoutes);

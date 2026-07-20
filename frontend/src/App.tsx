@@ -15,6 +15,7 @@ const Ventas = lazy(() => import('./pages/Ventas').then(m => ({ default: m.Venta
 const Compras = lazy(() => import('./pages/Compras').then(m => ({ default: m.Compras })));
 const MateriasPrimas = lazy(() => import('./pages/MateriasPrimas').then(m => ({ default: m.MateriasPrimas })));
 const Configuracion = lazy(() => import('./pages/Configuracion').then(m => ({ default: m.Configuracion })));
+const RegistroCliente = lazy(() => import('./pages/RegistroCliente').then(m => ({ default: m.RegistroCliente })));
 
 function ProtectedRoute({ children, adminOnly }: { children: React.ReactNode; adminOnly?: boolean }) {
   const { user, isAdmin } = useAuth();
@@ -30,6 +31,7 @@ function AppRoutes() {
   return (
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
+        <Route path="/registro-cliente" element={<RegistroCliente />} />
         <Route path="/login" element={user ? <Navigate to={isAdmin ? "/dashboard" : "/ventas"} replace /> : <Login />} />
         <Route path="/dashboard" element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
         <Route path="/productos" element={<ProtectedRoute><Productos /></ProtectedRoute>} />

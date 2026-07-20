@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo, MateriaPrima, MovimientoMateriaPrima } from '../types';
+import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo, MateriaPrima, MovimientoMateriaPrima, AppNotification } from '../types';
+import { supabase } from '../config/supabase';
 import {
   mockVentas,
   mockCompras
@@ -19,6 +20,11 @@ import { fetchMateriasPrimas, fetchCreateMateriaPrima, fetchUpdateMateriaPrima, 
 import { useAuth } from './AuthContext';
 
 interface AppDataContextType {
+  globalNotification: string | null;
+  setGlobalNotification: (msg: string | null) => void;
+  appNotifications: AppNotification[];
+  markNotificationsAsRead: () => void;
+  clearNotifications: () => void;
   // Productos
   productos: Producto[];
   addProducto: (p: Omit<Producto, 'id'>, autorNombre: string, autorRol: string) => void;
@@ -116,7 +122,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<any[]>([]);
   const [materiasPrimas, setMateriasPrimas] = useState<MateriaPrima[]>([]);
   const [movimientosMateriasPrimas, setMovimientosMateriasPrimas] = useState<MovimientoMateriaPrima[]>([]);
+  const [globalNotification, setGlobalNotification] = useState<string | null>(null);
+  const [appNotifications, setAppNotifications] = useState<AppNotification[]>([]);
   const { user } = useAuth();
+
+  const markNotificationsAsRead = () => {
+    setAppNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const clearNotifications = () => {
+    setAppNotifications([]);
+  };
 
   const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
   const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
@@ -150,6 +166,39 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
     fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
     loadUsers();
+
+    const clientSub = supabase
+      .channel('clientes-inserts')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'clientes' }, payload => {
+        const nuevoCliente = payload.new as Cliente;
+        setClientes(prev => {
+          if (prev.some(c => c.id === nuevoCliente.id)) return prev;
+          
+          // Notificar
+          setGlobalNotification(`📢 ¡Nuevo cliente registrado: ${nuevoCliente.nombre}!`);
+          setTimeout(() => setGlobalNotification(null), 8000);
+
+          setAppNotifications(nPrev => [{
+            id: Date.now().toString(),
+            title: 'Nuevo Cliente',
+            message: `Se ha registrado el cliente: ${nuevoCliente.nombre}`,
+            read: false,
+            date: new Date().toISOString()
+          }, ...nPrev]);
+          
+          // Request browser notification if possible
+          if (Notification.permission === 'granted') {
+            new Notification('Nuevo Cliente', { body: `Se registró ${nuevoCliente.nombre}` });
+          }
+          
+          return [nuevoCliente, ...prev];
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(clientSub);
+    };
   }, [user]);
   
   // Helper para insertar logs de auditoría
@@ -540,6 +589,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppDataContext.Provider value={{
+      globalNotification, setGlobalNotification,
+      appNotifications, markNotificationsAsRead, clearNotifications,
       productos, addProducto, updateProducto, deleteProducto,
       proveedores, addProveedor, updateProveedor, deleteProveedor,
       clientes, addCliente, updateCliente, deleteCliente,

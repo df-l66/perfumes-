@@ -225,3 +225,12 @@ export interface MovimientoMateriaPrima {
   notas?: string;
   registrado_por: string;
 }
+
+// ─── Notificaciones ─────────────────────────────────────────────────────────────
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  date: string;
+}

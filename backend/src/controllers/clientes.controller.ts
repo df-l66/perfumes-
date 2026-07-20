@@ -39,6 +39,19 @@ export const getClienteById = async (req: Request, res: Response) => {
 export const createCliente = async (req: Request, res: Response) => {
   const clienteData = req.body;
   try {
+    // Validar si el documento ya existe
+    if (clienteData.documento) {
+      const { data: existingDoc } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('documento', clienteData.documento)
+        .single();
+        
+      if (existingDoc) {
+        return res.status(400).json({ message: `El documento o NIT "${clienteData.documento}" ya se encuentra registrado.` });
+      }
+    }
+
     const { data, error } = await supabase
       .from('clientes')
       .insert([clienteData])

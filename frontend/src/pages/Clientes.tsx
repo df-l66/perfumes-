@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, Building2, User, Eye, Calendar, Banknote } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, Building2, User, Eye, Calendar, Banknote, Link } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -175,7 +175,16 @@ export function Clientes() {
     <Layout
       title="Clientes"
       subtitle="Base de datos de clientes"
-      action={<Button icon={<Plus size={16} />} onClick={openCreate}>Nuevo Cliente</Button>}
+      action={
+        <div className="flex gap-2">
+          <Button variant="secondary" icon={<Link size={16} />} onClick={() => {
+            navigator.clipboard.writeText(window.location.origin + '/registro-cliente');
+            setSuccessToast('Enlace de registro copiado al portapapeles');
+            setTimeout(() => setSuccessToast(null), 3000);
+          }}>Enlace Público</Button>
+          <Button icon={<Plus size={16} />} onClick={openCreate}>Nuevo Cliente</Button>
+        </div>
+      }
     >
       {/* Search */}
       <div className="relative mb-5 max-w-md">
