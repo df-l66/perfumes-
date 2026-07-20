@@ -80,7 +80,7 @@ export function Sidebar() {
             <div className={`transition-all duration-300 origin-left ${
               isHovered || mobileMenuOpen ? 'opacity-100 scale-100 w-auto visible' : 'opacity-0 scale-95 w-0 hidden'
             }`}>
-              <p className="font-bold text-amber-500 text-sm tracking-tight leading-none">JM</p>
+              <p className="font-bold text-amber-500 text-sm tracking-tight leading-none">Fragancias JM</p>
               <p className="text-zinc-500 text-[8px] uppercase font-bold tracking-wider mt-1 whitespace-nowrap">Tu esencia, nuestra pasión</p>
             </div>
           </div>
