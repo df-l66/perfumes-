@@ -55,7 +55,7 @@ export function Login() {
             <div className="w-16 h-16 rounded-xl bg-transparent flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.classList.add('bg-amber-500'); }} />
             </div>
-            <span className="text-amber-500 font-bold text-2xl tracking-tight">Fragancias MC</span>
+            <span className="text-amber-500 font-bold text-2xl tracking-tight">JM</span>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ export function Login() {
         </div>
 
         <div className="relative animate-fade-in-up animation-delay-300">
-          <p className="text-zinc-600 text-xs font-medium">© 2026 Fragancias MC · Entorno Seguro</p>
+          <p className="text-zinc-600 text-xs font-medium">© 2026 JM · Entorno Seguro</p>
         </div>
       </div>
 
@@ -100,7 +100,7 @@ export function Login() {
             <div className="w-14 h-14 rounded-lg bg-transparent overflow-hidden flex items-center justify-center">
               <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement?.classList.add('bg-amber-500'); }} />
             </div>
-            <span className="text-amber-600 font-bold text-xl">Fragancias MC</span>
+            <span className="text-amber-600 font-bold text-xl">JM</span>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl shadow-zinc-200/80 border border-zinc-100 p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-zinc-200">

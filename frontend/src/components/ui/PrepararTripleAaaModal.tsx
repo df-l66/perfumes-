@@ -26,10 +26,12 @@ function SearchableSelect({
   const wrapperRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    const opt = options.find(o => o.id === valueId);
-    if (opt) setQuery(opt.label);
-    else setQuery('');
-  }, [valueId, options]);
+    if (!isOpen) {
+      const opt = options.find(o => o.id === valueId);
+      if (opt) setQuery(opt.label);
+      else setQuery('');
+    }
+  }, [valueId, options, isOpen]);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
