@@ -13,7 +13,8 @@ import type { Producto, ProductStatus } from '../types';
 const EMPTY: any = {
   codigo: '', nombre: '', categoria: '', proveedor_id: '',
   precio_costo: '', precio_venta: '', stock: '', stock_minimo: '',
-  estado: 'activo', unidad: 'Frasco', descripcion: '',  tipo_producto: 'perfume', calidad: 'Original', mililitros: '', genero: 'Unisex', familia_olfativa: ''
+  estado: 'activo', unidad: 'Frasco', descripcion: '',  tipo_producto: 'perfume', calidad: 'Original', mililitros: '', genero: 'Unisex', familia_olfativa: '',
+  es_por_encargo: false
 };
 
 const formatCurrency = (v: number) =>
@@ -41,7 +42,7 @@ export function Productos() {
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
-  const [activeTab, setActiveTab] = useState<'catalogo' | 'kardex'>('catalogo');
+  const [activeTab, setActiveTab] = useState<'catalogo' | 'detallium' | 'kardex'>('catalogo');
   const [ajusteModalOpen, setAjusteModalOpen] = useState(false);
   const [ajusteForm, setAjusteForm] = useState({ producto_id: '', tipo: 'ajuste_entrada' as 'ajuste_entrada' | 'ajuste_salida', cantidad: '', notas: '' });
   const [ajusteSearchProd, setAjusteSearchProd] = useState('');
@@ -57,7 +58,7 @@ export function Productos() {
 
   const toggleEstado = (p: Producto) => {
     const nuevoEstado = p.estado === 'inactivo' 
-      ? (p.stock === 0 ? 'inactivo' : p.stock <= p.stock_minimo ? 'stock_bajo' : 'activo') 
+      ? ((p.stock === 0 && !p.es_por_encargo) ? 'inactivo' : (p.stock <= p.stock_minimo && !p.es_por_encargo) ? 'stock_bajo' : 'activo') 
       : 'inactivo';
     
     updateProducto({
@@ -72,9 +73,12 @@ export function Productos() {
         p.codigo.toLowerCase().includes(search.toLowerCase()) ||
         p.categoria.toLowerCase().includes(search.toLowerCase());
       const matchStatus = filterStatus === 'todos' || p.estado === filterStatus;
-      return matchSearch && matchStatus;
+      const matchTab = activeTab === 'catalogo' 
+        ? (p.tipo_producto === 'perfume' || !p.tipo_producto) 
+        : (activeTab === 'detallium' ? p.tipo_producto === 'otro' : true);
+      return matchSearch && matchStatus && matchTab;
     });
-  }, [productos, search, filterStatus]);
+  }, [productos, search, filterStatus, activeTab]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginated = useMemo(() => {
@@ -84,7 +88,7 @@ export function Productos() {
 
   const openCreate = () => {
     setEditItem(null);
-    setForm(EMPTY);
+    setForm({ ...EMPTY, tipo_producto: activeTab === 'detallium' ? 'otro' : 'perfume' });
     setError(null);
     setModalOpen(true);
   };
@@ -103,13 +107,13 @@ export function Productos() {
     // Validar código duplicado
     const codExiste = productos.some(p => p.codigo.trim().toLowerCase() === form.codigo.trim().toLowerCase() && (!editItem || p.id !== editItem.id));
     if (codExiste) {
-      setError(`El código de producto "${form.codigo}" ya está asignado a otro perfume.`);
+      setError(`El código de producto "${form.codigo}" ya está asignado a otro producto.`);
       return;
     }
 
     // Validar precio de venta vs costo
     if (form.precio_venta < form.precio_costo) {
-      setError("El precio de venta no puede ser menor al precio de costo del perfume.");
+      setError("El precio de venta no puede ser menor al precio de costo del producto.");
       return;
     }
 
@@ -120,14 +124,14 @@ export function Productos() {
     }
 
     // Validar volumen
-    if (!form.mililitros || form.mililitros <= 0) {
+    if (form.tipo_producto !== 'otro' && (!form.mililitros || form.mililitros <= 0)) {
       setError("El volumen del perfume debe ser mayor a 0 ml.");
       return;
     }
 
     // Validar categoría y proveedor seleccionados
     if (!form.categoria) {
-      setError("Debes seleccionar una categoría válida para el perfume.");
+      setError("Debes seleccionar una categoría válida para el producto.");
       return;
     }
     // El proveedor ya no es obligatorio
@@ -135,14 +139,28 @@ export function Productos() {
     const computed = {
       ...form,
       proveedor_id: form.proveedor_id || null,
+      mililitros: form.mililitros ? Number(form.mililitros) : null,
+      stock: form.stock === '' ? 0 : Number(form.stock),
+      stock_minimo: form.stock_minimo === '' ? 0 : Number(form.stock_minimo),
+      precio_costo: form.precio_costo === '' ? 0 : Number(form.precio_costo),
+      precio_venta: form.precio_venta === '' ? 0 : Number(form.precio_venta),
       estado: form.estado === 'inactivo'
         ? 'inactivo'
-        : form.stock === 0
+        : ((form.stock === '' ? 0 : Number(form.stock)) === 0 && !form.es_por_encargo)
           ? 'inactivo'
-          : form.stock <= form.stock_minimo
+          : ((form.stock === '' ? 0 : Number(form.stock)) <= (form.stock_minimo === '' ? 0 : Number(form.stock_minimo)) && !form.es_por_encargo)
             ? 'stock_bajo'
             : 'activo',
     } as Omit<Producto, 'id'>;
+
+    if (computed.es_por_encargo) {
+      if (!computed.descripcion.includes('[POR_ENCARGO]')) {
+        computed.descripcion = computed.descripcion + '\\n[POR_ENCARGO]';
+      }
+    } else {
+      computed.descripcion = computed.descripcion.replace('\\n[POR_ENCARGO]', '').replace('[POR_ENCARGO]', '');
+    }
+    delete (computed as any).es_por_encargo;
     
     const userName = user?.name || 'Usuario';
     const userRole = user?.role || 'admin';
@@ -235,7 +253,13 @@ export function Productos() {
           onClick={() => setActiveTab('catalogo')}
           className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'catalogo' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
-          Catálogo de Productos
+          Catálogo de Perfumes
+        </button>
+        <button 
+          onClick={() => setActiveTab('detallium')}
+          className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'detallium' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
+        >
+          Detallium
         </button>
         <button 
           onClick={() => setActiveTab('kardex')}
@@ -245,7 +269,7 @@ export function Productos() {
         </button>
       </div>
 
-      {activeTab === 'catalogo' && (
+      {activeTab !== 'kardex' && (
         <>
           {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -394,9 +418,13 @@ export function Productos() {
 
                   <td className="px-2 sm:px-3 py-3 font-semibold text-zinc-800 whitespace-nowrap text-xs sm:text-sm">{formatCurrency(p.precio_venta)}</td>
                   <td className="px-2 sm:px-3 py-3">
-                    <span className={`font-bold text-xs sm:text-sm ${p.stock === 0 ? 'text-red-600' : p.stock <= p.stock_minimo ? 'text-amber-600' : 'text-zinc-800'}`}>
-                      {p.stock}
-                    </span>
+                    {p.es_por_encargo && p.stock <= 0 ? (
+                      <span className="text-zinc-500 font-medium text-[11px] sm:text-xs italic bg-zinc-100 px-2 py-1 rounded-md">Sin stock (Por encargo)</span>
+                    ) : (
+                      <span className={`font-bold text-xs sm:text-sm ${(p.stock <= 0 && !p.es_por_encargo) ? 'text-red-600' : (p.stock <= p.stock_minimo && !p.es_por_encargo) ? 'text-amber-600' : 'text-zinc-800'}`}>
+                        {p.stock} {p.es_por_encargo && <span className="text-[10px] text-zinc-400 font-normal ml-1">(/Encargo)</span>}
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 sm:px-3 py-3 text-zinc-500 hidden sm:table-cell text-xs">{p.stock_minimo}</td>
                   <td className="px-2 sm:px-3 py-3 hidden md:table-cell"><Badge variant={p.estado} /></td>
@@ -433,10 +461,10 @@ export function Productos() {
           <div>
             {filtered.length > 0 ? (
               <span>
-                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> perfumes
+                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> productos
               </span>
             ) : (
-              <span>0 perfumes encontrados</span>
+              <span>0 productos encontrados</span>
             )}
           </div>
           {totalPages > 1 && (
@@ -682,12 +710,24 @@ export function Productos() {
             {field('Categoría', (
               <select required value={form.categoria} onChange={e => setForm((f: any) => ({ ...f, categoria: e.target.value }))} className={inp}>
                 <option value="">— Seleccionar —</option>
-                <option value="Fragancias Árabes">Fragancias Árabes</option>
-                <option value="Fragancias Casuales">Fragancias Casuales</option>
-                <option value="Fragancias Deportivas">Fragancias Deportivas</option>
-                <option value="Fragancias Elegantes">Fragancias Elegantes</option>
-                <option value="Fragancias Premium">Fragancias Premium</option>
-                <option value="Decants / Muestras">Decants / Muestras</option>
+                {form.tipo_producto !== 'otro' ? (
+                  <>
+                    <option value="Fragancias Árabes">Fragancias Árabes</option>
+                    <option value="Fragancias Casuales">Fragancias Casuales</option>
+                    <option value="Fragancias Deportivas">Fragancias Deportivas</option>
+                    <option value="Fragancias Elegantes">Fragancias Elegantes</option>
+                    <option value="Fragancias Premium">Fragancias Premium</option>
+                    <option value="Decants / Muestras">Decants / Muestras</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Accesorios">Accesorios</option>
+                    <option value="Cuidado Personal">Cuidado Personal</option>
+                    <option value="Cosméticos">Cosméticos</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Otros">Otros (Detallium)</option>
+                  </>
+                )}
               </select>
             ))}
             {field('Proveedor (Opcional)', (
@@ -720,39 +760,53 @@ export function Productos() {
             ))}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Stock Actual', <input type="number" step="any" min={0} required value={form.stock} onChange={e => setForm((f: any) => ({ ...f, stock: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
-            {field('Stock Mínimo', <input type="number" step="any" min={0} required value={form.stock_minimo} onChange={e => setForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
+            {field('Stock Actual', <input type="number" step="any" min={0} required={!form.es_por_encargo} value={form.stock} onChange={e => setForm((f: any) => ({ ...f, stock: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
+            {field('Stock Mínimo', <input type="number" step="any" min={0} required={!form.es_por_encargo} value={form.stock_minimo} onChange={e => setForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? '' : +e.target.value }))} className={inp} />)}
           </div>
-          {/* Campos específicos de Perfumería (Fijos) */}
-          <div className="p-4.5 bg-amber-50/30 rounded-xl border border-amber-100/50 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {field('Calidad del Perfume', (
-                <select value={form.calidad || 'Original'} onChange={e => setForm((f: any) => ({ ...f, calidad: e.target.value }))} className={inp}>
-                  <option value="Original">Original</option>
-                  <option value="1.1 Original">1.1 Original (Alta Similitud)</option>
-                  <option value="Replica AAA">Réplica AAA</option>
-                  <option value="Tester">Tester / Probador</option>
-                  <option value="Decant">Decant (Muestra)</option>
-                </select>
-              ))}
-              {field('Volumen / Tamaño (Mililitros)', (
-                <div className="relative">
-                  <input type="number" step="any" min={1} required value={form.mililitros} onChange={e => setForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">ml</span>
-                </div>
-              ))}
+          
+          <label className="flex items-center gap-2 cursor-pointer p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+            <input 
+              type="checkbox" 
+              checked={!!form.es_por_encargo} 
+              onChange={e => setForm((f: any) => ({ ...f, es_por_encargo: e.target.checked }))} 
+              className="w-4 h-4 text-amber-600 rounded border-zinc-300 focus:ring-amber-500"
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-zinc-700">Producto por Encargo (Bajo Pedido)</span>
+              <span className="text-xs text-zinc-500">No se validará el inventario al vender este producto (Se permite stock 0).</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {field('Género', (
-                <select value={form.genero || 'Unisex'} onChange={e => setForm((f: any) => ({ ...f, genero: e.target.value as any }))} className={inp}>
-                  <option value="Unisex">Unisex</option>
-                  <option value="Masculino">Masculino</option>
-                  <option value="Femenino">Femenino</option>
-                </select>
-              ))}
-              {field('Familia Olfativa', <input value={form.familia_olfativa || ''} onChange={e => setForm((f: any) => ({ ...f, familia_olfativa: e.target.value }))} className={inp} placeholder="Amaderada, Floral, Cítrica…" />)}
+          </label>
+          {form.tipo_producto !== 'otro' && (
+            <div className="p-4.5 bg-amber-50/30 rounded-xl border border-amber-100/50 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('Calidad del Perfume', (
+                  <select value={form.calidad || 'Original'} onChange={e => setForm((f: any) => ({ ...f, calidad: e.target.value }))} className={inp}>
+                    <option value="Original">Original</option>
+                    <option value="1.1 Original">1.1 Original (Alta Similitud)</option>
+                    <option value="Replica AAA">Réplica AAA</option>
+                    <option value="Tester">Tester / Probador</option>
+                    <option value="Decant">Decant (Muestra)</option>
+                  </select>
+                ))}
+                {field('Volumen / Tamaño (Mililitros)', (
+                  <div className="relative">
+                    <input type="number" step="any" min={1} required={form.tipo_producto !== 'otro'} value={form.mililitros} onChange={e => setForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? '' : +e.target.value }))} className={`${inp} pr-8`} />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">ml</span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('Género', (
+                  <select value={form.genero || 'Unisex'} onChange={e => setForm((f: any) => ({ ...f, genero: e.target.value as any }))} className={inp}>
+                    <option value="Unisex">Unisex</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                  </select>
+                ))}
+                {field('Familia Olfativa', <input value={form.familia_olfativa || ''} onChange={e => setForm((f: any) => ({ ...f, familia_olfativa: e.target.value }))} className={inp} placeholder="Amaderada, Floral, Cítrica…" />)}
+              </div>
             </div>
-          </div>
+          )}
 
           {field('Descripción', <textarea rows={2} value={form.descripcion} onChange={e => setForm((f: any) => ({ ...f, descripcion: e.target.value }))} className={inp} placeholder="Descripción corta del producto…" />)}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -783,7 +837,7 @@ export function Productos() {
       </Modal>
 
       {/* Detail Modal */}
-      <Modal isOpen={!!detailItem} onClose={() => setDetailItem(null)} title="Detalles del Perfume" size="lg">
+      <Modal isOpen={!!detailItem} onClose={() => setDetailItem(null)} title={detailItem?.tipo_producto === 'otro' ? 'Detalles del Producto (Detallium)' : 'Detalles del Perfume'} size="lg">
         {detailItem && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
             <div className="rounded-xl overflow-hidden bg-zinc-50 border border-zinc-200/50 flex items-center justify-center min-h-64 max-h-80 shadow-inner">
@@ -800,24 +854,26 @@ export function Productos() {
                 <p className="text-xs font-mono text-zinc-400 mt-0.5">{detailItem.codigo} · {detailItem.unidad}</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Calidad</span>
+              {detailItem.tipo_producto !== 'otro' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${detailItem.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
-                      {detailItem.calidad || 'Original'}
-                    </span>
+                    <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Calidad</span>
+                    <div>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${detailItem.calidad === 'Original' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                        {detailItem.calidad || 'Original'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Volumen</span>
+                    <div>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200 mt-1 font-mono">
+                        {detailItem.mililitros || 100} ml
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Volumen</span>
-                  <div>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-100 text-zinc-700 border border-zinc-200 mt-1 font-mono">
-                      {detailItem.mililitros || 100} ml
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -874,9 +930,13 @@ export function Productos() {
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Stock</span>
-                  <p className={`text-sm font-bold mt-1 ${detailItem.stock === 0 ? 'text-red-600' : detailItem.stock <= detailItem.stock_minimo ? 'text-amber-600' : 'text-zinc-800'}`}>
-                    {detailItem.stock}
-                  </p>
+                  {detailItem.es_por_encargo && detailItem.stock <= 0 ? (
+                    <p className="text-sm font-medium text-zinc-500 mt-1 italic">Sin stock (Por encargo)</p>
+                  ) : (
+                    <p className={`text-sm font-bold mt-1 ${(detailItem.stock <= 0 && !detailItem.es_por_encargo) ? 'text-red-600' : (detailItem.stock <= detailItem.stock_minimo && !detailItem.es_por_encargo) ? 'text-amber-600' : 'text-zinc-800'}`}>
+                      {detailItem.stock} {detailItem.es_por_encargo && <span className="text-[10px] text-zinc-400 font-normal ml-1">(/Encargo)</span>}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <span className="block text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Mínimo</span>

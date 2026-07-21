@@ -26,6 +26,7 @@ export interface Producto {
   descripcion: string;
   imagen?: string;      // URL de la imagen del producto
   tipo_producto?: 'perfume' | 'otro';
+  es_por_encargo?: boolean;
   // Campos dinámicos para giros específicos (Multitenant)
   calidad?: string;    // Perfumería: Original, 1.1, Réplica AAA, etc.
   mililitros?: number; // Perfumería: 50ml, 100ml, etc.

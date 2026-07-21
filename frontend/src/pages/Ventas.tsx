@@ -72,7 +72,7 @@ function NuevaVentaModal({
 
   const productosDisponibles = useMemo(() =>
     productos.filter(p =>
-      p.stock > 0 &&
+      (p.stock > 0 || p.es_por_encargo) &&
       (p.nombre.toLowerCase().includes(searchProd.toLowerCase()) ||
        p.codigo.toLowerCase().includes(searchProd.toLowerCase()))
     ), [productos, searchProd]
@@ -84,7 +84,7 @@ function NuevaVentaModal({
       if (existing) {
         return prev.map(i =>
           i.producto_id === prod.id
-            ? { ...i, cantidad: Math.min(i.cantidad + 1, prod.stock), subtotal: (i.cantidad + 1) * prod.precio_venta }
+            ? { ...i, cantidad: Math.min(i.cantidad + 1, prod.es_por_encargo ? 9999 : prod.stock), subtotal: (i.cantidad + 1) * prod.precio_venta }
             : i
         );
       }
@@ -140,7 +140,7 @@ function NuevaVentaModal({
     for (const item of carrito) {
       if (item.es_preparado) continue; // No validamos stock de productos para los preparados (se validará materias primas en backend)
       const prod = productos.find(p => p.id === item.producto_id);
-      if (prod && item.cantidad > prod.stock) {
+      if (prod && !prod.es_por_encargo && item.cantidad > prod.stock) {
         setError(`El producto "${item.nombre}" supera el stock disponible (${prod.stock}).`);
         return;
       }
@@ -335,7 +335,7 @@ function NuevaVentaModal({
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-zinc-700 truncate">{p.nombre}</p>
-                            <p className="text-xs text-zinc-400">{p.codigo} · stock: {p.stock} {p.mililitros ? `· ${p.mililitros}ml` : ''}</p>
+                            <p className="text-xs text-zinc-400">{p.codigo} · {p.es_por_encargo && p.stock <= 0 ? 'Sin stock (Por encargo)' : `stock: ${p.stock}`} {p.mililitros ? `· ${p.mililitros}ml` : ''}</p>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -377,7 +377,7 @@ function NuevaVentaModal({
                               >−</button>
                               <span className="text-xs font-semibold text-zinc-700 w-5 text-center">{item.cantidad}</span>
                               <button
-                                onClick={() => cambiarCantidad(item.producto_id, item.cantidad + 1, prod?.stock ?? 99)}
+                                onClick={() => cambiarCantidad(item.producto_id, item.cantidad + 1, prod?.es_por_encargo ? 9999 : (prod?.stock ?? 0))}
                                 className="w-5 h-5 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-600 flex items-center justify-center text-xs font-bold cursor-pointer"
                               >+</button>
                             </div>

@@ -46,10 +46,14 @@ export const createProducto = async (req: Request, res: Response) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      require('fs').appendFileSync('supabase-error.log', JSON.stringify({ body: productData, error }) + '\\n');
+      throw error;
+    }
     res.status(201).json(data);
   } catch (error: any) {
     console.error('Error al crear producto:', error);
+    require('fs').appendFileSync('supabase-error.log', 'Catch: ' + JSON.stringify(error) + '\\n');
     res.status(400).json({ message: 'No se pudo crear el producto', error: error.message });
   }
 };

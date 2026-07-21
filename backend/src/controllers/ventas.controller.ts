@@ -99,10 +99,18 @@ export const createVenta = async (req: Request, res: Response) => {
           }
         }
       } else {
-        const { data: prod } = await supabase.from('productos').select('stock, stock_minimo').eq('id', item.producto_id).single();
+        const { data: prod } = await supabase.from('productos').select('stock, stock_minimo, descripcion').eq('id', item.producto_id).single();
         if (prod) {
-          const nuevoStock = prod.stock - item.cantidad;
-          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+          const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
+          
+          let nuevoStock = prod.stock - item.cantidad;
+          if (isPorEncargo && nuevoStock < 0) {
+            nuevoStock = 0; // Don't let stock drop below 0 for made-to-order items
+          }
+          
+          const nuevoEstado = isPorEncargo 
+            ? 'activo' // Made-to-order items remain active even at 0 stock
+            : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
           
           await supabase.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
 
@@ -158,13 +166,16 @@ export const anularVenta = async (req: Request, res: Response) => {
       if (!item.producto_id) continue; // Skip prepared items that don't have a product ID
       const { data: prod } = await supabase
         .from('productos')
-        .select('stock, stock_minimo')
+        .select('stock, stock_minimo, descripcion')
         .eq('id', item.producto_id)
         .single();
 
       if (prod) {
-        const nuevoStock = prod.stock + item.cantidad;
-        const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+        const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
+        const nuevoStock = isPorEncargo ? prod.stock : (prod.stock + item.cantidad);
+        const nuevoEstado = isPorEncargo 
+          ? 'activo'
+          : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
 
         await supabase
           .from('productos')

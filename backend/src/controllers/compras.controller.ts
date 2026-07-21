@@ -75,13 +75,16 @@ export const createCompra = async (req: Request, res: Response) => {
       } else if (item.producto_id) {
         const { data: prod } = await supabase
           .from('productos')
-          .select('stock, stock_minimo')
+          .select('stock, stock_minimo, descripcion')
           .eq('id', item.producto_id)
           .single();
 
         if (prod) {
-          const nuevoStock = prod.stock + item.cantidad;
-          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+          const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
+          const nuevoStock = isPorEncargo ? prod.stock : (prod.stock + item.cantidad);
+          const nuevoEstado = isPorEncargo 
+            ? 'activo' 
+            : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
 
           // Actualizar stock y precio de costo/venta
           const updatePayload: any = { 
@@ -169,13 +172,16 @@ export const anularCompra = async (req: Request, res: Response) => {
       } else if (item.producto_id) {
         const { data: prod } = await supabase
           .from('productos')
-          .select('stock, stock_minimo')
+          .select('stock, stock_minimo, descripcion')
           .eq('id', item.producto_id)
           .single();
 
         if (prod) {
-          const nuevoStock = prod.stock - item.cantidad;
-          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo';
+          const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
+          const nuevoStock = isPorEncargo ? prod.stock : Math.max(0, prod.stock - item.cantidad);
+          const nuevoEstado = isPorEncargo 
+            ? 'activo'
+            : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
 
           await supabase
             .from('productos')

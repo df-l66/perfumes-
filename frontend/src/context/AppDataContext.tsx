@@ -224,7 +224,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       addLog(`Creó el producto "${nuevo.nombre}" con código ${nuevo.codigo}`, 'productos', autorNombre, autorRol);
     } catch (e) {
       console.error(e);
-      alert('Hubo un error al crear el producto');
+      alert(`Hubo un error al crear el producto: ${e instanceof Error ? e.message : e}`);
     }
   };
 

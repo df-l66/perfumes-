@@ -16,7 +16,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Error en la petición al servidor');
+    throw new Error(errorData.message ? `${errorData.message} (${errorData.error || ''})` : 'Error en la petición al servidor');
   }
 
   return response;
