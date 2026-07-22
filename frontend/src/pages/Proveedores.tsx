@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import type { Proveedor, ProveedorEstado } from '../types';
 
 const EMPTY: any = {
-  nombre: '', nit: '', contacto: '', telefono: '', email: '', ciudad: '', direccion: '', estado: 'activo'
+  nombre: '', nit: '', contacto: '', telefono: '', email: '', ciudad: '', estado: 'activo'
 };
 
 export function Proveedores() {
