@@ -20,6 +20,11 @@ import type { Venta, VentaItem, Cliente } from '../types';
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
+const formatNumberWithDots = (val: number | undefined) => {
+  if (!val) return '';
+  return new Intl.NumberFormat('es-CO').format(val);
+};
+
 // ── Nueva Venta Wizard ────────────────────────────────────────────────────────
 type WizardStep = 'cliente' | 'productos' | 'confirmar';
 
@@ -40,6 +45,8 @@ function NuevaVentaModal({
   const [searchProd, setSearchProd] = useState('');
   const [searchCliente, setSearchCliente] = useState('');
   const [metodoPago, setMetodoPago] = useState<'contado' | 'credito'>('contado');
+  const [abonoInicial, setAbonoInicial] = useState<number>(0);
+  const [abonoMetodoPago, setAbonoMetodoPago] = useState<'efectivo' | 'transferencia' | 'tarjeta'>('efectivo');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +57,8 @@ function NuevaVentaModal({
     setSearchProd('');
     setSearchCliente('');
     setMetodoPago('contado');
+    setAbonoInicial(0);
+    setAbonoMetodoPago('efectivo');
     setSuccess(false);
     setError(null);
   };
@@ -149,13 +158,14 @@ function NuevaVentaModal({
     if (metodoPago === 'credito' && clienteSeleccionado && clienteSeleccionado.id !== 'walk-in') {
       const limite = clienteSeleccionado.limite_credito || 0;
       const deuda = clienteSeleccionado.credito_usado || 0;
-      if (deuda + total > limite && limite > 0) {
-        setError(`El cliente no tiene suficiente límite de crédito disponible. (Límite: ${formatCurrency(limite)}, Deuda actual: ${formatCurrency(deuda)})`);
+      const deudaNetaVenta = Math.max(0, total - (abonoInicial || 0));
+      if (deuda + deudaNetaVenta > limite && limite > 0) {
+        setError(`El cliente no tiene suficiente límite de crédito disponible. (Límite: ${formatCurrency(limite)}, Deuda actual: ${formatCurrency(deuda)}, Nueva deuda: ${formatCurrency(deudaNetaVenta)})`);
         return;
       }
     }
 
-    addVenta(carrito, clienteId, user.id, user.name, user.role, metodoPago);
+    addVenta(carrito, clienteId, user.id, user.name, user.role, metodoPago, abonoInicial, abonoMetodoPago);
     setSuccess(true);
   };
 
@@ -463,15 +473,66 @@ function NuevaVentaModal({
                 )}
                 
                 {metodoPago === 'credito' && clienteId !== 'walk-in' && clienteSeleccionado && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-blue-700 font-medium">Cupo Disponible:</span>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-blue-700 font-medium">Cupo Disponible del Cliente:</span>
                       <span className="text-blue-700 font-bold">
                         {formatCurrency((clienteSeleccionado.limite_credito || 0) - (clienteSeleccionado.credito_usado || 0))}
                       </span>
                     </div>
-                    {total > ((clienteSeleccionado.limite_credito || 0) - (clienteSeleccionado.credito_usado || 0)) && (
-                      <p className="text-xs text-red-600 mt-2 font-medium">El cliente no tiene suficiente cupo para esta compra.</p>
+
+                    <div className="pt-2 border-t border-blue-200/60 space-y-2">
+                      <label className="block text-xs font-bold text-blue-900 uppercase tracking-wider">
+                        Abono / Pago Inicial (Opcional)
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <span className="block text-[11px] text-zinc-500 mb-1">Monto a abonar hoy</span>
+                          <div className="relative">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-zinc-400 font-bold">$</span>
+                            <input
+                              type="text"
+                              placeholder="0"
+                              value={formatNumberWithDots(abonoInicial)}
+                              onChange={e => {
+                                const digits = e.target.value.replace(/\D/g, '');
+                                const val = digits ? parseInt(digits, 10) : 0;
+                                setAbonoInicial(Math.min(val, total));
+                              }}
+                              className="w-full pl-6 pr-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs font-semibold text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="block text-[11px] text-zinc-500 mb-1">Método de pago del abono</span>
+                          <select
+                            value={abonoMetodoPago}
+                            onChange={e => setAbonoMetodoPago(e.target.value as any)}
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 cursor-pointer"
+                          >
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="tarjeta">Tarjeta</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {abonoInicial > 0 && (
+                        <div className="mt-2 text-xs p-2.5 bg-emerald-50 border border-emerald-200 rounded-md text-emerald-800 space-y-1">
+                          <div className="flex justify-between">
+                            <span>Abono pagado inmediatamente:</span>
+                            <span className="font-bold">{formatCurrency(abonoInicial)}</span>
+                          </div>
+                          <div className="flex justify-between font-bold border-t border-emerald-200/60 pt-1 text-emerald-900">
+                            <span>Saldo pendiente a crédito (Deuda):</span>
+                            <span>{formatCurrency(Math.max(0, total - abonoInicial))}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {Math.max(0, total - abonoInicial) > ((clienteSeleccionado.limite_credito || 0) - (clienteSeleccionado.credito_usado || 0)) && (
+                      <p className="text-xs text-red-600 font-medium">El cliente no tiene suficiente cupo para la deuda restante.</p>
                     )}
                   </div>
                 )}
@@ -498,8 +559,20 @@ function NuevaVentaModal({
                     ))}
                   </tbody>
                   <tfoot className="border-t border-zinc-200 bg-zinc-50">
+                    {metodoPago === 'credito' && abonoInicial > 0 && (
+                      <>
+                        <tr>
+                          <td colSpan={3} className="px-4 py-1.5 text-right text-xs text-zinc-500 font-medium">Abono Inicial (Pagado hoy):</td>
+                          <td className="px-4 py-1.5 text-right text-xs font-bold text-emerald-600 font-mono">-{formatCurrency(abonoInicial)}</td>
+                        </tr>
+                        <tr className="bg-amber-50/50 border-t border-zinc-200">
+                          <td colSpan={3} className="px-4 py-1.5 text-right text-xs font-semibold text-amber-900">Saldo a Crédito (Deuda):</td>
+                          <td className="px-4 py-1.5 text-right text-xs font-bold text-amber-900 font-mono">{formatCurrency(Math.max(0, total - abonoInicial))}</td>
+                        </tr>
+                      </>
+                    )}
                     <tr className="bg-amber-50 border-t-2 border-amber-200">
-                      <td colSpan={3} className="px-4 py-2.5 text-right font-bold text-amber-700">TOTAL NETO</td>
+                      <td colSpan={3} className="px-4 py-2.5 text-right font-bold text-amber-700">TOTAL VENTA</td>
                       <td className="px-4 py-2.5 text-right font-bold text-amber-700 text-base font-mono">{formatCurrency(total)}</td>
                     </tr>
                   </tfoot>
@@ -512,7 +585,7 @@ function NuevaVentaModal({
                   onClick={handleConfirm}
                   disabled={
                     (metodoPago === 'credito' && clienteId === 'walk-in') || 
-                    (metodoPago === 'credito' && clienteSeleccionado && total > ((clienteSeleccionado.limite_credito || 0) - (clienteSeleccionado.credito_usado || 0)))
+                    (metodoPago === 'credito' && clienteSeleccionado && Math.max(0, total - abonoInicial) > ((clienteSeleccionado.limite_credito || 0) - (clienteSeleccionado.credito_usado || 0)))
                   }
                 >
                   <CheckCircle2 size={15} />

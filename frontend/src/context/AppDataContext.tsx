@@ -45,7 +45,16 @@ interface AppDataContextType {
   addAbono: (a: Omit<Abono, 'id'>, autorNombre: string, autorId: string, autorRol: string) => void;
   // Ventas
   ventas: Venta[];
-  addVenta: (items: VentaItem[], clienteId: string, vendedorId: string, vendedorNombre: string, vendedorRol: string, metodoPago?: 'contado' | 'credito') => void;
+  addVenta: (
+    items: VentaItem[],
+    clienteId: string,
+    vendedorId: string,
+    vendedorNombre: string,
+    vendedorRol: string,
+    metodoPago?: 'contado' | 'credito',
+    abonoInicial?: number,
+    abonoMetodoPago?: 'efectivo' | 'transferencia' | 'tarjeta'
+  ) => void;
   anularVenta: (id: string, autorNombre: string, autorId: string, autorRol: string) => void;
   // Compras
   compras: Compra[];
@@ -397,7 +406,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     vendedorId: string,
     vendedorNombre: string,
     vendedorRol: string,
-    metodoPago: 'contado' | 'credito' = 'contado'
+    metodoPago: 'contado' | 'credito' = 'contado',
+    abonoInicial: number = 0,
+    abonoMetodoPago: 'efectivo' | 'transferencia' | 'tarjeta' = 'efectivo'
   ) => {
     const cliente = clientes.find(c => c.id === clienteId);
     const clienteNombre = clienteId === 'walk-in' ? 'Cliente No Registrado' : (cliente?.nombre ?? 'Desconocido');
@@ -417,6 +428,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       metodo_pago: metodoPago,
       monto_pagado: total,
       cambio: 0,
+      abono_inicial: abonoInicial,
+      abono_metodo_pago: abonoMetodoPago,
       items
     };
 
@@ -425,13 +438,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setVentas(prev => [nuevaVenta, ...prev]);
       refrescarProductos();
       refrescarMateriasPrimas(); // Sincronizar stock de materias primas por si hubo perfumes triple AAA
-      if (metodoPago === 'credito') refrescarClientes(); // Sincronizar stock
-
-      if (metodoPago === 'credito' && clienteId !== 'walk-in') {
-        setClientes(prev => prev.map(c => c.id === clienteId ? { ...c, credito_usado: (c.credito_usado || 0) + total } : c));
+      if (metodoPago === 'credito') {
+        refrescarClientes();
+        if (abonoInicial > 0) {
+          fetchAbonos().then(setAbonos).catch(console.error);
+        }
       }
 
-      addLog(`Registró la venta ${facturaNum} por ${total}`, 'ventas', vendedorNombre, vendedorRol);
+      if (metodoPago === 'credito' && clienteId !== 'walk-in') {
+        const abonoAplicado = Math.max(0, Math.min(abonoInicial, total));
+        const deudaNeta = total - abonoAplicado;
+        setClientes(prev => prev.map(c => c.id === clienteId ? { ...c, credito_usado: (c.credito_usado || 0) + deudaNeta } : c));
+      }
+
+      addLog(`Registró la venta ${facturaNum} por ${total}${abonoInicial > 0 ? ` (Abono inicial: ${abonoInicial})` : ''}`, 'ventas', vendedorNombre, vendedorRol);
     } catch (e) {
       console.error(e);
       alert('Error al procesar la venta');

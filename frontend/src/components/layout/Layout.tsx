@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAppData } from '../../context/AppDataContext';
 import { NotificationsBell } from './NotificationsBell';
+import { ChatbotWidget } from '../ui/ChatbotWidget';
 
 interface LayoutProps {
   children: ReactNode;
@@ -38,12 +39,15 @@ export function Layout({ children, title, subtitle, action }: LayoutProps) {
       
       {/* Global Notification Toast */}
       {globalNotification && (
-        <div className="fixed bottom-6 right-6 z-50 animate-fade-in-up">
+        <div className="fixed bottom-6 left-6 z-40 animate-fade-in-up">
           <div className="bg-amber-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
             <span className="text-sm font-semibold tracking-wide">{globalNotification}</span>
           </div>
         </div>
       )}
+
+      {/* Widget del Chatbot IA n8n */}
+      <ChatbotWidget />
     </div>
   );
 }

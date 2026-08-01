@@ -33,7 +33,7 @@ export const createVenta = async (req: Request, res: Response) => {
   
   try {
     // 1. Limpiar datos de columnas que no existen en la tabla ventas
-    const { subtotal, descuento, impuestos, monto_pagado, cambio, ...cleanVentaData } = ventaData;
+    const { subtotal, descuento, impuestos, monto_pagado, cambio, abono_inicial, abono_metodo_pago, ...cleanVentaData } = ventaData;
     
     // 2. Insertar la venta principal
     const { data: venta, error: ventaError } = await supabase
@@ -128,11 +128,25 @@ export const createVenta = async (req: Request, res: Response) => {
       }
     }
 
-    // 4. Actualizar crédito del cliente
+    // 4. Actualizar crédito del cliente y registrar abono inicial si aplica
     if (venta.metodo_pago === 'credito' && venta.cliente_id) {
+      const abonoMonto = Math.max(0, Math.min(Number(abono_inicial) || 0, venta.total));
+      const deudaNeta = venta.total - abonoMonto;
+
       const { data: cliente } = await supabase.from('clientes').select('credito_usado').eq('id', venta.cliente_id).single();
       if (cliente) {
-        await supabase.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + venta.total }).eq('id', venta.cliente_id);
+        await supabase.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + deudaNeta }).eq('id', venta.cliente_id);
+      }
+
+      if (abonoMonto > 0) {
+        await supabase.from('abonos').insert([{
+          cliente_id: venta.cliente_id,
+          cliente_nombre: venta.cliente_nombre,
+          monto: abonoMonto,
+          metodo_pago: abono_metodo_pago || 'efectivo',
+          notas: `Abono inicial en venta ${venta.factura}`,
+          registrado_por: venta.vendedor_nombre || 'Sistema'
+        }]);
       }
     }
 
