@@ -798,8 +798,8 @@ export function ChatbotWidget() {
     }
   }, [isOpen]);
 
-  // Obtener URL de Webhook desde variables de entorno
-  const n8nWebhookUrl = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || '';
+  // Obtener URL de Webhook desde variables de entorno con fallback por defecto
+  const n8nWebhookUrl = import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL || 'https://luna1394.app.n8n.cloud/webhook/e19c4e91-3141-4f80-a143-debbe6453172/chat';
 
   // Generar o recuperar sessionId persistente en sessionStorage
   const getSessionId = () => {
@@ -1187,8 +1187,15 @@ export function ChatbotWidget() {
       let botResponseText = '';
       if (typeof data === 'string') {
         botResponseText = data;
+      } else if (Array.isArray(data) && data.length > 0) {
+        const item = data[0];
+        if (typeof item === 'string') {
+          botResponseText = item;
+        } else if (item && typeof item === 'object') {
+          botResponseText = item.output || item.text || item.response || item.message || item.chatOutput || (item.json ? (item.json.output || item.json.text || item.json.message) : '') || JSON.stringify(item);
+        }
       } else if (data && typeof data === 'object') {
-        botResponseText = data.output || data.text || data.response || data.message || JSON.stringify(data);
+        botResponseText = data.output || data.text || data.response || data.message || data.chatOutput || (data.json ? (data.json.output || data.json.text || data.json.message) : '') || JSON.stringify(data);
       }
 
       if (!botResponseText) {
