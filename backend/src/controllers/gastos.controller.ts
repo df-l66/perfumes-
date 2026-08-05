@@ -1,15 +1,22 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getGastos = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    let { data, error } = await client
       .from('gastos')
       .select('*')
       .order('fecha', { ascending: false });
 
+    if (error) {
+      const fallback = await client.from('gastos').select('*');
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) throw error;
-    res.status(200).json(data);
+    res.status(200).json(data || []);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener gastos', error: error.message });
   }
@@ -18,11 +25,12 @@ export const getGastos = async (req: Request, res: Response) => {
 export const createGasto = async (req: Request, res: Response) => {
   const gastoData = req.body;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('gastos')
       .insert([gastoData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     res.status(201).json(data);
@@ -34,7 +42,8 @@ export const createGasto = async (req: Request, res: Response) => {
 export const deleteGasto = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { error } = await supabase
+    const client = getSupabaseClient(req);
+    const { error } = await client
       .from('gastos')
       .delete()
       .eq('id', id);

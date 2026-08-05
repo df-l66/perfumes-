@@ -1,15 +1,22 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getProveedores = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    let { data, error } = await client
       .from('proveedores')
       .select('*')
       .order('created_at', { ascending: false });
 
+    if (error) {
+      const fallback = await client.from('proveedores').select('*');
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) throw error;
-    res.status(200).json(data);
+    res.status(200).json(data || []);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener proveedores', error: error.message });
   }
@@ -18,11 +25,12 @@ export const getProveedores = async (req: Request, res: Response) => {
 export const getProveedorById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('proveedores')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Proveedor no encontrado' });
@@ -36,11 +44,12 @@ export const getProveedorById = async (req: Request, res: Response) => {
 export const createProveedor = async (req: Request, res: Response) => {
   const providerData = req.body;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('proveedores')
       .insert([providerData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     res.status(201).json(data);
@@ -53,12 +62,13 @@ export const updateProveedor = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('proveedores')
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Proveedor no encontrado' });
@@ -72,12 +82,13 @@ export const updateProveedor = async (req: Request, res: Response) => {
 export const deleteProveedor = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('proveedores')
       .delete()
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     res.status(200).json({ message: 'Proveedor eliminado correctamente', data });

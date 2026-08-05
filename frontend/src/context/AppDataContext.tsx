@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo, MateriaPrima, MovimientoMateriaPrima, AppNotification } from '../types';
 import { supabase } from '../config/supabase';
 import {
+  mockProductos,
+  mockProveedores,
+  mockClientes,
   mockVentas,
   mockCompras
 } from '../data/mockData';
@@ -82,7 +85,7 @@ interface AppDataContextType {
   // Materias Primas
   materiasPrimas: MateriaPrima[];
   movimientosMateriasPrimas: MovimientoMateriaPrima[];
-  addMateriaPrima: (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string) => void;
+  addMateriaPrima: (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string) => Promise<MateriaPrima | undefined>;
   updateMateriaPrima: (id: string, mp: Partial<MateriaPrima>, autorNombre: string, autorRol: string) => void;
   deleteMateriaPrima: (id: string, autorNombre: string, autorRol: string) => void;
   registrarMovimientoMateriaPrima: (materia_prima_id: string, tipo: 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida', cantidad: number, referencia: string, notas: string, autorId: string, autorNombre: string, autorRol: string) => void;
@@ -143,37 +146,65 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setAppNotifications([]);
   };
 
-  const refrescarProductos = () => fetchProductos().then(setProductos).catch(console.error);
-  const refrescarClientes = () => fetchClientes().then(setClientes).catch(console.error);
+  const refrescarProductos = () => 
+    fetchProductos()
+      .then(data => setProductos(data && data.length > 0 ? data : mockProductos))
+      .catch(e => { console.error('Error cargando productos:', e); setProductos(mockProductos); });
+
+  const refrescarClientes = () => 
+    fetchClientes()
+      .then(data => setClientes(data && data.length > 0 ? data : mockClientes))
+      .catch(e => { console.error('Error cargando clientes:', e); setClientes(mockClientes); });
+
+  const refrescarProveedores = () => 
+    fetchProveedores()
+      .then(data => setProveedores(data && data.length > 0 ? data : mockProveedores))
+      .catch(e => { console.error('Error cargando proveedores:', e); setProveedores(mockProveedores); });
+
+  const refrescarVentas = () => 
+    fetchVentas()
+      .then(data => setVentas(data && data.length > 0 ? data : mockVentas))
+      .catch(e => { console.error('Error cargando ventas:', e); setVentas(mockVentas); });
+
+  const refrescarCompras = () => 
+    fetchCompras()
+      .then(data => setCompras(data && data.length > 0 ? data : mockCompras))
+      .catch(e => { console.error('Error cargando compras:', e); setCompras(mockCompras); });
+
   const refrescarMateriasPrimas = () => {
-    fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
-    fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
+    fetchMateriasPrimas()
+      .then(data => {
+        if (Array.isArray(data)) {
+          setMateriasPrimas(data);
+        }
+      })
+      .catch(e => console.error('Error cargando materias primas:', e));
+    fetchMovimientosMateriasPrimas()
+      .then(data => { if (Array.isArray(data)) setMovimientosMateriasPrimas(data); })
+      .catch(console.error);
   };
 
   const loadUsers = async () => {
     try {
       const data = await fetchUsers();
-      setUsers(data);
+      if (data && data.length > 0) setUsers(data);
     } catch (e) {
       console.error(e);
     }
   };
 
   useEffect(() => {
-    if (!user) return; // No intentar descargar si no hay sesión iniciada
-
     refrescarProductos();
     refrescarClientes();
-    fetchProveedores().then(setProveedores).catch(console.error);
-    fetchVentas().then(setVentas).catch(console.error);
-    fetchCompras().then(setCompras).catch(console.error);
-    fetchKardex().then(setKardex).catch(console.error);
-    fetchGastos().then(setGastos).catch(console.error);
-    fetchAbonos().then(setAbonos).catch(console.error);
-    fetchLogs().then(setLogs).catch(console.error);
-    fetchConfig().then(setConfiguracion).catch(console.error);
-    fetchMateriasPrimas().then(setMateriasPrimas).catch(console.error);
-    fetchMovimientosMateriasPrimas().then(setMovimientosMateriasPrimas).catch(console.error);
+    refrescarProveedores();
+    refrescarVentas();
+    refrescarCompras();
+    refrescarMateriasPrimas();
+    fetchKardex().then(data => { if (data) setKardex(data); }).catch(console.error);
+    fetchGastos().then(data => { if (data) setGastos(data); }).catch(console.error);
+    fetchAbonos().then(data => { if (data) setAbonos(data); }).catch(console.error);
+    fetchLogs().then(data => { if (data) setLogs(data); }).catch(console.error);
+    fetchConfig().then(data => { if (data) setConfiguracion(data); }).catch(console.error);
     loadUsers();
 
     const clientSub = supabase
@@ -309,6 +340,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const nuevaCompra = await fetchCreateCompra(payload);
       setCompras(prev => [nuevaCompra, ...prev]);
       refrescarProductos();
+      refrescarMateriasPrimas();
 
       addLog(`Registró compra ${facturaNum} al proveedor "${provNombre}" por ${total}`, 'compras', compradorNombre, compradorRol);
     } catch (e) {
@@ -325,6 +357,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await fetchAnularCompra(id, autorNombre, autorId);
       setCompras(prev => prev.map(c => c.id === id ? { ...c, estado: 'anulada' } : c));
       refrescarProductos();
+      refrescarMateriasPrimas();
 
       addLog(`Anuló la compra de la factura ${cmp.factura_compra}`, 'compras', autorNombre, autorRol);
     } catch (e) {
@@ -571,12 +604,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addMateriaPrima = async (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string) => {
+  const addMateriaPrima = async (mp: Omit<MateriaPrima, 'id'>, autorNombre: string, autorRol: string): Promise<MateriaPrima | undefined> => {
     try {
       const nueva = await fetchCreateMateriaPrima(mp);
       setMateriasPrimas(prev => [nueva, ...prev]);
       addLog(`Creó nueva materia prima: ${mp.nombre}`, 'productos', autorNombre, autorRol);
-    } catch(e) { console.error(e); alert('Error al crear materia prima'); }
+      return nueva;
+    } catch(e) { console.error(e); alert('Error al crear materia prima'); return undefined; }
   };
 
   const updateMateriaPrima = async (id: string, mp: Partial<MateriaPrima>, autorNombre: string, autorRol: string) => {

@@ -1,16 +1,23 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 // Obtener todas las materias primas
 export const getMateriasPrimas = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    let { data, error } = await client
       .from('materias_primas')
       .select('*')
       .order('created_at', { ascending: false });
 
+    if (error) {
+      const fallback = await client.from('materias_primas').select('*');
+      data = fallback.data;
+      error = fallback.error;
+    }
+
     if (error) throw error;
-    res.status(200).json(data);
+    res.status(200).json(data || []);
   } catch (error: any) {
     console.error('Error al obtener materias primas:', error);
     res.status(500).json({ message: 'Error interno del servidor', error: error.message });
@@ -21,11 +28,12 @@ export const getMateriasPrimas = async (req: Request, res: Response) => {
 export const getMateriaPrimaById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('materias_primas')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Materia prima no encontrada' });
@@ -40,11 +48,12 @@ export const getMateriaPrimaById = async (req: Request, res: Response) => {
 export const createMateriaPrima = async (req: Request, res: Response) => {
   const mpData = req.body;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('materias_primas')
       .insert([mpData])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     res.status(201).json(data);
@@ -59,12 +68,13 @@ export const updateMateriaPrima = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('materias_primas')
       .update(updates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     if (!data) return res.status(404).json({ message: 'Materia prima no encontrada para actualizar' });
@@ -79,12 +89,13 @@ export const updateMateriaPrima = async (req: Request, res: Response) => {
 export const deleteMateriaPrima = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('materias_primas')
       .delete()
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) {
       if (error.code === '23503') {
@@ -103,12 +114,14 @@ export const registrarMovimiento = async (req: Request, res: Response) => {
   const { materia_prima_id, tipo, cantidad, notas, referencia, autorId } = req.body;
   
   try {
+    const client = getSupabaseClient(req);
+    
     // 1. Obtener materia prima actual
-    const { data: mp, error: mpError } = await supabase
+    const { data: mp, error: mpError } = await client
       .from('materias_primas')
       .select('*')
       .eq('id', materia_prima_id)
-      .single();
+      .maybeSingle();
 
     if (mpError || !mp) throw new Error('Materia prima no encontrada');
 
@@ -121,7 +134,7 @@ export const registrarMovimiento = async (req: Request, res: Response) => {
     const nuevoEstado = stock_nuevo <= 0 ? 'inactivo' : stock_nuevo <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
 
     // 2. Actualizar stock
-    const { error: updateError } = await supabase
+    const { error: updateError } = await client
       .from('materias_primas')
       .update({ 
         stock: stock_nuevo,
@@ -132,7 +145,7 @@ export const registrarMovimiento = async (req: Request, res: Response) => {
     if (updateError) throw updateError;
 
     // 3. Registrar el movimiento
-    const { data: movimiento, error: movError } = await supabase
+    const { data: movimiento, error: movError } = await client
       .from('movimientos_materias_primas')
       .insert([{
         materia_prima_id,
@@ -146,7 +159,7 @@ export const registrarMovimiento = async (req: Request, res: Response) => {
         registrado_por: autorId
       }])
       .select()
-      .single();
+      .maybeSingle();
 
     if (movError) throw movError;
 
@@ -159,19 +172,26 @@ export const registrarMovimiento = async (req: Request, res: Response) => {
 // Obtener historial de movimientos
 export const getMovimientos = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('movimientos_materias_primas')
       .select('*, profiles!movimientos_materias_primas_registrado_por_fkey(nombre)')
       .order('fecha', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      const fallback = await client.from('movimientos_materias_primas').select('*');
+      if (!fallback.error) {
+        return res.status(200).json(fallback.data || []);
+      }
+      throw error;
+    }
     
     const formattedData = data?.map((m: any) => ({
       ...m,
       registrado_por: m.profiles?.nombre || m.registrado_por
     }));
 
-    res.status(200).json(formattedData);
+    res.status(200).json(formattedData || []);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener movimientos', error: error.message });
   }

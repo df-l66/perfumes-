@@ -1,21 +1,28 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getKardex = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('movimientos_kardex')
       .select('*, profiles!movimientos_kardex_registrado_por_fkey(nombre)')
       .order('fecha', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      const fallback = await client.from('movimientos_kardex').select('*');
+      if (!fallback.error) {
+        return res.status(200).json(fallback.data || []);
+      }
+      throw error;
+    }
     
     const formattedData = data?.map((m: any) => ({
       ...m,
       registrado_por: m.profiles?.nombre || m.registrado_por
     }));
 
-    res.status(200).json(formattedData);
+    res.status(200).json(formattedData || []);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener el kardex', error: error.message });
   }
@@ -25,12 +32,13 @@ export const registrarAjuste = async (req: Request, res: Response) => {
   const { producto_id, tipo, cantidad, notas, autorId, autorNombre } = req.body;
   
   try {
+    const client = getSupabaseClient(req);
     // 1. Obtener producto actual
-    const { data: prod, error: prodError } = await supabase
+    const { data: prod, error: prodError } = await client
       .from('productos')
       .select('*')
       .eq('id', producto_id)
-      .single();
+      .maybeSingle();
 
     if (prodError || !prod) throw new Error('Producto no encontrado');
 
@@ -42,7 +50,7 @@ export const registrarAjuste = async (req: Request, res: Response) => {
     const nuevoEstado = stock_nuevo <= 0 ? 'inactivo' : stock_nuevo <= prod.stock_minimo ? 'stock_bajo' : 'activo';
 
     // 2. Actualizar stock del producto
-    const { error: updateError } = await supabase
+    const { error: updateError } = await client
       .from('productos')
       .update({ 
         stock: stock_nuevo,
@@ -53,7 +61,7 @@ export const registrarAjuste = async (req: Request, res: Response) => {
     if (updateError) throw updateError;
 
     // 3. Registrar el movimiento en el Kardex
-    const { data: movimiento, error: movError } = await supabase
+    const { data: movimiento, error: movError } = await client
       .from('movimientos_kardex')
       .insert([{
         producto_id,
@@ -67,7 +75,7 @@ export const registrarAjuste = async (req: Request, res: Response) => {
         registrado_por: autorId
       }])
       .select()
-      .single();
+      .maybeSingle();
 
     if (movError) throw movError;
 

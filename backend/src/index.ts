@@ -56,7 +56,7 @@ app.use('/api/clientes', authMiddleware, clientesRoutes);
 app.use('/api/ventas', authMiddleware, ventasRoutes);
 app.use('/api/kardex', authMiddleware, kardexRoutes);
 app.use('/api/abonos', authMiddleware, abonosRoutes);
-app.use('/api/materias-primas', authMiddleware, adminMiddleware, materiasPrimasRoutes);
+app.use('/api/materias-primas', authMiddleware, materiasPrimasRoutes);
 
 // Rutas administrativas (Solo administradores)
 app.use('/api/proveedores', authMiddleware, adminMiddleware, proveedoresRoutes);

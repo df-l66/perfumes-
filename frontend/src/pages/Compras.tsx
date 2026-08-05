@@ -13,7 +13,7 @@ import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { Compra, CompraItem, Producto, Proveedor } from '../types';
+import type { Compra, CompraItem, Producto, Proveedor, MateriaPrimaEstado } from '../types';
 
 type WizardStep = 'proveedor' | 'productos' | 'confirmar';
 
@@ -28,7 +28,7 @@ function NuevaCompraModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { productos, proveedores, addCompra, materiasPrimas } = useAppData();
+  const { productos, proveedores, addProducto, addMateriaPrima, addCompra, materiasPrimas } = useAppData();
   const { user } = useAuth();
 
   const [step, setStep] = useState<WizardStep>('proveedor');
@@ -40,6 +40,196 @@ function NuevaCompraModal({
   const [notas, setNotas] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para creación rápida/completa de productos desde la compra
+  const [quickProductModalOpen, setQuickProductModalOpen] = useState(false);
+  const [quickProdForm, setQuickProdForm] = useState<any>({
+    codigo: '',
+    nombre: '',
+    unidad: 'Frasco',
+    categoria: 'Fragancias Elegantes',
+    proveedor_id: '',
+    precio_costo: 0,
+    precio_venta: 0,
+    stock: 0,
+    stock_minimo: 0,
+    es_por_encargo: false,
+    tipo_producto: 'perfume',
+    calidad: 'Original',
+    mililitros: 100,
+    genero: 'Unisex',
+    familia_olfativa: '',
+    descripcion: '',
+    estado: 'activo',
+    imagen: ''
+  });
+  const [quickProdError, setQuickProdError] = useState<string | null>(null);
+
+  // Estado para creación rápida/completa de materia prima desde la compra
+  const [quickMpModalOpen, setQuickMpModalOpen] = useState(false);
+  const [quickMpForm, setQuickMpForm] = useState({
+    nombre: '',
+    tipo: 'esencia',
+    unidad_medida: 'ml',
+    stock: 0,
+    stock_minimo: 0,
+    costo_unitario: 0,
+    estado: 'activo' as MateriaPrimaEstado,
+    imagen: ''
+  });
+  const [quickMpError, setQuickMpError] = useState<string | null>(null);
+
+  const openQuickProductModal = () => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    setQuickProdForm({
+      codigo: `PROD-${randomNum}`,
+      nombre: searchProd.trim(),
+      unidad: 'Frasco',
+      categoria: 'Fragancias Elegantes',
+      proveedor_id: proveedorId !== 'sin-proveedor' ? proveedorId : '',
+      precio_costo: 0,
+      precio_venta: 0,
+      stock: 0,
+      stock_minimo: 0,
+      es_por_encargo: false,
+      tipo_producto: 'perfume',
+      calidad: 'Original',
+      mililitros: 100,
+      genero: 'Unisex',
+      familia_olfativa: '',
+      descripcion: '',
+      estado: 'activo',
+      imagen: ''
+    });
+    setQuickProdError(null);
+    setQuickProductModalOpen(true);
+  };
+
+  const handleQuickProductSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickProdError(null);
+
+    if (!quickProdForm.nombre.trim()) {
+      setQuickProdError('El nombre del producto es obligatorio.');
+      return;
+    }
+
+    if (!quickProdForm.codigo.trim()) {
+      setQuickProdError('El código del producto es obligatorio.');
+      return;
+    }
+
+    const codExiste = productos.some(p => p.codigo.trim().toLowerCase() === quickProdForm.codigo.trim().toLowerCase());
+    if (codExiste) {
+      setQuickProdError(`El código "${quickProdForm.codigo}" ya pertenece a otro producto.`);
+      return;
+    }
+
+    if (Number(quickProdForm.precio_venta) < Number(quickProdForm.precio_costo)) {
+      setQuickProdError('El precio de venta no puede ser menor al precio de costo del producto.');
+      return;
+    }
+
+    const computed = {
+      codigo: quickProdForm.codigo.trim(),
+      nombre: quickProdForm.nombre.trim(),
+      unidad: quickProdForm.unidad.trim() || 'Frasco',
+      categoria: quickProdForm.categoria || 'Fragancias Elegantes',
+      proveedor_id: quickProdForm.proveedor_id || (proveedorId !== 'sin-proveedor' ? proveedorId : null),
+      precio_costo: Number(quickProdForm.precio_costo) || 0,
+      precio_venta: Number(quickProdForm.precio_venta) || 0,
+      stock: Number(quickProdForm.stock) || 0,
+      stock_minimo: Number(quickProdForm.stock_minimo) || 0,
+      tipo_producto: quickProdForm.tipo_producto || 'perfume',
+      calidad: quickProdForm.calidad || 'Original',
+      mililitros: quickProdForm.mililitros ? Number(quickProdForm.mililitros) : null,
+      genero: quickProdForm.genero || 'Unisex',
+      familia_olfativa: quickProdForm.familia_olfativa?.trim() || '',
+      descripcion: quickProdForm.descripcion?.trim() || '',
+      imagen: quickProdForm.imagen?.trim() || '',
+      estado: quickProdForm.estado || 'activo'
+    } as Omit<Producto, 'id'>;
+
+    const userName = user?.name || 'Usuario';
+    const userRole = user?.role || 'admin';
+
+    addProducto(computed, userName, userRole);
+
+    // Agregar automáticamente al carrito de la compra actual
+    addToCart({
+      _id: `temp-${Date.now()}`,
+      _nombre: computed.nombre,
+      _codigo: computed.codigo,
+      _precio_costo: computed.precio_costo,
+      _precio_venta: computed.precio_venta,
+      _stock: computed.stock
+    }, 1, computed.precio_costo);
+
+    setQuickProductModalOpen(false);
+  };
+
+  const openQuickMpModal = () => {
+    setQuickMpForm({
+      nombre: searchProd.trim(),
+      tipo: 'esencia',
+      unidad_medida: 'ml',
+      stock: 0,
+      stock_minimo: 0,
+      costo_unitario: 0,
+      estado: 'activo',
+      imagen: ''
+    });
+    setQuickMpError(null);
+    setQuickMpModalOpen(true);
+  };
+
+  const handleQuickMpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickMpError(null);
+
+    if (!quickMpForm.nombre.trim()) {
+      setQuickMpError('El nombre de la materia prima es obligatorio.');
+      return;
+    }
+
+    const isDuplicate = materiasPrimas.some(m => m.nombre.trim().toLowerCase() === quickMpForm.nombre.trim().toLowerCase());
+    if (isDuplicate) {
+      setQuickMpError(`Ya existe una materia prima registrada con el nombre "${quickMpForm.nombre}".`);
+      return;
+    }
+
+    const payload = {
+      nombre: quickMpForm.nombre.trim(),
+      tipo: quickMpForm.tipo,
+      unidad_medida: quickMpForm.unidad_medida,
+      stock: Number(quickMpForm.stock) || 0,
+      stock_minimo: Number(quickMpForm.stock_minimo) || 0,
+      costo_unitario: Number(quickMpForm.costo_unitario) || 0,
+      estado: quickMpForm.estado || 'activo',
+      imagen: quickMpForm.imagen?.trim() || ''
+    };
+
+    const userName = user?.name || 'Usuario';
+    const userRole = user?.role || 'admin';
+
+    const nuevaMp = await addMateriaPrima(payload, userName, userRole);
+
+    if (nuevaMp) {
+      // Agregar automáticamente al carrito de la compra actual
+      addToCart({
+        _id: nuevaMp.id,
+        _nombre: nuevaMp.nombre,
+        _precio_costo: nuevaMp.costo_unitario,
+        _precio_venta: 0,
+        _codigo: `MP-${nuevaMp.tipo.toUpperCase()}`,
+        _stock: nuevaMp.stock
+      }, 1, nuevaMp.costo_unitario, 'materia_prima');
+    }
+
+    setQuickMpModalOpen(false);
+  };
 
   const reset = () => {
     setStep('proveedor');
@@ -81,15 +271,16 @@ function NuevaCompraModal({
     } else {
       return materiasPrimas.filter(m => 
         m.estado !== 'inactivo' && m.nombre.toLowerCase().includes(searchProd.toLowerCase())
-      ).map(m => ({ ...m, _id: m.id, _nombre: m.nombre, _precio_costo: 0, _precio_venta: 0, _codigo: `MP-${m.tipo.toUpperCase()}`, _stock: m.stock }));
+      ).map(m => ({ ...m, _id: m.id, _nombre: m.nombre, _precio_costo: m.costo_unitario || 0, _precio_venta: 0, _codigo: `MP-${m.tipo.toUpperCase()}`, _stock: m.stock }));
     }
   }, [productos, materiasPrimas, searchProd, tipoItem]);
 
   const getItemId = (item: CompraItem) => item.producto_id || item.materia_prima_id || '';
 
   // Manejo del carrito
-  const addToCart = (item: any, cantidad: number, costo: number) => {
+  const addToCart = (item: any, cantidad: number, costo: number, explicitTipoItem?: 'producto' | 'materia_prima') => {
     if (cantidad <= 0) return;
+    const targetTipoItem = explicitTipoItem || tipoItem;
     setCarrito(prev => {
       const idx = prev.findIndex(i => getItemId(i) === item._id);
       if (idx >= 0) {
@@ -99,9 +290,9 @@ function NuevaCompraModal({
         return updated;
       }
       return [...prev, {
-        producto_id: tipoItem === 'producto' ? item._id : undefined,
-        materia_prima_id: tipoItem === 'materia_prima' ? item._id : undefined,
-        tipo_item: tipoItem,
+        producto_id: targetTipoItem === 'producto' ? item._id : undefined,
+        materia_prima_id: targetTipoItem === 'materia_prima' ? item._id : undefined,
+        tipo_item: targetTipoItem,
         nombre: item._nombre,
         cantidad,
         precio_costo: costo,
@@ -352,49 +543,87 @@ function NuevaCompraModal({
                       Materias Primas
                     </button>
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-                    <input
-                      placeholder={`Buscar ${tipoItem === 'producto' ? 'producto' : 'materia prima'}...`}
-                      value={searchProd}
-                      onChange={e => setSearchProd(e.target.value)}
-                      className={`${inp} pl-9`}
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                      <input
+                        placeholder={`Buscar ${tipoItem === 'producto' ? 'producto' : 'materia prima'}...`}
+                        value={searchProd}
+                        onChange={e => setSearchProd(e.target.value)}
+                        className={`${inp} pl-9`}
+                      />
+                    </div>
+                    {tipoItem === 'producto' ? (
+                      <button
+                        type="button"
+                        onClick={openQuickProductModal}
+                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-sm cursor-pointer"
+                        title="Abrir formulario completo para registrar un nuevo producto"
+                      >
+                        <Plus size={14} /> + Producto
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={openQuickMpModal}
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 shadow-sm cursor-pointer"
+                        title="Abrir formulario para registrar una nueva materia prima"
+                      >
+                        <Plus size={14} /> + Materia Prima
+                      </button>
+                    )}
                   </div>
                   
                   <div className="border border-zinc-200 rounded-lg divide-y divide-zinc-100 max-h-64 overflow-y-auto bg-white">
                     {itemsFiltrados.length === 0 ? (
-                      <div className="py-8 text-center">
-                        <Package size={24} className="mx-auto text-zinc-300 mb-2" />
-                        <p className="text-xs text-zinc-400">Sin resultados</p>
+                      <div className="py-8 text-center space-y-2">
+                        <Package size={24} className="mx-auto text-zinc-300 mb-1" />
+                        <p className="text-xs text-zinc-400">No se encontraron {tipoItem === 'producto' ? 'productos' : 'materias primas'}</p>
+                        {tipoItem === 'producto' ? (
+                          <button 
+                            type="button" 
+                            onClick={openQuickProductModal}
+                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors pt-1"
+                          >
+                            <PlusCircle size={14} /> Crear "{searchProd || 'Nuevo Producto'}" en el catálogo
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            onClick={openQuickMpModal}
+                            className="text-xs font-bold text-purple-600 hover:text-purple-700 inline-flex items-center gap-1.5 cursor-pointer transition-colors pt-1"
+                          >
+                            <PlusCircle size={14} /> Crear "{searchProd || 'Nueva Materia Prima'}" en el catálogo
+                          </button>
+                        )}
                       </div>
                     ) : itemsFiltrados.map(p => (
-                      <button
-                        key={p._id}
-                        type="button"
-                        onClick={() => addToCart(p, 1, p._precio_costo)}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
-                            {(p as any).imagen ? (
-                              <img src={(p as any).imagen} alt={p._nombre} className="w-full h-full object-cover" />
-                            ) : (
-                              <Package size={14} className="text-zinc-400" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-zinc-700 truncate">{p._nombre}</p>
-                            <p className="text-xs text-zinc-400">{p._codigo} · stock: {p._stock}</p>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm font-bold text-amber-600">{formatCurrency(p._precio_venta)}</p>
-                          <p className="text-xs text-zinc-300 group-hover:text-amber-400 transition-colors">+ agregar</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                          <button
+                            key={p._id}
+                            type="button"
+                            onClick={() => addToCart(p, 1, p._precio_costo)}
+                            className="w-full flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-amber-50 text-left transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-3.5 min-w-0">
+                              <div className="w-8 h-8 rounded-md overflow-hidden bg-zinc-100 border border-zinc-200/60 shrink-0 flex items-center justify-center">
+                                {(p as any).imagen ? (
+                                  <img src={(p as any).imagen} alt={p._nombre} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Package size={14} className="text-zinc-400" />
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-zinc-700 truncate">{p._nombre}</p>
+                                <p className="text-xs text-zinc-400">{p._codigo} · stock: {p._stock}</p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-sm font-bold text-amber-600">{formatCurrency(p._precio_venta)}</p>
+                              <p className="text-xs text-zinc-300 group-hover:text-amber-400 transition-colors">+ agregar</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                 </div>
 
                 {/* Cart Preview */}
@@ -572,6 +801,264 @@ function NuevaCompraModal({
           )}
         </>
       )}
+
+      {/* Modal Dedicado para Crear Producto Completo desde Compras */}
+      <Modal 
+        isOpen={quickProductModalOpen} 
+        onClose={() => setQuickProductModalOpen(false)} 
+        title="Crear Nuevo Producto" 
+        size="lg"
+        zIndexClass="z-[70]"
+      >
+        <form onSubmit={handleQuickProductSubmit} className="space-y-4 text-left">
+          {quickProdError && <AlertBox type="warning" title="Atención" className="mb-4">{quickProdError}</AlertBox>}
+
+          {proveedorSeleccionado && (
+            <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl flex items-center justify-between text-xs text-amber-800">
+              <div>
+                <span className="font-bold">Proveedor Asignado para la Compra:</span> {proveedorSeleccionado.nombre}
+              </div>
+              <span className="text-[10px] bg-amber-200/60 px-2 py-0.5 rounded-md font-semibold text-amber-900">Se agregará al carrito</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Código', <input required minLength={3} value={quickProdForm.codigo} onChange={e => setQuickProdForm((f: any) => ({ ...f, codigo: e.target.value }))} className={inp} placeholder="PER-001" />)}
+            {field('Unidad', <input required value={quickProdForm.unidad} onChange={e => setQuickProdForm((f: any) => ({ ...f, unidad: e.target.value }))} className={inp} placeholder="Frasco, Spray…" />)}
+          </div>
+
+          {field('Nombre del Producto', <input required minLength={3} value={quickProdForm.nombre} onChange={e => setQuickProdForm((f: any) => ({ ...f, nombre: e.target.value }))} className={inp} placeholder="Nombre completo" />)}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Categoría', (
+              <select required value={quickProdForm.categoria} onChange={e => setQuickProdForm((f: any) => ({ ...f, categoria: e.target.value }))} className={inp}>
+                <option value="">— Seleccionar —</option>
+                {quickProdForm.tipo_producto !== 'otro' ? (
+                  <>
+                    <option value="Fragancias Árabes">Fragancias Árabes</option>
+                    <option value="Fragancias Casuales">Fragancias Casuales</option>
+                    <option value="Fragancias Elegantes">Fragancias Elegantes</option>
+                    <option value="Fragancias Premium">Fragancias Premium</option>
+                    <option value="Decants / Muestras">Decants / Muestras</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Accesorios">Accesorios</option>
+                    <option value="Cuidado Personal">Cuidado Personal</option>
+                    <option value="Cosméticos">Cosméticos</option>
+                    <option value="Ropa">Ropa</option>
+                    <option value="Otros">Otros</option>
+                  </>
+                )}
+              </select>
+            ))}
+            {field('Proveedor (Asociado)', (
+              <select value={quickProdForm.proveedor_id || ''} onChange={e => setQuickProdForm((f: any) => ({ ...f, proveedor_id: e.target.value }))} className={inp}>
+                <option value="">— Sin Proveedor —</option>
+                {proveedores.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              </select>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Precio Costo (COP)', (
+              <input 
+                type="text" 
+                required 
+                value={formatNumberWithDots(quickProdForm.precio_costo)} 
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  setQuickProdForm((f: any) => ({ ...f, precio_costo: digits ? parseInt(digits, 10) : 0 }));
+                }} 
+                className={inp} 
+                placeholder="0" 
+              />
+            ))}
+            {field('Precio Venta (COP)', (
+              <input 
+                type="text" 
+                required 
+                value={formatNumberWithDots(quickProdForm.precio_venta)} 
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  setQuickProdForm((f: any) => ({ ...f, precio_venta: digits ? parseInt(digits, 10) : 0 }));
+                }} 
+                className={inp} 
+                placeholder="0" 
+              />
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Stock Actual', <input type="number" step="any" min={0} value={quickProdForm.stock} onChange={e => setQuickProdForm((f: any) => ({ ...f, stock: e.target.value === '' ? 0 : +e.target.value }))} className={inp} />)}
+            {field('Stock Mínimo', <input type="number" step="any" min={0} value={quickProdForm.stock_minimo} onChange={e => setQuickProdForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? 0 : +e.target.value }))} className={inp} />)}
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer p-3 bg-zinc-50 border border-zinc-200 rounded-lg">
+            <input 
+              type="checkbox" 
+              checked={!!quickProdForm.es_por_encargo} 
+              onChange={e => setQuickProdForm((f: any) => ({ ...f, es_por_encargo: e.target.checked }))} 
+              className="w-4 h-4 text-amber-600 rounded border-zinc-300 focus:ring-amber-500"
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-bold text-zinc-700">Producto por Encargo (Bajo Pedido)</span>
+              <span className="text-xs text-zinc-500">Permite registrar sin validar stock inicial.</span>
+            </div>
+          </label>
+
+          {quickProdForm.tipo_producto !== 'otro' && (
+            <div className="p-4.5 bg-amber-50/30 rounded-xl border border-amber-100/50 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('Calidad del Perfume', (
+                  <select value={quickProdForm.calidad || 'Original'} onChange={e => setQuickProdForm((f: any) => ({ ...f, calidad: e.target.value }))} className={inp}>
+                    <option value="Original">Original</option>
+                    <option value="1.1 Original">1.1 Original (Alta Similitud)</option>
+                    <option value="Replica AAA">Réplica AAA</option>
+                    <option value="Tester">Tester / Probador</option>
+                    <option value="Decant">Decant (Muestra)</option>
+                  </select>
+                ))}
+                {field('Volumen / Tamaño (Mililitros)', (
+                  <div className="relative">
+                    <input type="number" step="any" min={1} value={quickProdForm.mililitros || 100} onChange={e => setQuickProdForm((f: any) => ({ ...f, mililitros: e.target.value === '' ? 0 : +e.target.value }))} className={`${inp} pr-8`} />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">ml</span>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {field('Género', (
+                  <select value={quickProdForm.genero || 'Unisex'} onChange={e => setQuickProdForm((f: any) => ({ ...f, genero: e.target.value as any }))} className={inp}>
+                    <option value="Unisex">Unisex</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                  </select>
+                ))}
+                {field('Familia Olfativa', <input value={quickProdForm.familia_olfativa || ''} onChange={e => setQuickProdForm((f: any) => ({ ...f, familia_olfativa: e.target.value }))} className={inp} placeholder="Amaderada, Floral, Cítrica…" />)}
+              </div>
+            </div>
+          )}
+
+          {field('Descripción', <textarea rows={2} value={quickProdForm.descripcion || ''} onChange={e => setQuickProdForm((f: any) => ({ ...f, descripcion: e.target.value }))} className={inp} placeholder="Descripción corta del producto…" />)}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Estado del Producto', (
+              <select value={quickProdForm.estado} onChange={e => setQuickProdForm((f: any) => ({ ...f, estado: e.target.value as any }))} className={inp}>
+                <option value="activo">Activo / Disponible</option>
+                <option value="inactivo">Inactivo / Oculto</option>
+              </select>
+            ))}
+            {field('URL de la Imagen', <input value={quickProdForm.imagen || ''} onChange={e => setQuickProdForm((f: any) => ({ ...f, imagen: e.target.value }))} className={inp} placeholder="https://ejemplo.com/perfume.jpg" />)}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">
+            <Button type="button" variant="secondary" onClick={() => setQuickProductModalOpen(false)}>Cancelar</Button>
+            <Button type="submit">Guardar e Ingresar al Carrito</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Dedicado para Crear Materia Prima desde Compras */}
+      <Modal 
+        isOpen={quickMpModalOpen} 
+        onClose={() => setQuickMpModalOpen(false)} 
+        title="Crear Nueva Materia Prima" 
+        size="md"
+        zIndexClass="z-[70]"
+      >
+        <form onSubmit={handleQuickMpSubmit} className="space-y-4 text-left">
+          {quickMpError && <AlertBox type="warning" title="Atención" className="mb-4">{quickMpError}</AlertBox>}
+
+          {field('Nombre de la Materia Prima', (
+            <input 
+              required 
+              minLength={3} 
+              value={quickMpForm.nombre} 
+              onChange={e => setQuickMpForm((f: any) => ({ ...f, nombre: e.target.value }))} 
+              className={inp} 
+              placeholder="Ej. Esencia Concentrada Dior Sauvage" 
+            />
+          ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Tipo de Materia Prima', (
+              <select value={quickMpForm.tipo} onChange={e => setQuickMpForm((f: any) => ({ ...f, tipo: e.target.value }))} className={inp}>
+                <option value="esencia">Esencia</option>
+                <option value="alcohol">Alcohol</option>
+                <option value="fijador">Fijador</option>
+                <option value="envase">Envase / Frasco</option>
+                <option value="otro">Otro Insumo</option>
+              </select>
+            ))}
+            {field('Unidad de Medida', (
+              <select value={quickMpForm.unidad_medida} onChange={e => setQuickMpForm((f: any) => ({ ...f, unidad_medida: e.target.value }))} className={inp}>
+                <option value="ml">Mililitros (ml)</option>
+                <option value="g">Gramos (g)</option>
+                <option value="ud">Unidades (ud)</option>
+              </select>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Stock Inicial', (
+              <input 
+                type="number" 
+                step="any" 
+                min={0} 
+                value={quickMpForm.stock} 
+                onChange={e => setQuickMpForm((f: any) => ({ ...f, stock: e.target.value === '' ? 0 : +e.target.value }))} 
+                className={inp} 
+              />
+            ))}
+            {field('Stock Mínimo', (
+              <input 
+                type="number" 
+                step="any" 
+                min={0} 
+                value={quickMpForm.stock_minimo} 
+                onChange={e => setQuickMpForm((f: any) => ({ ...f, stock_minimo: e.target.value === '' ? 0 : +e.target.value }))} 
+                className={inp} 
+              />
+            ))}
+          </div>
+
+          {field('Costo de Referencia (COP)', (
+            <input 
+              type="text" 
+              required 
+              value={formatNumberWithDots(quickMpForm.costo_unitario)} 
+              onChange={e => {
+                const digits = e.target.value.replace(/\D/g, '');
+                setQuickMpForm((f: any) => ({ ...f, costo_unitario: digits ? parseInt(digits, 10) : 0 }));
+              }} 
+              className={inp} 
+              placeholder="0" 
+            />
+          ))}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {field('Estado del Insumo', (
+              <select value={quickMpForm.estado} onChange={e => setQuickMpForm((f: any) => ({ ...f, estado: e.target.value as any }))} className={inp}>
+                <option value="activo">Activo / Disponible</option>
+                <option value="inactivo">Inactivo / Oculto</option>
+              </select>
+            ))}
+            {field('URL de Imagen (Opcional)', (
+              <input 
+                value={quickMpForm.imagen || ''} 
+                onChange={e => setQuickMpForm((f: any) => ({ ...f, imagen: e.target.value }))} 
+                className={inp} 
+                placeholder="https://ejemplo.com/esencia.jpg" 
+              />
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-zinc-100">
+            <Button type="button" variant="secondary" onClick={() => setQuickMpModalOpen(false)}>Cancelar</Button>
+            <Button type="submit">Guardar e Ingresar al Carrito</Button>
+          </div>
+        </form>
+      </Modal>
     </Modal>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Truck, Search, Eye, Power, Mail, Phone, MapPin, User, FileText, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, Truck, Search, Eye, Power, Mail, Phone, MapPin, User, FileText, Calendar, DollarSign, Package, PlusCircle } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -7,7 +7,7 @@ import { Modal } from '../components/ui/Modal';
 import { AlertBox } from '../components/ui/AlertBox';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
-import type { Proveedor, ProveedorEstado } from '../types';
+import type { Proveedor, ProveedorEstado, Producto } from '../types';
 
 const EMPTY: any = {
   nombre: '', nit: '', contacto: '', telefono: '', email: '', ciudad: '', estado: 'activo'

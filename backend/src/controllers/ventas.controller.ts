@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getVentas = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('ventas')
       .select(`
         *,
@@ -32,11 +33,12 @@ export const createVenta = async (req: Request, res: Response) => {
   const { items, ...ventaData } = req.body;
   
   try {
+    const client = getSupabaseClient(req);
     // 1. Limpiar datos de columnas que no existen en la tabla ventas
     const { subtotal, descuento, impuestos, monto_pagado, cambio, abono_inicial, abono_metodo_pago, ...cleanVentaData } = ventaData;
     
     // 2. Insertar la venta principal
-    const { data: venta, error: ventaError } = await supabase
+    const { data: venta, error: ventaError } = await client
       .from('ventas')
       .insert([{
         factura: cleanVentaData.factura,
@@ -50,14 +52,13 @@ export const createVenta = async (req: Request, res: Response) => {
         estado: cleanVentaData.estado || (cleanVentaData.metodo_pago === 'credito' ? 'pendiente' : 'completada')
       }])
       .select()
-      .single();
+      .maybeSingle();
 
-    if (ventaError) throw ventaError;
+    if (ventaError || !venta) throw ventaError || new Error('No se pudo registrar la venta');
 
     // 3. Procesar cada ítem
     for (const item of items) {
       const isPreparado = item.es_preparado;
-      // Intentar omitir producto_id si es preparado para evitar constraint de FK si aplica, o usar null
       const detallePayload: any = {
         venta_id: venta.id,
         nombre: item.nombre,
@@ -70,17 +71,17 @@ export const createVenta = async (req: Request, res: Response) => {
         detallePayload.producto_id = item.producto_id;
       }
 
-      await supabase.from('venta_detalles').insert([detallePayload]);
+      await client.from('venta_detalles').insert([detallePayload]);
 
       if (isPreparado && item.receta) {
         const descontarMateriaPrima = async (id: string, qty: number) => {
           if (!id) return;
-          const { data: mp } = await supabase.from('materias_primas').select('stock, stock_minimo, nombre').eq('id', id).single();
+          const { data: mp } = await client.from('materias_primas').select('stock, stock_minimo, nombre').eq('id', id).maybeSingle();
           if (mp) {
             const nuevoStock = Number(mp.stock) - qty;
             const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
-            await supabase.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', id);
-            await supabase.from('movimientos_materias_primas').insert([{
+            await client.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', id);
+            await client.from('movimientos_materias_primas').insert([{
               materia_prima_id: id,
               materia_prima_nombre: mp.nombre,
               tipo: 'salida',
@@ -98,23 +99,23 @@ export const createVenta = async (req: Request, res: Response) => {
             await descontarMateriaPrima(ing.materia_prima_id, ing.cantidad * item.cantidad);
           }
         }
-      } else {
-        const { data: prod } = await supabase.from('productos').select('stock, stock_minimo, descripcion').eq('id', item.producto_id).single();
+      } else if (item.producto_id) {
+        const { data: prod } = await client.from('productos').select('stock, stock_minimo, descripcion').eq('id', item.producto_id).maybeSingle();
         if (prod) {
           const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
           
           let nuevoStock = prod.stock - item.cantidad;
           if (isPorEncargo && nuevoStock < 0) {
-            nuevoStock = 0; // Don't let stock drop below 0 for made-to-order items
+            nuevoStock = 0;
           }
           
           const nuevoEstado = isPorEncargo 
-            ? 'activo' // Made-to-order items remain active even at 0 stock
+            ? 'activo' 
             : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
           
-          await supabase.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
+          await client.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
 
-          await supabase.from('movimientos_kardex').insert([{
+          await client.from('movimientos_kardex').insert([{
             producto_id: item.producto_id,
             producto_nombre: item.nombre,
             tipo: 'salida',
@@ -133,13 +134,13 @@ export const createVenta = async (req: Request, res: Response) => {
       const abonoMonto = Math.max(0, Math.min(Number(abono_inicial) || 0, venta.total));
       const deudaNeta = venta.total - abonoMonto;
 
-      const { data: cliente } = await supabase.from('clientes').select('credito_usado').eq('id', venta.cliente_id).single();
+      const { data: cliente } = await client.from('clientes').select('credito_usado').eq('id', venta.cliente_id).maybeSingle();
       if (cliente) {
-        await supabase.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + deudaNeta }).eq('id', venta.cliente_id);
+        await client.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + deudaNeta }).eq('id', venta.cliente_id);
       }
 
       if (abonoMonto > 0) {
-        await supabase.from('abonos').insert([{
+        await client.from('abonos').insert([{
           cliente_id: venta.cliente_id,
           cliente_nombre: venta.cliente_nombre,
           monto: abonoMonto,
@@ -162,27 +163,23 @@ export const anularVenta = async (req: Request, res: Response) => {
   const { autorNombre, autorId } = req.body;
   
   try {
-    // Obtener la venta con sus detalles
-    const { data: venta, error: fetchError } = await supabase
+    const client = getSupabaseClient(req);
+    const { data: venta, error: fetchError } = await client
       .from('ventas')
       .select('*, venta_detalles(*)')
       .eq('id', id)
-      .single();
+      .maybeSingle();
       
     if (fetchError || !venta) throw new Error('Venta no encontrada');
     if (venta.estado === 'anulada') throw new Error('La venta ya estaba anulada');
 
-    // We will update the status to anulada AT THE END of the function
-    // to avoid partial updates if an error occurs during stock restoration.
-
-    // Devolver el stock de cada producto
     for (const item of venta.venta_detalles) {
-      if (!item.producto_id) continue; // Skip prepared items that don't have a product ID
-      const { data: prod } = await supabase
+      if (!item.producto_id) continue;
+      const { data: prod } = await client
         .from('productos')
         .select('stock, stock_minimo, descripcion')
         .eq('id', item.producto_id)
-        .single();
+        .maybeSingle();
 
       if (prod) {
         const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
@@ -191,7 +188,7 @@ export const anularVenta = async (req: Request, res: Response) => {
           ? 'activo'
           : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
 
-        await supabase
+        await client
           .from('productos')
           .update({ 
             stock: nuevoStock,
@@ -199,8 +196,7 @@ export const anularVenta = async (req: Request, res: Response) => {
           })
           .eq('id', item.producto_id);
 
-        // Registrar entrada por anulación en Kardex
-        await supabase.from('movimientos_kardex').insert([{
+        await client.from('movimientos_kardex').insert([{
           producto_id: item.producto_id,
           producto_nombre: item.nombre,
           tipo: 'ajuste_entrada',
@@ -213,27 +209,26 @@ export const anularVenta = async (req: Request, res: Response) => {
       }
     }
 
-    // Devolver stock de materias primas descontadas en esta venta
-    const { data: movsMp } = await supabase
+    const { data: movsMp } = await client
       .from('movimientos_materias_primas')
       .select('*')
       .eq('referencia', `Venta ${venta.factura}`);
 
     if (movsMp && movsMp.length > 0) {
       for (const mov of movsMp) {
-        const { data: mp } = await supabase
+        const { data: mp } = await client
           .from('materias_primas')
           .select('stock, stock_minimo')
           .eq('id', mov.materia_prima_id)
-          .single();
+          .maybeSingle();
 
         if (mp) {
           const nuevoStock = Number(mp.stock) + Number(mov.cantidad);
           const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
 
-          await supabase.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', mov.materia_prima_id);
+          await client.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', mov.materia_prima_id);
           
-          await supabase.from('movimientos_materias_primas').insert([{
+          await client.from('movimientos_materias_primas').insert([{
             materia_prima_id: mov.materia_prima_id,
             materia_prima_nombre: mov.materia_prima_nombre,
             tipo: 'entrada',
@@ -247,23 +242,22 @@ export const anularVenta = async (req: Request, res: Response) => {
       }
     }
 
-    // Devolver crédito al cliente si la venta era a crédito
     if (venta.metodo_pago === 'credito' && venta.cliente_id) {
-      const { data: cliente } = await supabase
+      const { data: cliente } = await client
         .from('clientes')
         .select('credito_usado')
         .eq('id', venta.cliente_id)
-        .single();
+        .maybeSingle();
         
       if (cliente) {
-        await supabase
+        await client
           .from('clientes')
           .update({ credito_usado: Math.max(0, (cliente.credito_usado || 0) - venta.total) })
           .eq('id', venta.cliente_id);
       }
     }
-    // Cambiar estado a anulada al final, si todo salió bien
-    const { error: updateError } = await supabase
+
+    const { error: updateError } = await client
       .from('ventas')
       .update({ estado: 'anulada' })
       .eq('id', id);

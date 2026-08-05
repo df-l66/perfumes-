@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { adminMiddleware } from '../middlewares/auth.middleware';
 import {
   getMateriasPrimas,
   getMateriaPrimaById,
@@ -11,15 +12,15 @@ import {
 
 const router = Router();
 
-// Rutas de catálogo de materias primas
+// Rutas de catálogo de materias primas (Lectura libre para usuarios autenticados)
 router.get('/', getMateriasPrimas);
-router.post('/', createMateriaPrima);
-// Rutas de movimientos (ingresos/compras y ajustes)
-router.post('/movimientos', registrarMovimiento);
 router.get('/movimientos/historial', getMovimientos);
-
 router.get('/:id', getMateriaPrimaById);
-router.put('/:id', updateMateriaPrima);
-router.delete('/:id', deleteMateriaPrima);
+
+// Escritura restringida a administradores
+router.post('/', adminMiddleware, createMateriaPrima);
+router.post('/movimientos', adminMiddleware, registrarMovimiento);
+router.put('/:id', adminMiddleware, updateMateriaPrima);
+router.delete('/:id', adminMiddleware, deleteMateriaPrima);
 
 export default router;

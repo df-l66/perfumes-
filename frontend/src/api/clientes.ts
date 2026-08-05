@@ -29,7 +29,7 @@ export const fetchCreateClientePublico = async (cliente: Omit<Cliente, 'id'>): P
   
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || 'Error al registrar cliente');
+    throw new Error(errData.message || errData.error || 'Error al registrar cliente');
   }
   
   return response.json();

@@ -1,18 +1,18 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getConfig = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('company_config')
       .select('*')
       .eq('id', 1)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error; // Ignorar error de no encontrado
+    if (error && error.code !== 'PGRST116') throw error;
     
     if (!data) {
-      // Si no existe, devolver valores por defecto
       return res.status(200).json({
         id: 1,
         nombre: 'Mi Empresa',
@@ -35,11 +35,12 @@ export const updateConfig = async (req: Request, res: Response) => {
   const config = req.body;
   
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('company_config')
       .upsert([{ ...config, id: 1 }])
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     res.status(200).json(data);

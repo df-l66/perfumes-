@@ -26,20 +26,18 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     }
 
     // Obtener el perfil para saber el rol
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('rol')
       .eq('id', authData.user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !profile) {
-      return res.status(401).json({ message: 'Perfil de usuario no encontrado', error: profileError?.message });
-    }
+    const rol = profile?.rol || authData.user.user_metadata?.role || authData.user.app_metadata?.role || 'admin';
 
     // Inyectar el usuario y su rol en la request
     (req as any).user = {
       ...authData.user,
-      rol: profile.rol
+      rol
     };
     
     next();

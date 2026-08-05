@@ -44,7 +44,13 @@ export function RegistroCliente() {
       }
 
       await fetchCreateClientePublico({
-        ...formData,
+        nombre: formData.nombre.trim(),
+        tipo: formData.tipo,
+        documento: formData.documento.trim(),
+        email: formData.email.trim(),
+        telefono: formData.telefono.trim(),
+        ciudad: formData.ciudad.trim(),
+        direccion: formData.direccion.trim(),
         fecha_registro: new Date().toISOString().split('T')[0],
       });
       setSuccess(true);

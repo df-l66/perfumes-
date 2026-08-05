@@ -1,4 +1,5 @@
 import React, { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -9,6 +10,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   headerAction?: ReactNode;
   hideCloseButton?: boolean;
+  zIndexClass?: string;
 }
 
 const sizes = {
@@ -18,53 +20,67 @@ const sizes = {
   xl: 'max-w-2xl',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', headerAction, hideCloseButton }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', headerAction, hideCloseButton, zIndexClass = 'z-50' }: ModalProps) {
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleKey = (e: KeyboardEvent) => { 
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose(); 
+      }
+    };
     if (isOpen) {
       document.addEventListener('keydown', handleKey);
+      document.body.style.overflow = 'hidden';
     }
     return () => {
       document.removeEventListener('keydown', handleKey);
+      document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+  return createPortal(
+    <div className={`fixed inset-0 ${zIndexClass} overflow-y-auto`}>
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-zinc-900/60 backdrop-blur-sm transition-opacity duration-300 ease-out"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       {/* Modal Container */}
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-dvh items-center justify-center p-2 sm:p-4 text-center">
           <div className={`relative transform overflow-hidden w-full ${sizes[size]} bg-white rounded-2xl shadow-2xl border border-zinc-100 flex flex-col z-20 animate-scale-in text-left max-h-[95dvh] sm:max-h-[90vh]`}>
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-100 bg-white z-20 shrink-0">
-            <h2 className="text-lg font-semibold text-zinc-800">{title}</h2>
-            <div className="flex items-center gap-1 ml-auto">
-              {headerAction}
-              {!hideCloseButton && (
-                <button
-                  onClick={onClose}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
-                  aria-label="Cerrar"
-                >
-                  <X size={18} />
-                </button>
-              )}
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-100 bg-white z-20 shrink-0">
+              <h2 className="text-lg font-semibold text-zinc-800">{title}</h2>
+              <div className="flex items-center gap-1 ml-auto">
+                {headerAction}
+                {!hideCloseButton && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClose();
+                    }}
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+                    aria-label="Cerrar"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          {/* Body */}
-          <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto">
-            {children}
+            {/* Body */}
+            <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto flex-1">
+              {children}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { supabase } from '../config/supabase';
+import { getSupabaseClient } from '../config/supabase';
 
 export const getCompras = async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const client = getSupabaseClient(req);
+    const { data, error } = await client
       .from('compras')
       .select(`
         *,
@@ -16,12 +17,12 @@ export const getCompras = async (req: Request, res: Response) => {
       throw error;
     }
     
-    const formattedData = data.map((compra: any) => ({
+    const formattedData = data?.map((compra: any) => ({
       ...compra,
       items: compra.compra_detalles
     }));
     
-    res.status(200).json(formattedData);
+    res.status(200).json(formattedData || []);
   } catch (error: any) {
     res.status(500).json({ message: 'Error al obtener compras', error: error.message });
   }
@@ -31,20 +32,21 @@ export const createCompra = async (req: Request, res: Response) => {
   const { items, ...compraData } = req.body;
   
   try {
-    const { data: compra, error: compraError } = await supabase
+    const client = getSupabaseClient(req);
+    const { data: compra, error: compraError } = await client
       .from('compras')
       .insert([compraData])
       .select()
-      .single();
+      .maybeSingle();
 
-    if (compraError) throw compraError;
+    if (compraError || !compra) throw compraError || new Error('No se pudo crear el encabezado de compra');
 
     for (const item of items) {
       const isMP = !!item.materia_prima_id;
       
       const detalleData = {
         compra_id: compra.id,
-        producto_id: item.producto_id || null, // Will be null for materia prima if we altered DB
+        producto_id: item.producto_id || null,
         materia_prima_id: item.materia_prima_id || null,
         nombre: item.nombre,
         cantidad: item.cantidad,
@@ -53,15 +55,15 @@ export const createCompra = async (req: Request, res: Response) => {
         subtotal: item.subtotal
       };
       
-      await supabase.from('compra_detalles').insert([detalleData]);
+      await client.from('compra_detalles').insert([detalleData]);
 
       if (isMP) {
-        const { data: mp } = await supabase.from('materias_primas').select('stock').eq('id', item.materia_prima_id).single();
+        const { data: mp } = await client.from('materias_primas').select('stock').eq('id', item.materia_prima_id).maybeSingle();
         if (mp) {
           const nuevoStock = Number(mp.stock) + item.cantidad;
-          await supabase.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
+          await client.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
           
-          await supabase.from('movimientos_materias_primas').insert([{
+          await client.from('movimientos_materias_primas').insert([{
             materia_prima_id: item.materia_prima_id,
             materia_prima_nombre: item.nombre,
             tipo: 'entrada',
@@ -73,11 +75,11 @@ export const createCompra = async (req: Request, res: Response) => {
           }]);
         }
       } else if (item.producto_id) {
-        const { data: prod } = await supabase
+        const { data: prod } = await client
           .from('productos')
           .select('stock, stock_minimo, descripcion')
           .eq('id', item.producto_id)
-          .single();
+          .maybeSingle();
 
         if (prod) {
           const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
@@ -97,13 +99,13 @@ export const createCompra = async (req: Request, res: Response) => {
             updatePayload.precio_venta = item.precio_venta;
           }
 
-          await supabase
+          await client
             .from('productos')
             .update(updatePayload)
             .eq('id', item.producto_id);
 
           // Registrar en Kardex
-          await supabase.from('movimientos_kardex').insert([{
+          await client.from('movimientos_kardex').insert([{
             producto_id: item.producto_id,
             producto_nombre: item.nombre,
             tipo: 'entrada',
@@ -118,7 +120,7 @@ export const createCompra = async (req: Request, res: Response) => {
     }
 
     // Fetch the inserted items to return them correctly
-    const { data: insertedItems } = await supabase
+    const { data: insertedItems } = await client
       .from('compra_detalles')
       .select('*')
       .eq('compra_id', compra.id);
@@ -134,16 +136,17 @@ export const anularCompra = async (req: Request, res: Response) => {
   const { autorNombre, autorId } = req.body;
   
   try {
-    const { data: compra, error: fetchError } = await supabase
+    const client = getSupabaseClient(req);
+    const { data: compra, error: fetchError } = await client
       .from('compras')
       .select('*, compra_detalles(*)')
       .eq('id', id)
-      .single();
+      .maybeSingle();
       
     if (fetchError || !compra) throw new Error('Compra no encontrada');
     if (compra.estado === 'anulada') throw new Error('La compra ya estaba anulada');
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await client
       .from('compras')
       .update({ estado: 'anulada' })
       .eq('id', id);
@@ -153,12 +156,12 @@ export const anularCompra = async (req: Request, res: Response) => {
     // Descontar el stock (reversar compra)
     for (const item of compra.compra_detalles) {
       if (item.materia_prima_id) {
-        const { data: mp } = await supabase.from('materias_primas').select('stock').eq('id', item.materia_prima_id).single();
+        const { data: mp } = await client.from('materias_primas').select('stock').eq('id', item.materia_prima_id).maybeSingle();
         if (mp) {
           const nuevoStock = Number(mp.stock) - item.cantidad;
-          await supabase.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
+          await client.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
           
-          await supabase.from('movimientos_materias_primas').insert([{
+          await client.from('movimientos_materias_primas').insert([{
             materia_prima_id: item.materia_prima_id,
             materia_prima_nombre: item.nombre,
             tipo: 'ajuste_salida',
@@ -170,11 +173,11 @@ export const anularCompra = async (req: Request, res: Response) => {
           }]);
         }
       } else if (item.producto_id) {
-        const { data: prod } = await supabase
+        const { data: prod } = await client
           .from('productos')
           .select('stock, stock_minimo, descripcion')
           .eq('id', item.producto_id)
-          .single();
+          .maybeSingle();
 
         if (prod) {
           const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
@@ -183,7 +186,7 @@ export const anularCompra = async (req: Request, res: Response) => {
             ? 'activo'
             : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
 
-          await supabase
+          await client
             .from('productos')
             .update({ 
               stock: nuevoStock,
@@ -191,7 +194,7 @@ export const anularCompra = async (req: Request, res: Response) => {
             })
             .eq('id', item.producto_id);
 
-          await supabase.from('movimientos_kardex').insert([{
+          await client.from('movimientos_kardex').insert([{
             producto_id: item.producto_id,
             producto_nombre: item.nombre,
             tipo: 'ajuste_salida',
