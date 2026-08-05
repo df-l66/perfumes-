@@ -33,14 +33,21 @@ export function Proveedores() {
   const filtered = React.useMemo(() => {
     return proveedores.filter(p => {
       const s = search.toLowerCase();
-      return p.nombre.toLowerCase().includes(s) ||
-        p.nit.toLowerCase().includes(s) ||
-        p.contacto.toLowerCase().includes(s) ||
-        p.ciudad.toLowerCase().includes(s);
+      return (p.nombre || '').toLowerCase().includes(s) ||
+        (p.nit || '').toLowerCase().includes(s) ||
+        (p.contacto || '').toLowerCase().includes(s) ||
+        (p.ciudad || '').toLowerCase().includes(s);
     });
   }, [proveedores, search]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
   const paginated = React.useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);

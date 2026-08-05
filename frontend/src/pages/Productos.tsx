@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Search, Pencil, Trash2, Package, FileDown, PlusCircle, Eye, Power } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -69,9 +69,9 @@ export function Productos() {
 
   const filtered = useMemo(() => {
     return productos.filter(p => {
-      const matchSearch = p.nombre.toLowerCase().includes(search.toLowerCase()) ||
-        p.codigo.toLowerCase().includes(search.toLowerCase()) ||
-        p.categoria.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = (p.nombre || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.codigo || '').toLowerCase().includes(search.toLowerCase()) ||
+        (p.categoria || '').toLowerCase().includes(search.toLowerCase());
       const matchStatus = filterStatus === 'todos' || p.estado === filterStatus;
       const matchTab = activeTab === 'catalogo' 
         ? (p.tipo_producto === 'perfume' || !p.tipo_producto) 
@@ -80,7 +80,14 @@ export function Productos() {
     });
   }, [productos, search, filterStatus, activeTab]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);
@@ -250,19 +257,19 @@ export function Productos() {
       {/* Tabs */}
       <div className="mb-6 flex gap-2 border-b border-zinc-200">
         <button 
-          onClick={() => setActiveTab('catalogo')}
+          onClick={() => { setActiveTab('catalogo'); setCurrentPage(1); }}
           className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'catalogo' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Catálogo de Perfumes
         </button>
         <button 
-          onClick={() => setActiveTab('detallium')}
+          onClick={() => { setActiveTab('detallium'); setCurrentPage(1); }}
           className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'detallium' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Detallium
         </button>
         <button 
-          onClick={() => setActiveTab('kardex')}
+          onClick={() => { setActiveTab('kardex'); setCurrentPage(1); }}
           className={`px-4 py-3 font-bold text-sm border-b-2 transition-colors ${activeTab === 'kardex' ? 'border-amber-500 text-amber-700' : 'border-transparent text-zinc-500 hover:text-zinc-700'}`}
         >
           Kardex y Ajustes (Historial)

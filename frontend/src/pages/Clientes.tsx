@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Search, Mail, Phone, MapPin, Building2, User, Eye, Calendar, Banknote, Link } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -51,14 +51,21 @@ export function Clientes() {
 
   const filtered = useMemo(() =>
     clientes.filter(c =>
-      c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
-      c.ciudad.toLowerCase().includes(search.toLowerCase()) ||
-      c.documento.includes(search)
+      (c.nombre || '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.ciudad || '').toLowerCase().includes(search.toLowerCase()) ||
+      (c.documento || '').includes(search)
     ), [clientes, search]
   );
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);

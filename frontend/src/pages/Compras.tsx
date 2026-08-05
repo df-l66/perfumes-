@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Search, Pencil, Trash2, Calendar, FileText, CheckCircle2, 
   XCircle, Download, ShoppingBag, PlusCircle, ArrowRight, ArrowLeft, Package, Eye,
@@ -1078,14 +1078,21 @@ export function Compras() {
   // Filtrado de historial de compras
   const filtered = useMemo(() => {
     return compras.filter(c => {
-      const matchSearch = c.factura_compra.toLowerCase().includes(search.toLowerCase()) ||
-        c.proveedor_nombre.toLowerCase().includes(search.toLowerCase());
+      const matchSearch = (c.factura_compra || '').toLowerCase().includes(search.toLowerCase()) ||
+        (c.proveedor_nombre || '').toLowerCase().includes(search.toLowerCase());
       const matchEstado = filterEstado === 'todos' || c.estado === filterEstado;
       return matchSearch && matchEstado;
     });
   }, [compras, search, filterEstado]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);

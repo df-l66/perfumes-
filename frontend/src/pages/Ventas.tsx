@@ -619,14 +619,21 @@ export function Ventas() {
   const ITEMS_PER_PAGE = 10;
 
   const filtered = useMemo(() => ventas.filter(v => {
-    const matchSearch = v.factura.toLowerCase().includes(search.toLowerCase()) ||
-      v.cliente_nombre.toLowerCase().includes(search.toLowerCase()) ||
-      v.vendedor_nombre.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (v.factura || '').toLowerCase().includes(search.toLowerCase()) ||
+      (v.cliente_nombre || '').toLowerCase().includes(search.toLowerCase()) ||
+      (v.vendedor_nombre || '').toLowerCase().includes(search.toLowerCase());
     const matchEstado = filterEstado === 'todos' || v.estado === filterEstado;
     return matchSearch && matchEstado;
   }), [ventas, search, filterEstado]);
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
+
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filtered.slice(start, start + ITEMS_PER_PAGE);

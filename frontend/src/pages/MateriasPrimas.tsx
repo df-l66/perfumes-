@@ -74,10 +74,16 @@ export function MateriasPrimas() {
   });
 
   const filtered = useMemo(() => {
-    return materiasPrimas.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()) || p.tipo.toLowerCase().includes(search.toLowerCase()));
+    return materiasPrimas.filter(p => (p.nombre || '').toLowerCase().includes(search.toLowerCase()) || (p.tipo || '').toLowerCase().includes(search.toLowerCase()));
   }, [materiasPrimas, search]);
 
   const totalPages = useMemo(() => Math.ceil(filtered.length / itemsPerPage) || 1, [filtered, itemsPerPage]);
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filtered.length, totalPages, currentPage]);
 
   const paginated = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;

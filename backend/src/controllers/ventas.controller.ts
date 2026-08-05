@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import { getSupabaseClient } from '../config/supabase';
 
+const isUuid = (val: any): boolean => {
+  if (typeof val !== 'string') return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val);
+};
+
 export const getVentas = async (req: Request, res: Response) => {
   try {
     const client = getSupabaseClient(req);
@@ -62,69 +67,123 @@ export const createVenta = async (req: Request, res: Response) => {
       const detallePayload: any = {
         venta_id: venta.id,
         nombre: item.nombre,
-        cantidad: item.cantidad,
-        precio_unitario: item.precio_unitario,
-        subtotal: item.subtotal
+        cantidad: Number(item.cantidad) || 1,
+        precio_unitario: Number(item.precio_unitario) || 0,
+        subtotal: Number(item.subtotal) || 0
       };
       
-      if (!isPreparado) {
+      if (!isPreparado && item.producto_id && isUuid(item.producto_id)) {
         detallePayload.producto_id = item.producto_id;
       }
 
-      await client.from('venta_detalles').insert([detallePayload]);
+      const { error: detErr } = await client.from('venta_detalles').insert([detallePayload]);
+      if (detErr) {
+        console.error('Error al insertar venta_detalle:', detErr);
+      }
 
       if (isPreparado && item.receta) {
         const descontarMateriaPrima = async (id: string, qty: number) => {
           if (!id) return;
-          const { data: mp } = await client.from('materias_primas').select('stock, stock_minimo, nombre').eq('id', id).maybeSingle();
+          const { data: mp, error: fetchMpErr } = await client
+            .from('materias_primas')
+            .select('stock, stock_minimo, nombre')
+            .eq('id', id)
+            .maybeSingle();
+
+          if (fetchMpErr) {
+            console.error(`Error buscando materia prima ${id}:`, fetchMpErr);
+            return;
+          }
+
           if (mp) {
-            const nuevoStock = Number(mp.stock) - qty;
+            const stockActual = Number(mp.stock) || 0;
+            const nuevoStock = Math.max(0, stockActual - Number(qty));
             const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
-            await client.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', id);
-            await client.from('movimientos_materias_primas').insert([{
+
+            const { error: updateMpErr } = await client
+              .from('materias_primas')
+              .update({ stock: nuevoStock, estado: nuevoEstado })
+              .eq('id', id);
+
+            if (updateMpErr) {
+              console.error(`Error actualizando stock de materia prima ${id}:`, updateMpErr);
+              throw updateMpErr;
+            }
+
+            const validRegistradoPor = isUuid(venta.vendedor_id) ? venta.vendedor_id : null;
+            const { error: movMpErr } = await client.from('movimientos_materias_primas').insert([{
               materia_prima_id: id,
               materia_prima_nombre: mp.nombre,
               tipo: 'salida',
-              cantidad: qty,
-              stock_anterior: mp.stock,
+              cantidad: Number(qty),
+              stock_anterior: stockActual,
               stock_nuevo: nuevoStock,
               referencia: `Venta ${venta.factura}`,
-              registrado_por: venta.vendedor_id
+              registrado_por: validRegistradoPor
             }]);
+
+            if (movMpErr) {
+              console.error('Error registrando movimiento materias primas:', movMpErr);
+            }
           }
         };
 
         if (Array.isArray(item.receta)) {
           for (const ing of item.receta) {
-            await descontarMateriaPrima(ing.materia_prima_id, ing.cantidad * item.cantidad);
+            if (ing.materia_prima_id && ing.cantidad) {
+              await descontarMateriaPrima(ing.materia_prima_id, Number(ing.cantidad) * (Number(item.cantidad) || 1));
+            }
           }
         }
       } else if (item.producto_id) {
-        const { data: prod } = await client.from('productos').select('stock, stock_minimo, descripcion').eq('id', item.producto_id).maybeSingle();
+        const { data: prod, error: fetchProdErr } = await client
+          .from('productos')
+          .select('stock, stock_minimo, descripcion')
+          .eq('id', item.producto_id)
+          .maybeSingle();
+
+        if (fetchProdErr) {
+          console.error(`Error al buscar producto ${item.producto_id}:`, fetchProdErr);
+        }
+
         if (prod) {
           const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
-          
-          let nuevoStock = prod.stock - item.cantidad;
+          const stockActual = Number(prod.stock) || 0;
+          const cantVendido = Number(item.cantidad) || 1;
+          let nuevoStock = stockActual - cantVendido;
           if (isPorEncargo && nuevoStock < 0) {
             nuevoStock = 0;
           }
           
           const nuevoEstado = isPorEncargo 
             ? 'activo' 
-            : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
+            : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(prod.stock_minimo) ? 'stock_bajo' : 'activo');
           
-          await client.from('productos').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', item.producto_id);
+          const { error: updateProdErr } = await client
+            .from('productos')
+            .update({ stock: nuevoStock, estado: nuevoEstado })
+            .eq('id', item.producto_id);
 
-          await client.from('movimientos_kardex').insert([{
+          if (updateProdErr) {
+            console.error(`Error actualizando stock de producto ${item.producto_id}:`, updateProdErr);
+            throw updateProdErr;
+          }
+
+          const validRegistradoPor = isUuid(venta.vendedor_id) ? venta.vendedor_id : null;
+          const { error: movKardexErr } = await client.from('movimientos_kardex').insert([{
             producto_id: item.producto_id,
             producto_nombre: item.nombre,
             tipo: 'salida',
-            cantidad: item.cantidad,
-            stock_anterior: prod.stock,
+            cantidad: cantVendido,
+            stock_anterior: stockActual,
             stock_nuevo: nuevoStock,
             referencia: `Venta ${venta.factura}`,
-            registrado_por: venta.vendedor_id
+            registrado_por: validRegistradoPor
           }]);
+
+          if (movKardexErr) {
+            console.error('Error registrando movimiento kardex:', movKardexErr);
+          }
         }
       }
     }
@@ -136,7 +195,7 @@ export const createVenta = async (req: Request, res: Response) => {
 
       const { data: cliente } = await client.from('clientes').select('credito_usado').eq('id', venta.cliente_id).maybeSingle();
       if (cliente) {
-        await client.from('clientes').update({ credito_usado: (cliente.credito_usado || 0) + deudaNeta }).eq('id', venta.cliente_id);
+        await client.from('clientes').update({ credito_usado: (Number(cliente.credito_usado) || 0) + deudaNeta }).eq('id', venta.cliente_id);
       }
 
       if (abonoMonto > 0) {
@@ -173,6 +232,8 @@ export const anularVenta = async (req: Request, res: Response) => {
     if (fetchError || !venta) throw new Error('Venta no encontrada');
     if (venta.estado === 'anulada') throw new Error('La venta ya estaba anulada');
 
+    const validAutorId = isUuid(autorId) ? autorId : null;
+
     for (const item of venta.venta_detalles) {
       if (!item.producto_id) continue;
       const { data: prod } = await client
@@ -183,10 +244,12 @@ export const anularVenta = async (req: Request, res: Response) => {
 
       if (prod) {
         const isPorEncargo = prod.descripcion?.includes('[POR_ENCARGO]');
-        const nuevoStock = isPorEncargo ? prod.stock : (prod.stock + item.cantidad);
+        const stockActual = Number(prod.stock) || 0;
+        const cantItem = Number(item.cantidad) || 0;
+        const nuevoStock = isPorEncargo ? stockActual : (stockActual + cantItem);
         const nuevoEstado = isPorEncargo 
           ? 'activo'
-          : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= prod.stock_minimo ? 'stock_bajo' : 'activo');
+          : (nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(prod.stock_minimo) ? 'stock_bajo' : 'activo');
 
         await client
           .from('productos')
@@ -200,11 +263,11 @@ export const anularVenta = async (req: Request, res: Response) => {
           producto_id: item.producto_id,
           producto_nombre: item.nombre,
           tipo: 'ajuste_entrada',
-          cantidad: item.cantidad,
-          stock_anterior: prod.stock,
+          cantidad: cantItem,
+          stock_anterior: stockActual,
           stock_nuevo: nuevoStock,
           referencia: `Anulación de Venta ${venta.factura}`,
-          registrado_por: autorId
+          registrado_por: validAutorId
         }]);
       }
     }
@@ -223,7 +286,9 @@ export const anularVenta = async (req: Request, res: Response) => {
           .maybeSingle();
 
         if (mp) {
-          const nuevoStock = Number(mp.stock) + Number(mov.cantidad);
+          const stockActual = Number(mp.stock) || 0;
+          const cantMov = Number(mov.cantidad) || 0;
+          const nuevoStock = stockActual + cantMov;
           const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
 
           await client.from('materias_primas').update({ stock: nuevoStock, estado: nuevoEstado }).eq('id', mov.materia_prima_id);
@@ -232,11 +297,11 @@ export const anularVenta = async (req: Request, res: Response) => {
             materia_prima_id: mov.materia_prima_id,
             materia_prima_nombre: mov.materia_prima_nombre,
             tipo: 'entrada',
-            cantidad: mov.cantidad,
-            stock_anterior: mp.stock,
+            cantidad: cantMov,
+            stock_anterior: stockActual,
             stock_nuevo: nuevoStock,
             referencia: `Anulación de Venta ${venta.factura}`,
-            registrado_por: autorId
+            registrado_por: validAutorId
           }]);
         }
       }
@@ -252,7 +317,7 @@ export const anularVenta = async (req: Request, res: Response) => {
       if (cliente) {
         await client
           .from('clientes')
-          .update({ credito_usado: Math.max(0, (cliente.credito_usado || 0) - venta.total) })
+          .update({ credito_usado: Math.max(0, (Number(cliente.credito_usado) || 0) - Number(venta.total)) })
           .eq('id', venta.cliente_id);
       }
     }
@@ -269,3 +334,4 @@ export const anularVenta = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'No se pudo anular la venta', error: error.message });
   }
 };
+
