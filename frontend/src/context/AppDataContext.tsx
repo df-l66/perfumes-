@@ -1,13 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { Producto, Proveedor, Cliente, Venta, VentaItem, ActivityLog, CompanyConfig, Compra, CompraItem, Abono, Gasto, MovimientoKardex, MovimientoTipo, MateriaPrima, MovimientoMateriaPrima, AppNotification } from '../types';
 import { supabase } from '../config/supabase';
-import {
-  mockProductos,
-  mockProveedores,
-  mockClientes,
-  mockVentas,
-  mockCompras
-} from '../data/mockData';
 import { fetchProductos, fetchCreateProducto, fetchUpdateProducto, fetchDeleteProducto } from '../api/productos';
 import { fetchProveedores, fetchCreateProveedor, fetchUpdateProveedor, fetchDeleteProveedor } from '../api/proveedores';
 import { fetchClientes, fetchCreateCliente, fetchUpdateCliente, fetchDeleteCliente } from '../api/clientes';
@@ -102,13 +95,7 @@ const AppDataContext = createContext<AppDataContextType | undefined>(undefined);
 let nextId = 100;
 const genId = (prefix: string) => `${prefix}${++nextId}`;
 
-const initialLogs: ActivityLog[] = [
-  { id: 'l1', usuario_nombre: 'Admin Sistema', rol: 'admin', accion: 'Sistema inicializado correctamente', fecha: '2025-06-30 08:00', modulo: 'configuracion' },
-  { id: 'l2', usuario_nombre: 'Laura Gómez', rol: 'vendedor', accion: 'Registró venta FAC-2024-0015', fecha: '2025-06-30 17:35', modulo: 'ventas' },
-  { id: 'l3', usuario_nombre: 'Admin Sistema', rol: 'admin', accion: 'Actualizó stock mínimo de Bleu de Chanel EDP', fecha: '2025-07-01 10:12', modulo: 'productos' },
-  { id: 'l4', usuario_nombre: 'Laura Gómez', rol: 'vendedor', accion: 'Registró nuevo cliente Importadora Perfumes S.A.', fecha: '2025-07-01 11:45', modulo: 'clientes' },
-  { id: 'l5', usuario_nombre: 'Admin Sistema', rol: 'admin', accion: 'Modificó datos del proveedor Fragancias del Mundo S.A.S.', fecha: '2025-07-02 14:22', modulo: 'proveedores' },
-];
+const initialLogs: ActivityLog[] = [];
 
 const initialConfig: CompanyConfig = {
   nombre: 'Mi Empresa',
@@ -148,28 +135,28 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const refrescarProductos = () => 
     fetchProductos()
-      .then(data => setProductos(data && data.length > 0 ? data : mockProductos))
-      .catch(e => { console.error('Error cargando productos:', e); setProductos(mockProductos); });
+      .then(data => { if (Array.isArray(data)) setProductos(data); })
+      .catch(e => { console.error('Error cargando productos:', e); setProductos([]); });
 
   const refrescarClientes = () => 
     fetchClientes()
-      .then(data => setClientes(data && data.length > 0 ? data : mockClientes))
-      .catch(e => { console.error('Error cargando clientes:', e); setClientes(mockClientes); });
+      .then(data => { if (Array.isArray(data)) setClientes(data); })
+      .catch(e => { console.error('Error cargando clientes:', e); setClientes([]); });
 
   const refrescarProveedores = () => 
     fetchProveedores()
-      .then(data => setProveedores(data && data.length > 0 ? data : mockProveedores))
-      .catch(e => { console.error('Error cargando proveedores:', e); setProveedores(mockProveedores); });
+      .then(data => { if (Array.isArray(data)) setProveedores(data); })
+      .catch(e => { console.error('Error cargando proveedores:', e); setProveedores([]); });
 
   const refrescarVentas = () => 
     fetchVentas()
-      .then(data => setVentas(data && data.length > 0 ? data : mockVentas))
-      .catch(e => { console.error('Error cargando ventas:', e); setVentas(mockVentas); });
+      .then(data => { if (Array.isArray(data)) setVentas(data); })
+      .catch(e => { console.error('Error cargando ventas:', e); setVentas([]); });
 
   const refrescarCompras = () => 
     fetchCompras()
-      .then(data => setCompras(data && data.length > 0 ? data : mockCompras))
-      .catch(e => { console.error('Error cargando compras:', e); setCompras(mockCompras); });
+      .then(data => { if (Array.isArray(data)) setCompras(data); })
+      .catch(e => { console.error('Error cargando compras:', e); setCompras([]); });
 
   const refrescarMateriasPrimas = () => {
     fetchMateriasPrimas()
