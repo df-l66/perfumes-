@@ -61,6 +61,10 @@ export function MateriasPrimas() {
   const [ajusteError, setAjusteError] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
   
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [ajusteForm, setAjusteForm] = useState({
     materia_prima_id: '',
     tipo: 'entrada' as 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida',
@@ -72,6 +76,17 @@ export function MateriasPrimas() {
   const filtered = useMemo(() => {
     return materiasPrimas.filter(p => p.nombre.toLowerCase().includes(search.toLowerCase()) || p.tipo.toLowerCase().includes(search.toLowerCase()));
   }, [materiasPrimas, search]);
+
+  const totalPages = useMemo(() => Math.ceil(filtered.length / itemsPerPage) || 1, [filtered, itemsPerPage]);
+
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [search, itemsPerPage]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -209,7 +224,7 @@ export function MateriasPrimas() {
             <div className="p-8 text-center text-zinc-500">
               No se encontraron materias primas.
             </div>
-          ) : filtered.map(p => (
+          ) : paginated.map(p => (
             <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
               <div className="flex gap-3 items-start justify-between">
                 <div className="flex gap-3 items-center">
@@ -276,7 +291,7 @@ export function MateriasPrimas() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {filtered.map(p => (
+              {paginated.map(p => (
                 <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
                   <td className="px-3 sm:px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -335,6 +350,54 @@ export function MateriasPrimas() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Paginación Footer */}
+        <div className="px-5 py-3.5 border-t border-zinc-100 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500 font-medium">
+          <div className="flex items-center gap-3">
+            {filtered.length > 0 ? (
+              <span>
+                Mostrando <strong className="text-zinc-700">{(currentPage - 1) * itemsPerPage + 1}</strong> al <strong className="text-zinc-700">{Math.min(currentPage * itemsPerPage, filtered.length)}</strong> de <strong className="text-zinc-700">{filtered.length}</strong> materias primas
+              </span>
+            ) : (
+              <span>0 materias primas encontradas</span>
+            )}
+            <div className="flex items-center gap-1.5 ml-2">
+              <span className="text-zinc-400">Ver:</span>
+              <select
+                value={itemsPerPage}
+                onChange={e => setItemsPerPage(Number(e.target.value))}
+                className="px-2 py-1 border border-zinc-200 rounded-md bg-white text-xs font-semibold text-zinc-700 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
+              >
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2.5">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Anterior
+              </button>
+              <span className="font-semibold text-zinc-600">
+                Pág. {currentPage} de {totalPages}
+              </span>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                className="px-2.5 py-1 rounded-md border border-zinc-200 bg-white text-[11px] font-bold text-zinc-600 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

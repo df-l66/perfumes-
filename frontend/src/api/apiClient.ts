@@ -1,12 +1,35 @@
 import { supabase } from '../config/supabase';
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const { data: { session } } = await supabase.auth.getSession();
+  let token: string | undefined;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token;
+  } catch (e) {
+    console.error('Error fetching Supabase session token:', e);
+  }
+
+  if (!token) {
+    try {
+      const storedToken = localStorage.getItem('token') || localStorage.getItem('sb-zoojbnvxnnsymmdvmaqj-auth-token');
+      if (storedToken) {
+        try {
+          const parsed = JSON.parse(storedToken);
+          token = parsed?.access_token || parsed?.token || storedToken;
+        } catch {
+          token = storedToken;
+        }
+      }
+    } catch {
+      // Ignorar errores de localStorage
+    }
+  }
   
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(session ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
-    ...options.headers,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(options.headers as Record<string, string>),
   };
 
   const response = await fetch(url, {
