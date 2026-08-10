@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Search, X, Check, Sparkles } from 'lucide-react';
 import { useAppData } from '../../context/AppDataContext';
 import { useAuth } from '../../context/AuthContext';
 import type { VentaItem } from '../../types';
@@ -19,64 +19,131 @@ function SearchableSelect({
 }: { 
   valueId: string, 
   onChange: (id: string) => void, 
-  options: { id: string, label: string, extra?: string }[] 
+  options: { id: string, label: string, extra?: string, tipo?: string }[] 
 }) {
-  const [query, setQuery] = React.useState('');
-  const [isOpen, setIsOpen] = React.useState(false);
-  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      const opt = options.find(o => o.id === valueId);
-      if (opt) setQuery(opt.label);
-      else setQuery('');
-    }
-  }, [valueId, options, isOpen]);
+  const selectedOpt = useMemo(() => options.find(o => o.id === valueId), [options, valueId]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setIsOpen(false);
-        const opt = options.find(o => o.id === valueId);
-        setQuery(opt ? opt.label : '');
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [valueId, options]);
+  }, []);
 
-  const filtered = options.filter(o => o.label.toLowerCase().includes(query.toLowerCase()));
+  const filtered = useMemo(() => {
+    if (!query.trim()) return options;
+    const q = query.toLowerCase();
+    return options.filter(o => o.label.toLowerCase().includes(q) || (o.tipo && o.tipo.toLowerCase().includes(q)));
+  }, [options, query]);
+
+  const handleSelect = (id: string) => {
+    onChange(id);
+    setIsOpen(false);
+    setQuery('');
+  };
+
+  const handleClear = () => {
+    onChange('');
+    setQuery('');
+    setIsOpen(true);
+  };
 
   return (
-    <div className="relative flex-1" ref={wrapperRef}>
-      <input
-        className="w-full p-2 text-sm border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-        placeholder="Buscar insumo..."
-        value={query}
-        onFocus={() => setIsOpen(true)}
-        onChange={e => {
-          setQuery(e.target.value);
-          setIsOpen(true);
-          onChange(''); // Clear selected ID if they start typing a new one
-        }}
-      />
-      {isOpen && filtered.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-zinc-200 rounded-lg shadow-xl">
-          {filtered.map(o => (
-            <li 
-              key={o.id}
-              className="px-3 py-2 text-sm hover:bg-amber-50 cursor-pointer border-b border-zinc-50 last:border-0"
-              onClick={() => {
-                onChange(o.id);
-                setQuery(o.label);
-                setIsOpen(false);
-              }}
+    <div className="relative flex-1 min-w-0" ref={wrapperRef}>
+      {selectedOpt && !isOpen ? (
+        <div 
+          className="flex items-start justify-between gap-2 p-2.5 bg-amber-50/80 hover:bg-amber-100/60 border border-amber-300/80 rounded-xl cursor-pointer transition-all shadow-sm group"
+          onClick={() => setIsOpen(true)}
+          title={selectedOpt.label}
+        >
+          <div className="min-w-0 flex-1">
+            <p className="text-xs sm:text-sm font-bold text-zinc-900 leading-snug wrap-break-word whitespace-normal">
+              {selectedOpt.label}
+            </p>
+            {selectedOpt.extra && (
+              <span className="inline-block text-[11px] font-bold text-amber-800 mt-1 font-mono bg-amber-100 px-1.5 py-0.5 rounded">
+                {selectedOpt.extra}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClear();
+            }}
+            className="text-amber-700 hover:text-amber-950 p-1 rounded-lg hover:bg-amber-200/60 transition-colors shrink-0"
+            title="Cambiar insumo"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            className="w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm font-medium border border-zinc-200 rounded-xl bg-white focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 shadow-sm"
+            placeholder="Buscar por nombre completo de esencia..."
+            value={query}
+            onFocus={() => setIsOpen(true)}
+            onChange={e => {
+              setQuery(e.target.value);
+              setIsOpen(true);
+            }}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
             >
-              <div className="font-medium text-zinc-800">{o.label}</div>
-              {o.extra && <div className="text-xs text-zinc-400">{o.extra}</div>}
-            </li>
-          ))}
-        </ul>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 sm:right-auto sm:w-[125%] sm:min-w-70 max-w-full sm:max-w-xl mt-1 max-h-64 overflow-y-auto bg-white border border-zinc-200 rounded-xl shadow-2xl divide-y divide-zinc-100 font-sans">
+          {filtered.length === 0 ? (
+            <div className="p-3.5 text-center text-xs text-zinc-400">
+              No se encontraron esencias con ese nombre
+            </div>
+          ) : (
+            filtered.map(o => {
+              const isSelected = o.id === valueId;
+              return (
+                <div
+                  key={o.id}
+                  title={o.label}
+                  className={`p-3 text-xs sm:text-sm hover:bg-amber-50/90 cursor-pointer transition-colors flex items-start justify-between gap-3 ${
+                    isSelected ? 'bg-amber-50 text-amber-900 font-bold' : 'text-zinc-800'
+                  }`}
+                  onClick={() => handleSelect(o.id)}
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <p className="font-bold text-zinc-900 leading-snug wrap-break-word whitespace-normal text-xs sm:text-sm">
+                      {o.label}
+                    </p>
+                    {o.extra && (
+                      <span className="inline-block px-1.5 py-0.5 bg-zinc-100 text-zinc-700 font-mono text-[10px] font-bold rounded">
+                        {o.extra}
+                      </span>
+                    )}
+                  </div>
+                  {isSelected && <Check size={16} className="text-amber-600 shrink-0 mt-0.5" />}
+                </div>
+              );
+            })
+          )}
+        </div>
       )}
     </div>
   );
@@ -94,7 +161,7 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
     { id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }
   ]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setNombrePerfume('');
       setPrecio(0);
@@ -123,7 +190,7 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
     }
   };
 
-  const materiasActivas = materiasPrimas.filter(m => m.estado !== 'inactivo');
+  const materiasActivas = useMemo(() => materiasPrimas.filter(m => m.estado !== 'inactivo'), [materiasPrimas]);
 
   const handleAddIngredient = () => {
     setIngredientes(prev => [...prev, { id: Date.now().toString(), materia_prima_id: '', cantidad: 0 }]);
@@ -167,7 +234,6 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
       }))
     };
     onAdd(newItem);
-    // Reset handle manually only for inputs, ingredients reset is handled by useEffect
     onClose();
   };
 
@@ -175,18 +241,18 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
     <Modal isOpen={isOpen} onClose={onClose} title="Preparar Perfume Triple AAA" size="xl">
       <form onSubmit={handleAdd} className="space-y-5">
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-medium border border-red-100">
+          <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-medium border border-red-100">
             {error}
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Nombre Referencia</label>
-            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" placeholder="Ej: Perfume Invictus 100ml" value={nombrePerfume} onChange={e => setNombrePerfume(e.target.value)} />
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Nombre Referencia</label>
+            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white shadow-sm" placeholder="Ej: Perfume Invictus 100ml" value={nombrePerfume} onChange={e => setNombrePerfume(e.target.value)} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">Precio de Venta</label>
-            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white" value={formatNumberWithDots(precio)} onChange={e => {
+            <label className="block text-xs font-semibold text-zinc-700 mb-1.5">Precio de Venta</label>
+            <input required type="text" className="w-full p-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition-colors bg-white shadow-sm font-mono font-bold text-amber-700" value={formatNumberWithDots(precio)} onChange={e => {
               const cleaned = e.target.value.replace(/\D/g, '');
               setPrecio(cleaned === '' ? 0 : Number(cleaned));
             }} />
@@ -194,55 +260,85 @@ export function PrepararTripleAaaModal({ isOpen, onClose, onAdd }: Props) {
         </div>
 
         <div className="pt-4 border-t border-zinc-100">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="font-semibold text-zinc-700 text-sm">Receta (Materias Primas Gastadas)</h4>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="font-bold text-zinc-800 text-sm flex items-center gap-1.5">
+              <Sparkles size={16} className="text-amber-500" /> Receta de Insumos y Esencias
+            </h4>
             <Button type="button" size="sm" variant="secondary" onClick={handleAddIngredient}>
               <Plus className="w-4 h-4 mr-1" /> Añadir
             </Button>
           </div>
           
-          <div className="space-y-2 max-h-[30vh] overflow-y-auto pr-2">
-            {ingredientes.map((ing, idx) => (
-              <div key={ing.id} className="flex gap-2 items-center bg-zinc-50 p-2 rounded-lg border border-zinc-100 shadow-sm">
-                <span className="text-xs font-bold text-zinc-400 w-4 text-center">{idx + 1}.</span>
-                <SearchableSelect 
-                  valueId={ing.materia_prima_id} 
-                  onChange={(id) => handleIngredientChange(ing.id, 'materia_prima_id', id)} 
-                  options={materiasActivas.map(m => ({ id: m.id, label: m.nombre, extra: `${m.unidad_medida} (Stock: ${m.stock})` }))} 
-                />
-                <input 
-                  required 
-                  type="number" 
-                  step="0.01"
-                  min="0.01" 
-                  placeholder="Cant."
-                  className="w-24 p-2 text-sm border border-zinc-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400" 
-                  value={ing.cantidad || ''} 
-                  onChange={e => handleIngredientChange(ing.id, 'cantidad', Number(e.target.value))} 
-                />
-                <button 
-                  type="button" 
-                  className="p-2 text-zinc-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                  onClick={() => handleRemoveIngredient(ing.id)}
-                  disabled={ingredientes.length === 1}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+          <div className="space-y-3 max-h-[42vh] overflow-y-auto pr-1">
+            {ingredientes.map((ing, idx) => {
+              const selectedMp = materiasActivas.find(m => m.id === ing.materia_prima_id);
+              const isStockInsufficient = selectedMp && ing.cantidad > selectedMp.stock;
+
+              return (
+                <div key={ing.id} className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center bg-zinc-50/90 p-3 rounded-xl border border-zinc-200/80 shadow-sm transition-all hover:border-amber-200">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="text-xs font-black text-zinc-400 w-5 text-center shrink-0 font-mono">{idx + 1}.</span>
+                  </div>
+                  
+                  {/* Selector con soporte para nombres largos de esencias */}
+                  <SearchableSelect 
+                    valueId={ing.materia_prima_id} 
+                    onChange={(id) => handleIngredientChange(ing.id, 'materia_prima_id', id)} 
+                    options={materiasActivas.map(m => ({ 
+                      id: m.id, 
+                      label: m.nombre, 
+                      extra: `${m.unidad_medida} (Stock: ${m.stock})`,
+                      tipo: m.tipo 
+                    }))} 
+                  />
+                  
+                  <div className="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+                    <div className="relative">
+                      <input 
+                        required 
+                        type="number" 
+                        step="0.01"
+                        min="0.01" 
+                        placeholder="Cant."
+                        className={`w-28 p-2 text-xs sm:text-sm font-mono font-bold border rounded-xl bg-white focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 ${
+                          isStockInsufficient ? 'border-red-400 bg-red-50 text-red-700' : 'border-zinc-200'
+                        }`} 
+                        value={ing.cantidad || ''} 
+                        onChange={e => handleIngredientChange(ing.id, 'cantidad', Number(e.target.value))} 
+                      />
+                      {selectedMp && (
+                        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-zinc-400 pointer-events-none">
+                          {selectedMp.unidad_medida}
+                        </span>
+                      )}
+                    </div>
+
+                    <button 
+                      type="button" 
+                      className="p-2 text-zinc-400 hover:text-red-500 rounded-xl hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                      onClick={() => handleRemoveIngredient(ing.id)}
+                      disabled={ingredientes.length === 1}
+                      title="Eliminar ingrediente"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="flex justify-between items-center mt-3">
+          <div className="flex justify-between items-center mt-3 pt-2">
             <Button type="button" variant="secondary" size="sm" onClick={handleAddIngredient} className="flex items-center gap-1">
               <Plus size={16} /> Agregar Insumo
             </Button>
-            <button type="button" onClick={handleSaveDefault} className="text-xs text-amber-600 hover:text-amber-700 font-bold px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
-              ⭐ Memorizar Fórmula
+            <button type="button" onClick={handleSaveDefault} className="text-xs text-amber-700 hover:text-amber-900 font-bold px-3 py-1.5 bg-amber-100/70 hover:bg-amber-200/70 border border-amber-300 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer">
+              ⭐ Memorizar Fórmula por Defecto
             </button>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
+        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100">
+          <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
           <Button type="submit">Agregar al Carrito</Button>
         </div>
       </form>

@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Search, Pencil, Trash2, Beaker, FileDown, Eye, Droplet, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Beaker, FileDown, FileUp, Eye, Droplet, Package, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, ArrowUpDown, SlidersHorizontal, Layers, Filter } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import { exportToExcel } from '../utils/excelUtils';
+import { ExcelImportModal, type ColumnDefinition } from '../components/ui/ExcelImportModal';
 import type { MateriaPrima, MateriaPrimaEstado } from '../types';
 
 const EMPTY: any = {
@@ -60,7 +62,7 @@ export function MateriasPrimas() {
   const [error, setError] = useState<string | null>(null);
   const [ajusteError, setAjusteError] = useState<string | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -73,9 +75,62 @@ export function MateriasPrimas() {
     notas: ''
   });
 
+  // Filtro inteligente de stock y ordenamiento
+  const [stockFilterStatus, setStockFilterStatus] = useState<'todos' | 'agotado' | 'stock_bajo' | 'optimo'>('todos');
+  const [stockSortBy, setStockSortBy] = useState<'prioridad_reorden' | 'stock_asc' | 'stock_desc' | 'nombre'>('prioridad_reorden');
+  const [minStockInput, setMinStockInput] = useState<string>('');
+  const [maxStockInput, setMaxStockInput] = useState<string>('');
+  const [showCustomStockRange, setShowCustomStockRange] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Estadísticas KPI de Stock
+  const kpiTotal = materiasPrimas.length;
+  const kpiAgotados = materiasPrimas.filter(m => m.stock <= 0).length;
+  const kpiStockBajo = materiasPrimas.filter(m => m.stock > 0 && m.stock <= m.stock_minimo).length;
+  const kpiOptimo = materiasPrimas.filter(m => m.stock > m.stock_minimo).length;
+
   const filtered = useMemo(() => {
-    return materiasPrimas.filter(p => (p.nombre || '').toLowerCase().includes(search.toLowerCase()) || (p.tipo || '').toLowerCase().includes(search.toLowerCase()));
-  }, [materiasPrimas, search]);
+    return materiasPrimas
+      .filter(p => {
+        // Búsqueda por texto
+        const matchesSearch = (p.nombre || '').toLowerCase().includes(search.toLowerCase()) || 
+                              (p.tipo || '').toLowerCase().includes(search.toLowerCase());
+        if (!matchesSearch) return false;
+
+        // Filtro rápido por estado de stock
+        if (stockFilterStatus === 'agotado' && p.stock > 0) return false;
+        if (stockFilterStatus === 'stock_bajo' && (p.stock <= 0 || p.stock > p.stock_minimo)) return false;
+        if (stockFilterStatus === 'optimo' && p.stock <= p.stock_minimo) return false;
+
+        // Filtro por rango numérico de stock
+        if (minStockInput !== '') {
+          const min = Number(minStockInput);
+          if (!isNaN(min) && p.stock < min) return false;
+        }
+        if (maxStockInput !== '') {
+          const max = Number(maxStockInput);
+          if (!isNaN(max) && p.stock > max) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (stockSortBy === 'prioridad_reorden') {
+          // Prioridad: Menor porcentaje de stock disponible respecto al stock mínimo primero
+          const ratioA = a.stock_minimo > 0 ? a.stock / a.stock_minimo : a.stock;
+          const ratioB = b.stock_minimo > 0 ? b.stock / b.stock_minimo : b.stock;
+          return ratioA - ratioB;
+        } else if (stockSortBy === 'stock_asc') {
+          return a.stock - b.stock;
+        } else if (stockSortBy === 'stock_desc') {
+          return b.stock - a.stock;
+        } else if (stockSortBy === 'nombre') {
+          return (a.nombre || '').localeCompare(b.nombre || '');
+        }
+        return 0;
+      });
+  }, [materiasPrimas, search, stockFilterStatus, minStockInput, maxStockInput, stockSortBy]);
 
   const totalPages = useMemo(() => Math.ceil(filtered.length / itemsPerPage) || 1, [filtered, itemsPerPage]);
 
@@ -92,7 +147,7 @@ export function MateriasPrimas() {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [search, itemsPerPage]);
+  }, [search, itemsPerPage, stockFilterStatus, minStockInput, maxStockInput, stockSortBy]);
 
   const openCreate = () => {
     setEditItem(null);
@@ -197,29 +252,249 @@ export function MateriasPrimas() {
 
   const inp = 'w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 bg-white transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none';
 
+  // Configuración de columnas para Excel
+  const materiaPrimaExcelColumns: ColumnDefinition[] = [
+    { label: 'Nombre', key: 'nombre', example: 'Esencia Chanel N°5', required: true },
+    { label: 'Tipo', key: 'tipo', example: 'esencia', required: true },
+    { label: 'Unidad Medida', key: 'unidad_medida', example: 'ml', required: true },
+    { label: 'Stock Actual', key: 'stock', example: 500 },
+    { label: 'Stock Mínimo', key: 'stock_minimo', example: 100 },
+    { label: 'Costo Unitario', key: 'costo_unitario', example: 120, required: true },
+    { label: 'Estado', key: 'estado', example: 'activo' }
+  ];
+
+  const mapMateriaPrimaRawRow = (raw: Record<string, any>) => {
+    const errors: string[] = [];
+    const nombre = String(raw['Nombre'] || raw['nombre'] || '').trim();
+    const tipoRaw = String(raw['Tipo'] || raw['tipo'] || 'esencia').trim().toLowerCase();
+    const unidad_medida = String(raw['Unidad Medida'] || raw['unidad_medida'] || raw['Unidad'] || 'ml').trim();
+    const stock = Number(raw['Stock Actual'] || raw['stock'] || raw['Stock'] || 0);
+    const stock_minimo = Number(raw['Stock Mínimo'] || raw['stock_minimo'] || raw['Stock Minimo'] || 10);
+    const costo_unitario = Number(raw['Costo Unitario'] || raw['costo_unitario'] || raw['Costo Ref.'] || 0);
+    const estadoRaw = String(raw['Estado'] || raw['estado'] || 'activo').toLowerCase();
+    const estado = estadoRaw === 'inactivo' ? 'inactivo' : 'activo';
+
+    if (!nombre) errors.push('El nombre es obligatorio');
+    if (isNaN(costo_unitario) || costo_unitario <= 0) errors.push('El costo unitario debe ser un número mayor a 0');
+    if (isNaN(stock) || stock < 0) errors.push('El stock no puede ser negativo');
+
+    return {
+      data: {
+        nombre,
+        tipo: tipoRaw || 'esencia',
+        unidad_medida,
+        stock: isNaN(stock) ? 0 : stock,
+        stock_minimo: isNaN(stock_minimo) ? 10 : stock_minimo,
+        costo_unitario: isNaN(costo_unitario) ? 0 : costo_unitario,
+        estado,
+        imagen: ''
+      },
+      errors
+    };
+  };
+
+  const handleImportMateriasPrimas = async (validItems: any[]) => {
+    let count = 0;
+    for (const item of validItems) {
+      await addMateriaPrima(item, user?.name || 'Usuario', user?.role || 'admin');
+      count++;
+    }
+    setSuccessToast(`Se importaron ${count} materias primas con éxito.`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleExportExcel = () => {
+    const headers: Record<string, string> = {
+      nombre: 'Nombre',
+      tipo: 'Tipo',
+      unidad_medida: 'Unidad Medida',
+      stock: 'Stock Actual',
+      stock_minimo: 'Stock Mínimo',
+      costo_unitario: 'Costo Unitario',
+      estado: 'Estado'
+    };
+    exportToExcel(filtered, 'Materias_Primas', headers, 'Materias Primas');
+  };
+
   return (
-    <Layout title="Materias Primas">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div className="relative flex-1 w-full sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Buscar materia prima..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+    <Layout title="Materias Primas" subtitle="Gestión de insumos y control inteligente de stock">
+      {/* Tarjetas KPI de Filtrado Rápido de Stock */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <button
+          type="button"
+          onClick={() => setStockFilterStatus('todos')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+            stockFilterStatus === 'todos'
+              ? 'bg-zinc-900 text-white border-zinc-900 shadow-md ring-2 ring-zinc-900/20'
+              : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-300 shadow-sm hover:bg-zinc-50/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">Total Insumos</span>
+            <Layers size={16} className={stockFilterStatus === 'todos' ? 'text-amber-400' : 'text-zinc-400'} />
+          </div>
+          <p className="text-xl font-black mt-1 font-mono">{kpiTotal}</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStockFilterStatus('agotado')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+            stockFilterStatus === 'agotado'
+              ? 'bg-rose-600 text-white border-rose-600 shadow-md ring-2 ring-rose-600/20'
+              : 'bg-rose-50/40 text-rose-800 border-rose-200/80 hover:border-rose-300 shadow-sm hover:bg-rose-50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider opacity-90">Sin Stock (Agotados)</span>
+            <AlertTriangle size={16} className={stockFilterStatus === 'agotado' ? 'text-white' : 'text-rose-500'} />
+          </div>
+          <p className="text-xl font-black mt-1 font-mono">{kpiAgotados}</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStockFilterStatus('stock_bajo')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+            stockFilterStatus === 'stock_bajo'
+              ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/20'
+              : 'bg-amber-50/40 text-amber-900 border-amber-200/80 hover:border-amber-300 shadow-sm hover:bg-amber-50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider opacity-90">Stock Bajo (Reorden)</span>
+            <Package size={16} className={stockFilterStatus === 'stock_bajo' ? 'text-white' : 'text-amber-600'} />
+          </div>
+          <p className="text-xl font-black mt-1 font-mono">{kpiStockBajo}</p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStockFilterStatus('optimo')}
+          className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+            stockFilterStatus === 'optimo'
+              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-600/20'
+              : 'bg-emerald-50/40 text-emerald-900 border-emerald-200/80 hover:border-emerald-300 shadow-sm hover:bg-emerald-50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider opacity-90">Stock Óptimo</span>
+            <CheckCircle2 size={16} className={stockFilterStatus === 'optimo' ? 'text-white' : 'text-emerald-600'} />
+          </div>
+          <p className="text-xl font-black mt-1 font-mono">{kpiOptimo}</p>
+        </button>
+      </div>
+
+      {/* Top Controls: Search, Buttons & Stock Filters */}
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Buscar insumo por nombre o tipo..."
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 outline-none transition-all shadow-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+            <Button onClick={() => setImportModalOpen(true)} variant="secondary" size="sm" icon={<FileUp size={14} />} className="w-full justify-center">
+              Importar Excel
+            </Button>
+            <Button onClick={handleExportExcel} variant="secondary" size="sm" icon={<FileDown size={14} />} className="w-full justify-center">
+              Exportar Excel
+            </Button>
+            <Button onClick={() => openAjuste()} variant="secondary" size="sm" icon={<Package size={14} />} className="w-full justify-center">
+              Ajuste
+            </Button>
+            <Button onClick={openCreate} size="sm" icon={<Plus size={14} />} className="w-full justify-center">
+              Nuevo Insumo
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <Button onClick={() => openAjuste()} variant="secondary" className="flex-1 sm:flex-none">
-            <Package className="w-4 h-4 mr-2" />
-            Ajuste de Stock
-          </Button>
-          <Button onClick={openCreate} className="flex-1 sm:flex-none">
-            <Plus className="w-4 h-4 mr-2" />
-            Nueva Materia Prima
-          </Button>
+
+        {/* Toolbar de Filtrado Inteligente y Ordenamiento */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-zinc-50 rounded-xl border border-zinc-200/80">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide mr-1 flex items-center gap-1">
+              <Filter size={13} /> Filtrar Stock:
+            </span>
+            {(['todos', 'agotado', 'stock_bajo', 'optimo'] as const).map(status => (
+              <button
+                key={status}
+                onClick={() => setStockFilterStatus(status)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  stockFilterStatus === status
+                    ? 'bg-amber-600 text-white shadow-sm'
+                    : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                }`}
+              >
+                {status === 'todos' ? 'Todos' : status === 'agotado' ? 'Sin Stock' : status === 'stock_bajo' ? 'Stock Bajo' : 'Óptimo'}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setShowCustomStockRange(!showCustomStockRange)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                showCustomStockRange || minStockInput || maxStockInput
+                  ? 'bg-amber-50 text-amber-800 border-amber-300'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+              }`}
+            >
+              <SlidersHorizontal size={13} /> Rango Numérico
+            </button>
+          </div>
+
+          {/* Selector de Ordenamiento Inteligente */}
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide flex items-center gap-1">
+              <ArrowUpDown size={13} /> Orden:
+            </span>
+            <select
+              value={stockSortBy}
+              onChange={(e) => setStockSortBy(e.target.value as any)}
+              className="px-3 py-1.5 bg-white border border-zinc-200 rounded-lg text-xs font-bold text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 cursor-pointer shadow-sm"
+            >
+              <option value="prioridad_reorden">⚠️ Prioridad de Reabastecimiento</option>
+              <option value="stock_asc">📈 Stock: Menor a Mayor</option>
+              <option value="stock_desc">📉 Stock: Mayor a Menor</option>
+              <option value="nombre">🔤 Nombre (A-Z)</option>
+            </select>
+          </div>
         </div>
+
+        {/* Panel Desplegable de Rango Personalizado de Stock */}
+        {showCustomStockRange && (
+          <div className="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200 flex flex-wrap items-center gap-3 animate-fade-in">
+            <span className="text-xs font-bold text-amber-900">Rango de Stock:</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                placeholder="Mínimo"
+                value={minStockInput}
+                onChange={(e) => setMinStockInput(e.target.value)}
+                className="w-24 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-amber-500/30"
+              />
+              <span className="text-amber-700 text-xs">hasta</span>
+              <input
+                type="number"
+                placeholder="Máximo"
+                value={maxStockInput}
+                onChange={(e) => setMaxStockInput(e.target.value)}
+                className="w-24 px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-mono outline-none focus:ring-2 focus:ring-amber-500/30"
+              />
+            </div>
+            {(minStockInput || maxStockInput) && (
+              <button
+                onClick={() => { setMinStockInput(''); setMaxStockInput(''); }}
+                className="text-xs text-amber-800 underline font-semibold hover:text-amber-950 cursor-pointer"
+              >
+                Limpiar Rango
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
@@ -230,57 +505,85 @@ export function MateriasPrimas() {
             <div className="p-8 text-center text-zinc-500">
               No se encontraron materias primas.
             </div>
-          ) : paginated.map(p => (
-            <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
-              <div className="flex gap-3 items-start justify-between">
-                <div className="flex gap-3 items-center">
-                  {p.tipo === 'esencia' ? (
-                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                      {p.imagen ? <AutoSlider images={p.imagen.split(',')} alt={p.nombre} /> : <Droplet className="w-5 h-5 text-purple-300" />}
+          ) : paginated.map(p => {
+            const percent = p.stock_minimo > 0 ? Math.min(Math.round((p.stock / p.stock_minimo) * 100), 200) : 100;
+            const isAgotado = p.stock <= 0;
+            const isBajo = !isAgotado && p.stock <= p.stock_minimo;
+
+            return (
+              <div key={p.id} className="p-4 space-y-3 hover:bg-zinc-50/60 transition-colors">
+                <div className="flex gap-3 items-start justify-between">
+                  <div className="flex gap-3 items-center">
+                    {p.tipo === 'esencia' ? (
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                        {p.imagen ? <AutoSlider images={p.imagen.split(',')} alt={p.nombre} /> : <Droplet className="w-5 h-5 text-purple-300" />}
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+                        {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-bold text-zinc-800 text-sm leading-tight">{p.nombre}</p>
+                      <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600'}`}>
+                        {p.tipo}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
-                      {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
-                    </div>
-                  )}
-                  <div>
-                    <p className="font-bold text-zinc-800 text-sm leading-tight">{p.nombre}</p>
-                    <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600'}`}>
-                      {p.tipo}
-                    </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2 bg-zinc-50 rounded-lg p-2.5 border border-zinc-100">
-                <div>
-                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Stock Actual</span>
-                  <span className={`font-bold text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-zinc-800'}`}>
-                    {p.stock} <span className="text-xs font-normal text-zinc-500">{p.unidad_medida}</span>
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-zinc-400 uppercase font-bold">Costo Unit.</span>
-                  <span className="font-bold text-zinc-800 text-sm">{formatCurrency(p.costo_unitario)}</span>
-                </div>
-              </div>
+                <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block text-[10px] text-zinc-400 uppercase font-bold">Stock Actual</span>
+                      <span className={`font-black text-sm font-mono ${isAgotado ? 'text-rose-600' : isBajo ? 'text-amber-600' : 'text-zinc-800'}`}>
+                        {p.stock} <span className="text-xs font-normal text-zinc-500">{p.unidad_medida}</span>
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-[10px] text-zinc-400 uppercase font-bold">Costo Unit.</span>
+                      <span className="font-bold text-zinc-800 text-sm">{formatCurrency(p.costo_unitario)}</span>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="flex-1 py-2 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
-                  <Eye size={14} className="mr-1.5" /> Detalles
-                </button>
-                <button onClick={() => openAjuste(p.id)} className="flex-1 py-2 flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors">
-                  <Package size={14} className="mr-1.5" /> Ajustar
-                </button>
-                <button onClick={() => openEdit(p)} className="flex-1 py-2 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors">
-                  <Pencil size={14} className="mr-1.5" /> Editar
-                </button>
-                <button onClick={() => handleDelete(p.id)} className="px-3.5 py-2 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors">
-                  <Trash2 size={16} />
-                </button>
+                  {/* Estado y Barra Visual de Stock en Móvil */}
+                  <div className="space-y-1 pt-1 border-t border-zinc-200/60">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-zinc-500 font-mono text-[10px]">Mín: {p.stock_minimo} {p.unidad_medida}</span>
+                      <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
+                        isAgotado ? 'bg-rose-100 text-rose-700' : isBajo ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {isAgotado ? 'Agotado (0%)' : isBajo ? `Reorden (${percent}%)` : `Óptimo (${percent}%)`}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-zinc-200/80 rounded-full overflow-hidden">
+                      <div
+                        style={{ width: `${Math.min(percent, 100)}%` }}
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          isAgotado ? 'bg-rose-500' : isBajo ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="py-2 px-3 flex items-center justify-center bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-lg text-xs font-semibold transition-colors">
+                    <Eye size={14} className="mr-1.5" /> Detalles
+                  </button>
+                  <button onClick={() => openAjuste(p.id)} className="py-2 px-3 flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold transition-colors">
+                    <Package size={14} className="mr-1.5" /> Ajustar
+                  </button>
+                  <button onClick={() => openEdit(p)} className="py-2 px-3 flex items-center justify-center bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-lg text-xs font-semibold transition-colors">
+                    <Pencil size={14} className="mr-1.5" /> Editar
+                  </button>
+                  <button onClick={() => handleDelete(p.id)} className="py-2 px-3 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-semibold transition-colors">
+                    <Trash2 size={14} className="mr-1.5" /> Eliminar
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Desktop Table */}
@@ -290,63 +593,90 @@ export function MateriasPrimas() {
               <tr>
                 <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden md:table-cell">Tipo</th>
-                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Stock</th>
+                <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Estado / Cobertura de Stock</th>
                 <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Unidad</th>
                 <th className="px-3 sm:px-4 py-3 text-left text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hidden sm:table-cell">Costo Ref.</th>
                 <th className="px-3 sm:px-4 py-3 text-right text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {paginated.map(p => (
-                <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
-                  <td className="px-3 sm:px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {p.tipo === 'esencia' ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
-                          {p.imagen ? (
-                            <AutoSlider images={p.imagen.split(',')} alt={p.nombre} />
-                          ) : (
-                            <Droplet className="w-5 h-5 text-purple-300" />
-                          )}
+              {paginated.map(p => {
+                const percent = p.stock_minimo > 0 ? Math.min(Math.round((p.stock / p.stock_minimo) * 100), 200) : 100;
+                const isAgotado = p.stock <= 0;
+                const isBajo = !isAgotado && p.stock <= p.stock_minimo;
+
+                return (
+                  <tr key={p.id} className="hover:bg-zinc-50/60 transition-colors">
+                    <td className="px-3 sm:px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {p.tipo === 'esencia' ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-purple-50 border border-purple-100 flex items-center justify-center shrink-0">
+                            {p.imagen ? (
+                              <AutoSlider images={p.imagen.split(',')} alt={p.nombre} />
+                            ) : (
+                              <Droplet className="w-5 h-5 text-purple-300" />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
+                            {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-semibold text-zinc-800 text-sm block leading-tight">{p.nombre}</span>
+                          <span className="text-[11px] text-zinc-400 font-mono">Mínimo recomendado: {p.stock_minimo} {p.unidad_medida}</span>
                         </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center shrink-0">
-                          {p.tipo === 'alcohol' ? <Beaker className="w-5 h-5 text-blue-300" /> : <Package className="w-5 h-5 text-zinc-300" />}
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 capitalize hidden md:table-cell">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700 border border-purple-200' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'}`}>
+                        {p.tipo}
+                      </span>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 min-w-44">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className={`font-black font-mono ${isAgotado ? 'text-rose-600' : isBajo ? 'text-amber-600' : 'text-emerald-700'}`}>
+                            {p.stock} {p.unidad_medida}
+                          </span>
+                          <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
+                            isAgotado ? 'bg-rose-100 text-rose-700' : isBajo ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {isAgotado ? 'Agotado (0%)' : isBajo ? `Reorden (${percent}%)` : `Óptimo (${percent}%)`}
+                          </span>
                         </div>
-                      )}
-                      <span className="font-medium text-zinc-800">{p.nombre}</span>
-                    </div>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3 capitalize hidden md:table-cell">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium ${p.tipo === 'esencia' ? 'bg-purple-100 text-purple-700 border border-purple-200' : p.tipo === 'alcohol' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-zinc-100 text-zinc-600 border border-zinc-200'}`}>
-                      {p.tipo}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3">
-                    <span className={`font-bold text-xs sm:text-sm ${p.stock <= p.stock_minimo ? 'text-red-600' : 'text-zinc-800'}`}>
-                      {p.stock}
-                    </span>
-                  </td>
-                  <td className="px-3 sm:px-4 py-3 text-zinc-500 hidden sm:table-cell text-xs">{p.unidad_medida}</td>
-                  <td className="px-3 sm:px-4 py-3 font-semibold text-zinc-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
-                  <td className="px-3 sm:px-4 py-3">
-                    <div className="flex justify-end gap-1">
-                      <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
-                        <Eye size={16} />
-                      </button>
-                      <button onClick={() => openAjuste(p.id)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
-                        <Package size={16} />
-                      </button>
-                      <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
-                        <Pencil size={16} />
-                      </button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {/* Barra de estado visual de stock */}
+                        <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200/60">
+                          <div
+                            style={{ width: `${Math.min(percent, 100)}%` }}
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              isAgotado ? 'bg-rose-500' : isBajo ? 'bg-amber-500' : 'bg-emerald-500'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 sm:px-4 py-3 text-zinc-500 hidden sm:table-cell text-xs font-mono">{p.unidad_medida}</td>
+                    <td className="px-3 sm:px-4 py-3 font-semibold text-zinc-800 hidden sm:table-cell text-xs sm:text-sm">{formatCurrency(p.costo_unitario)}</td>
+                    <td className="px-3 sm:px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => { setViewItem(p); setActiveSlide(0); }} className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors cursor-pointer" title="Ver detalles">
+                          <Eye size={16} />
+                        </button>
+                        <button onClick={() => openAjuste(p.id)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-blue-600 transition-colors cursor-pointer" title="Ajustar Stock">
+                          <Package size={16} />
+                        </button>
+                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-amber-600 transition-colors cursor-pointer" title="Editar">
+                          <Pencil size={16} />
+                        </button>
+                        <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-600 transition-colors cursor-pointer" title="Eliminar">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-gray-500">
@@ -652,6 +982,28 @@ export function MateriasPrimas() {
         )}
       </Modal>
 
+      {/* Modal Importar Excel */}
+      <ExcelImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        title="Importar Materias Primas desde Excel"
+        columns={materiaPrimaExcelColumns}
+        templateFileName="Materias_Primas"
+        fieldMapper={mapMateriaPrimaRawRow}
+        onImport={handleImportMateriasPrimas}
+      />
+
+      {/* Toast Animado */}
+      {successToast && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl shadow-emerald-600/10 border border-emerald-500/20 animate-slide-in-right">
+          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center animate-bounce-short">
+            <svg className="w-3.5 h-3.5 text-white stroke-[3.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold tracking-wide">{successToast}</span>
+        </div>
+      )}
     </Layout>
   );
 }

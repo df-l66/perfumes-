@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus, Search, Pencil, Trash2, Package, FileDown, PlusCircle, Eye, Power } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Package, FileDown, FileUp, PlusCircle, Eye, Power } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -7,7 +7,8 @@ import { Modal } from '../components/ui/Modal';
 import { AlertBox } from '../components/ui/AlertBox';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
-import { exportToCSV as downloadCSV } from '../utils/exportToCSV';
+import { exportToExcel } from '../utils/excelUtils';
+import { ExcelImportModal, type ColumnDefinition } from '../components/ui/ExcelImportModal';
 import type { Producto, ProductStatus } from '../types';
 
 const EMPTY: any = {
@@ -49,6 +50,7 @@ export function Productos() {
   const [ajusteSearchFocused, setAjusteSearchFocused] = useState(false);
   const [kardexSearch, setKardexSearch] = useState('');
   const [kardexFilterTipo, setKardexFilterTipo] = useState<'todos' | 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida'>('todos');
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   const handlePriceChange = (field: keyof Producto, value: string) => {
     const cleaned = value.replace(/\D/g, '');
@@ -218,7 +220,73 @@ export function Productos() {
 
 
 
-  const exportToCSV = () => {
+  const productExcelColumns: ColumnDefinition[] = [
+    { label: 'Nombre', key: 'nombre', example: 'Sauvage Eau de Parfum', required: true },
+    { label: 'Código', key: 'codigo', example: 'PER-001' },
+    { label: 'Categoría', key: 'categoria', example: 'Amaderada' },
+    { label: 'Precio Costo', key: 'precio_costo', example: 45000 },
+    { label: 'Precio Venta', key: 'precio_venta', example: 85000, required: true },
+    { label: 'Stock', key: 'stock', example: 25 },
+    { label: 'Stock Mínimo', key: 'stock_minimo', example: 5 },
+    { label: 'Estado', key: 'estado', example: 'activo' },
+    { label: 'Unidad', key: 'unidad', example: 'Frasco' },
+    { label: 'Tipo Producto', key: 'tipo_producto', example: 'perfume' },
+    { label: 'Calidad', key: 'calidad', example: 'Original' },
+    { label: 'Género', key: 'genero', example: 'Unisex' }
+  ];
+
+  const mapProductRawRow = (raw: Record<string, any>) => {
+    const errors: string[] = [];
+    const nombre = String(raw['Nombre'] || raw['nombre'] || '').trim();
+    const codigo = String(raw['Código'] || raw['codigo'] || raw['Codigo'] || '').trim();
+    const categoria = String(raw['Categoría'] || raw['categoria'] || raw['Categoria'] || 'General').trim();
+    const precio_costo = Number(raw['Precio Costo'] || raw['precio_costo'] || 0);
+    const precio_venta = Number(raw['Precio Venta'] || raw['precio_venta'] || 0);
+    const stock = Number(raw['Stock'] || raw['stock'] || 0);
+    const stock_minimo = Number(raw['Stock Mínimo'] || raw['stock_minimo'] || raw['Stock Minimo'] || 5);
+    const estadoRaw = String(raw['Estado'] || raw['estado'] || 'activo').toLowerCase();
+    const estado = (estadoRaw === 'inactivo') ? 'inactivo' : 'activo';
+    const unidad = String(raw['Unidad'] || raw['unidad'] || 'Frasco').trim();
+    const tipo_producto = String(raw['Tipo Producto'] || raw['tipo_producto'] || 'perfume').trim();
+    const calidad = String(raw['Calidad'] || raw['calidad'] || 'Original').trim();
+    const genero = String(raw['Género'] || raw['genero'] || 'Unisex').trim();
+
+    if (!nombre) errors.push('El nombre es obligatorio');
+    if (isNaN(precio_venta) || precio_venta <= 0) errors.push('El precio de venta debe ser un número mayor a 0');
+    if (isNaN(stock) || stock < 0) errors.push('El stock no puede ser negativo');
+
+    return {
+      data: {
+        nombre,
+        codigo: codigo || `PROD-${Math.floor(1000 + Math.random() * 9000)}`,
+        categoria,
+        precio_costo: isNaN(precio_costo) ? 0 : precio_costo,
+        precio_venta,
+        stock: isNaN(stock) ? 0 : stock,
+        stock_minimo: isNaN(stock_minimo) ? 5 : stock_minimo,
+        estado,
+        unidad,
+        tipo_producto,
+        calidad,
+        genero,
+        es_por_encargo: false,
+        descripcion: ''
+      },
+      errors
+    };
+  };
+
+  const handleImportProductos = async (validItems: any[]) => {
+    let successCount = 0;
+    for (const item of validItems) {
+      await addProducto(item, user?.name || 'Usuario', user?.role || 'admin');
+      successCount++;
+    }
+    setSuccessToast(`Se importaron ${successCount} productos con éxito.`);
+    setTimeout(() => setSuccessToast(null), 4000);
+  };
+
+  const handleExportExcel = () => {
     const headers: Record<string, string> = {
       codigo: 'Código',
       nombre: 'Nombre',
@@ -227,10 +295,14 @@ export function Productos() {
       precio_venta: 'Precio Venta',
       stock: 'Stock',
       stock_minimo: 'Stock Mínimo',
-      estado: 'Estado'
+      estado: 'Estado',
+      unidad: 'Unidad',
+      tipo_producto: 'Tipo Producto',
+      calidad: 'Calidad',
+      genero: 'Género'
     };
 
-    downloadCSV(filtered, `Catalogo_Productos_${new Date().toISOString().slice(0, 10)}`, headers);
+    exportToExcel(filtered, 'Catalogo_Productos', headers, 'Productos');
   };
 
   const field = (label: string, children: React.ReactNode) => (
@@ -289,23 +361,30 @@ export function Productos() {
             className="w-full pl-9 pr-4 py-2.5 rounded-lg border border-zinc-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400"
           />
         </div>
-        <div className="flex gap-2 flex-wrap items-center">
-          {(['todos', 'activo', 'stock_bajo', 'inactivo'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
-              className={`px-3.5 py-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                filterStatus === s
-                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
-                  : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
-              }`}
-            >
-              {s === 'todos' ? 'Todos' : s === 'stock_bajo' ? 'Stock Bajo' : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-          <Button variant="secondary" size="sm" icon={<FileDown size={14} />} onClick={exportToCSV} className="ml-auto sm:ml-0">
-            Exportar Excel
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex gap-1.5 flex-wrap items-center">
+            {(['todos', 'activo', 'stock_bajo', 'inactivo'] as const).map(s => (
+              <button
+                key={s}
+                onClick={() => { setFilterStatus(s); setCurrentPage(1); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                  filterStatus === s
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
+                }`}
+              >
+                {s === 'todos' ? 'Todos' : s === 'stock_bajo' ? 'Stock Bajo' : s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 sm:flex gap-2 w-full sm:w-auto">
+            <Button variant="secondary" size="sm" icon={<FileUp size={14} />} onClick={() => setImportModalOpen(true)} className="w-full justify-center">
+              Importar Excel
+            </Button>
+            <Button variant="secondary" size="sm" icon={<FileDown size={14} />} onClick={handleExportExcel} className="w-full justify-center">
+              Exportar Excel
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -976,6 +1055,17 @@ export function Productos() {
           <Button onClick={() => setDetailItem(null)}>Cerrar</Button>
         </div>
       </Modal>
+
+      {/* Modal de Importación Excel */}
+      <ExcelImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        title="Importar Productos desde Excel"
+        columns={productExcelColumns}
+        templateFileName="Productos"
+        fieldMapper={mapProductRawRow}
+        onImport={handleImportProductos}
+      />
 
       {/* Toast Animado */}
       {successToast && (
