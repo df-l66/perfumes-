@@ -142,3 +142,60 @@
   }
 }
 
+/* Configuración de Impresión para Tirilla POS (Impresoras Térmicas 80mm) */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0mm;
+  }
+  
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 80mm !important;
+  }
+
+  /* Ocultar la interfaz normal del sistema al imprimir */
+  nav, header, sidebar, aside, button, .print\:hidden {
+    display: none !important;
+  }
+
+  /* Quitar recuadros de fondo y backdrops de portales/modales */
+  div[class*="fixed inset-0"] {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Formato Tirilla Limpia sin Recuadro Exterior */
+  #printable-invoice {
+    display: block !important;
+    position: relative !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    margin: 0 !important;
+    padding: 4mm 3mm !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+  }
+
+  #printable-invoice * {
+    color: #000000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+

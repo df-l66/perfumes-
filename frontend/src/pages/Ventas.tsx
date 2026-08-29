@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, ShoppingCart, Trash2, XCircle,
   FileText, ChevronRight, CheckCircle2, Package, FileDown, Download,
-  RotateCcw
+  RotateCcw, Printer
 } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
@@ -660,6 +660,132 @@ export function Ventas() {
     downloadCSV(dataToExport, `Registro_Ventas_${new Date().toISOString().slice(0, 10)}`, headers);
   };
 
+  const handleDownloadTirillaPOS = async (venta?: Venta) => {
+    try {
+      const v = venta || detailVenta;
+      if (!v) return;
+
+      const itemHeight = (v.items || []).length * 8;
+      const totalHeight = Math.max(120, 85 + itemHeight);
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [80, totalHeight]
+      });
+
+      const pageWidth = 80;
+      let y = 8;
+
+      // Header logo
+      try {
+        const response = await fetch('/logo.png');
+        if (response.ok) {
+          const blob = await response.blob();
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          pdf.addImage(base64, 'JPEG', (pageWidth - 16) / 2, y, 16, 16);
+          y += 18;
+        }
+      } catch (e) {
+        console.warn('Could not load logo for POS PDF', e);
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(configuracion.nombre, pageWidth / 2, y, { align: 'center' });
+      y += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      if (configuracion.nit) {
+        pdf.text(`NIT: ${configuracion.nit}`, pageWidth / 2, y, { align: 'center' });
+        y += 4;
+      }
+      if (configuracion.direccion) {
+        pdf.text(configuracion.direccion, pageWidth / 2, y, { align: 'center' });
+        y += 4;
+      }
+      if (configuracion.telefono) {
+        pdf.text(`Tel: ${configuracion.telefono}`, pageWidth / 2, y, { align: 'center' });
+        y += 5;
+      }
+
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineDashPattern([1, 1], 0);
+      pdf.line(4, y, pageWidth - 4, y);
+      y += 5;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10.5);
+      pdf.text(`FACTURA: ${v.factura}`, 4, y);
+      y += 5;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.text(`Fecha: ${new Date(v.fecha).toLocaleDateString('es-CO')}`, 4, y);
+      y += 4;
+      pdf.text(`Adquiriente: ${v.cliente_nombre}`, 4, y);
+      y += 4;
+      pdf.text(`Vendedor: ${v.vendedor_nombre}`, 4, y);
+      y += 4;
+      if (v.metodo_pago) {
+        pdf.text(`Método de Pago: ${v.metodo_pago.toUpperCase()}`, 4, y);
+        y += 4;
+      }
+
+      pdf.line(4, y, pageWidth - 4, y);
+      y += 5;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8.5);
+      pdf.text('Cant  Producto', 4, y);
+      pdf.text('Total', pageWidth - 4, y, { align: 'right' });
+      y += 4;
+
+      for (const item of v.items) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        const lines = pdf.splitTextToSize(item.nombre, 44);
+        pdf.text(`${item.cantidad}x`, 4, y);
+        pdf.text(lines[0], 14, y);
+        pdf.text(formatCurrency(item.subtotal), pageWidth - 4, y, { align: 'right' });
+        y += 4;
+
+        if (lines.length > 1) {
+          pdf.setFont('helvetica', 'normal');
+          for (let i = 1; i < lines.length; i++) {
+            pdf.text(lines[i], 14, y);
+            y += 3.5;
+          }
+        }
+      }
+
+      y += 1;
+      pdf.line(4, y, pageWidth - 4, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.text('TOTAL NETO:', 4, y);
+      pdf.text(formatCurrency(v.total), pageWidth - 4, y, { align: 'right' });
+      y += 8;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.text('¡Gracias por su preferencia!', pageWidth / 2, y, { align: 'center' });
+
+      pdf.save(`Tirilla-${v.factura}.pdf`);
+    } catch (err: any) {
+      console.error('Error al generar Tirilla POS:', err);
+      alert('Error al generar tirilla: ' + (err.message || err.toString()));
+    }
+  };
+
   const handleDownloadPDF = async (venta?: Venta) => {
     try {
       const v = venta || detailVenta;
@@ -711,26 +837,19 @@ export function Ventas() {
       pdf.text(`MÉTODO DE PAGO: ${v.metodo_pago ? v.metodo_pago.toUpperCase() : 'CONTADO'}`, pageWidth - 14, 46, { align: 'right' });
       pdf.setFont('helvetica', 'normal');
 
-      // Parties
-      pdf.setFillColor(248, 250, 252); // Slate 50
-      pdf.setDrawColor(226, 232, 240); // Slate 200
-      pdf.rect(14, 52, pageWidth - 28, 20, 'FD');
-      
+      // Parties (No outer rectangle box)
       pdf.setFontSize(9);
       pdf.setTextColor(148, 163, 184); // Slate 400
-      pdf.text('ADQUIRIENTE', 20, 59);
-      pdf.text('CAJERO / VENDEDOR', pageWidth / 2, 59);
+      pdf.text('ADQUIRIENTE', 14, 57);
+      pdf.text('CAJERO / VENDEDOR', pageWidth / 2, 57);
       
       pdf.setFontSize(11);
       pdf.setTextColor(30, 41, 59); // Slate 800
-      pdf.text(v.cliente_nombre, 20, 66);
-      pdf.text(v.vendedor_nombre, pageWidth / 2, 66);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(v.cliente_nombre, 14, 64);
+      pdf.text(v.vendedor_nombre, pageWidth / 2, 64);
 
       // Table
-      const ivaFactor = 1 + (configuracion.iva_porcentaje / 100);
-      const subtotalSinIva = v.total / ivaFactor;
-      const ivaCalculado = v.total - subtotalSinIva;
-
       const tableData = v.items.map(item => [
         item.nombre,
         item.cantidad.toString(),
@@ -739,7 +858,7 @@ export function Ventas() {
       ]);
 
       autoTable(pdf, {
-        startY: 75,
+        startY: 72,
         head: [['Descripción del Producto', 'Cant.', 'P. Unit.', 'Subtotal']],
         body: tableData,
         theme: 'striped',
@@ -761,15 +880,11 @@ export function Ventas() {
       pdf.text('TOTAL NETO:', pageWidth - 60, finalY + 5, { align: 'right' });
       pdf.text(formatCurrency(v.total), pageWidth - 14, finalY + 5, { align: 'right' });
 
-      // Footer
+      // Footer message (No DIAN!)
       pdf.setFontSize(9);
-      pdf.setTextColor(148, 163, 184);
+      pdf.setTextColor(100, 116, 139);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Detalle DIAN:', 14, finalY + 30);
-      pdf.text(configuracion.resolucion, 14, finalY + 35);
-      
-      pdf.setFontSize(8);
-      pdf.text(`Comprobante oficial generado por el sistema administrativo de inventarios de ${configuracion.nombre}.`, pageWidth / 2, finalY + 45, { align: 'center' });
+      pdf.text(`¡Gracias por su compra en ${configuracion.nombre}!`, pageWidth / 2, finalY + 25, { align: 'center' });
 
       pdf.save(`Factura-${v.factura}.pdf`);
     } catch (err: any) {
@@ -988,82 +1103,96 @@ export function Ventas() {
           return (
             <div className="space-y-6">
               {/* Printable Invoice Container */}
-              <div id="printable-invoice" className="bg-white border border-zinc-200 rounded-xl p-6 space-y-5 print:border-0 print:p-0 print:shadow-none">
+              <div id="printable-invoice" className="bg-white border border-zinc-200 rounded-xl p-5 sm:p-6 space-y-4 print:border-0 print:p-0 print:shadow-none print:w-full print:max-w-none">
                 
                 {/* Invoice Header */}
-                <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-zinc-100 pb-4">
-                  <div className="flex items-start gap-4">
-                    <img src="/logo.png" alt="Logo" className="w-44 h-44 object-contain print:w-44 print:h-44 scale-125 origin-center rounded-md" onError={(e) => e.currentTarget.style.display = 'none'} />
-                    <div className="space-y-1">
-                      <h3 className="font-extrabold text-zinc-800 text-lg leading-tight">{configuracion.nombre}</h3>
-                      <p className="text-xs text-zinc-500 font-medium">NIT: {configuracion.nit}</p>
-                      <p className="text-xs text-zinc-400">{configuracion.direccion}</p>
-                      <p className="text-xs text-zinc-400">Tel: {configuracion.telefono}</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-200 pb-4 print:border-b-2 print:border-black print:pb-3">
+                  <div className="flex items-center gap-3">
+                    <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain print:w-14 print:h-14 shrink-0" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    <div>
+                      <h3 className="font-extrabold text-zinc-900 text-lg sm:text-xl print:text-base print:text-black leading-tight">{configuracion.nombre}</h3>
+                      <p className="text-xs text-zinc-600 print:text-black font-medium mt-0.5">NIT: {configuracion.nit}</p>
+                      <p className="text-xs text-zinc-500 print:text-black">{configuracion.direccion}</p>
+                      <p className="text-xs text-zinc-500 print:text-black">Tel: {configuracion.telefono}</p>
                     </div>
                   </div>
-                  <div className="text-left sm:text-right space-y-1 shrink-0">
-                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Factura de Venta</span>
-                    <h4 className="text-xl font-mono font-bold text-amber-600">{detailVenta.factura}</h4>
-                    <p className="text-xs text-zinc-500">Fecha: {new Date(detailVenta.fecha).toLocaleDateString('es-CO')}</p>
-                    <Badge variant={detailVenta.estado} className="mt-1" />
+                  <div className="text-left sm:text-right space-y-1 shrink-0 print:text-left print:mt-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 print:text-black block">Factura de Venta</span>
+                    <h4 className="text-xl font-mono font-bold text-amber-600 print:text-black print:text-lg">{detailVenta.factura}</h4>
+                    <p className="text-xs text-zinc-600 print:text-black font-medium">Fecha: {new Date(detailVenta.fecha).toLocaleDateString('es-CO')}</p>
+                    <div className="print:hidden">
+                      <Badge variant={detailVenta.estado} className="mt-1" />
+                    </div>
                   </div>
                 </div>
 
                 {/* Cliente / Vendedor Metadata */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-zinc-50 p-3 rounded-lg border border-zinc-100 print:bg-white print:border-zinc-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-zinc-50 p-3 rounded-lg border border-zinc-100 print:bg-transparent print:border-0 print:p-0 print:gap-1 print:my-2">
                   <div>
-                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Adquiriente</p>
-                    <p className="font-bold text-zinc-800 mt-1">{detailVenta.cliente_nombre}</p>
+                    <span className="text-zinc-400 print:text-black font-bold uppercase tracking-wider text-[10px] sm:text-xs">ADQUIRIENTE: </span>
+                    <span className="font-bold text-zinc-800 print:text-black text-xs sm:text-sm">{detailVenta.cliente_nombre}</span>
                   </div>
                   <div>
-                    <p className="text-zinc-400 font-bold uppercase tracking-wider">Cajero / Vendedor</p>
-                    <p className="font-bold text-zinc-800 mt-1">{detailVenta.vendedor_nombre}</p>
+                    <span className="text-zinc-400 print:text-black font-bold uppercase tracking-wider text-[10px] sm:text-xs">CAJERO / VENDEDOR: </span>
+                    <span className="font-bold text-zinc-800 print:text-black text-xs sm:text-sm">{detailVenta.vendedor_nombre}</span>
                   </div>
+                  {detailVenta.metodo_pago && (
+                    <div>
+                      <span className="text-zinc-400 print:text-black font-bold uppercase tracking-wider text-[10px] sm:text-xs">MÉTODO DE PAGO: </span>
+                      <span className="font-bold text-zinc-800 print:text-black text-xs sm:text-sm uppercase">{detailVenta.metodo_pago}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Items Table */}
-                <div className="rounded-lg border border-zinc-200 overflow-hidden print:border-zinc-300">
-                  <table className="w-full text-xs">
-                    <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-zinc-100">
+                <div className="rounded-lg border border-zinc-200 overflow-hidden print:border-0 print:rounded-none">
+                  <table className="w-full text-xs print:text-sm print:font-sans">
+                    <thead className="bg-zinc-50 border-b border-zinc-200 print:bg-transparent print:border-y print:border-black">
                       <tr>
-                        <th className="px-4 py-2.5 text-left font-bold text-zinc-600">Descripción del Producto</th>
-                        <th className="px-4 py-2.5 text-center font-bold text-zinc-600">Cant.</th>
-                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">P. Unit.</th>
-                        <th className="px-4 py-2.5 text-right font-bold text-zinc-600">Subtotal</th>
+                        <th className="px-3 py-2 text-left font-bold text-zinc-700 print:text-black print:px-0">Producto</th>
+                        <th className="px-3 py-2 text-center font-bold text-zinc-700 print:text-black print:px-0">Cant.</th>
+                        <th className="px-3 py-2 text-right font-bold text-zinc-700 print:text-black print:px-0">P. Unit</th>
+                        <th className="px-3 py-2 text-right font-bold text-zinc-700 print:text-black print:px-0">Subtotal</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100">
+                    <tbody className="divide-y divide-zinc-100 print:divide-y-0">
                       {detailVenta.items.map(item => (
-                        <tr key={item.producto_id} className="hover:bg-zinc-50/20">
-                          <td className="px-4 py-2.5 text-zinc-700 font-medium truncate max-w-0" title={item.nombre}>{item.nombre}</td>
-                          <td className="px-4 py-2.5 text-center text-zinc-600 font-mono">{item.cantidad}</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-600 font-mono">{formatCurrency(item.precio_unitario)}</td>
-                          <td className="px-4 py-2.5 text-right font-bold text-zinc-800 font-mono">{formatCurrency(item.subtotal)}</td>
+                        <tr key={item.producto_id} className="hover:bg-zinc-50/20 print:border-b print:border-zinc-200">
+                          <td className="px-3 py-2 text-zinc-800 font-medium print:text-black print:px-0 print:py-1.5" title={item.nombre}>{item.nombre}</td>
+                          <td className="px-3 py-2 text-center text-zinc-600 font-mono print:text-black print:px-0 print:py-1.5">{item.cantidad}</td>
+                          <td className="px-3 py-2 text-right text-zinc-600 font-mono print:text-black print:px-0 print:py-1.5">{formatCurrency(item.precio_unitario)}</td>
+                          <td className="px-3 py-2 text-right font-bold text-zinc-900 font-mono print:text-black print:px-0 print:py-1.5">{formatCurrency(item.subtotal)}</td>
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className="border-t border-zinc-200 bg-zinc-50/50 print:bg-zinc-50">
-
-                      <tr className="bg-amber-50/50 border-t border-amber-100 print:bg-amber-50">
-                        <td colSpan={3} className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm">TOTAL NETO</td>
-                        <td className="px-4 py-3 text-right font-extrabold text-amber-800 text-sm font-mono">{formatCurrency(detailVenta.total)}</td>
+                    <tfoot className="border-t-2 border-zinc-200 bg-zinc-50/50 print:bg-transparent print:border-t-2 print:border-black">
+                      <tr className="bg-amber-50/50 print:bg-transparent">
+                        <td colSpan={3} className="px-3 py-2.5 text-right font-extrabold text-amber-900 print:text-black text-sm print:text-base">TOTAL NETO</td>
+                        <td className="px-3 py-2.5 text-right font-extrabold text-amber-900 print:text-black text-sm print:text-base font-mono">{formatCurrency(detailVenta.total)}</td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
 
-                {/* Resolution Footnote */}
-                <div className="border-t border-zinc-100 pt-3 text-[10px] text-zinc-400 leading-normal">
-                  <p className="font-medium">Detalle DIAN:</p>
-                  <p className="mt-0.5">{configuracion.resolucion}</p>
+                {/* Footer message (No DIAN) */}
+                <div className="pt-2 text-center text-xs text-zinc-400 print:text-black print:pt-4 print:text-xs border-t border-dashed border-zinc-200 print:border-black">
+                  <p className="font-semibold print:font-bold">¡Gracias por su preferencia!</p>
                 </div>
               </div>
 
               {/* Detail Buttons (Hidden on Print) */}
-              <div className="flex justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
-                <Button variant="primary" icon={<Download size={15} />} onClick={() => handleDownloadPDF()}>
-                  Descargar Comprobante
-                </Button>
+              <div className="flex flex-wrap justify-between items-center gap-3 pt-2 border-t border-zinc-100 print:hidden">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="primary" icon={<Printer size={15} />} onClick={() => window.print()}>
+                    Imprimir Tirilla POS
+                  </Button>
+                  <Button variant="secondary" icon={<Download size={15} />} onClick={() => handleDownloadTirillaPOS()}>
+                    Descargar Tirilla (80mm)
+                  </Button>
+                  <Button variant="ghost" icon={<FileDown size={15} />} onClick={() => handleDownloadPDF()}>
+                    Factura A4
+                  </Button>
+                </div>
                 <Button variant="ghost" onClick={() => setDetailVenta(null)}>
                   Cerrar
                 </Button>

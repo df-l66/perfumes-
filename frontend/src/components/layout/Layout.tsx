@@ -2,7 +2,6 @@ import React, { type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAppData } from '../../context/AppDataContext';
 import { NotificationsBell } from './NotificationsBell';
-import { ChatbotWidget } from '../ui/ChatbotWidget';
 
 interface LayoutProps {
   children: ReactNode;
@@ -45,9 +44,6 @@ export function Layout({ children, title, subtitle, action }: LayoutProps) {
           </div>
         </div>
       )}
-
-      {/* Widget del Chatbot IA n8n */}
-      <ChatbotWidget />
     </div>
   );
 }
