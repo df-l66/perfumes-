@@ -30,9 +30,9 @@ export function Sidebar() {
   const [isHovered, setIsHovered] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const visibleItems = navItems.filter(item => !item.adminOnly || isAdmin);

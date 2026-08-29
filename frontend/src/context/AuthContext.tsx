@@ -4,7 +4,7 @@ import { supabase } from '../config/supabase';
 
 interface AuthContextType {
   user: User | null;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAdmin: boolean;
   loading: boolean;
   authError: string | null;
@@ -61,8 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/login';
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Error al cerrar sesión:', err);
+    } finally {
+      localStorage.clear();
+      sessionStorage.clear();
+      setUser(null);
+    }
   };
 
   return (
