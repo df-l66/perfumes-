@@ -527,7 +527,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // ─── Finanzas (Gastos y Caja) ───
+  // ─── Finanzas (Gastos) ───
   const addGasto = async (g: Omit<Gasto, 'id'>, autorNombre: string, autorRol: string) => {
     try {
       const nuevo = await fetchCreateGasto(g);

@@ -66,7 +66,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function Dashboard() {
-  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas } = useAppData();
+  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas, abonos } = useAppData();
   const { user } = useAuth();
 
   const getLocalDate = () => {
@@ -79,7 +79,10 @@ export function Dashboard() {
 
   // Convierte fecha UTC a YYYY-MM-DD en la zona horaria local
   const getLocalIsoDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    if (dateStr.length === 10) return dateStr;
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr.substring(0, 10);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
@@ -91,39 +94,50 @@ export function Dashboard() {
     return dateOnly >= startDate && dateOnly <= endDate;
   };
 
-  const ventasCompletadas = ventas.filter(v => (v.estado === 'completada' || (v.estado === 'pendiente' && v.metodo_pago !== 'credito')) && isBetweenDates(v.fecha));
+  // Ventas activas (todas menos anuladas) para costos y causación
+  const ventasActivas = ventas.filter(v => v.estado !== 'anulada' && isBetweenDates(v.fecha));
+  
+  // Ventas pagadas de contado
+  const ventasContado = ventasActivas.filter(v => v.metodo_pago !== 'credito');
+
   const comprasFiltradas = compras.filter(c => c.estado === 'completada' && isBetweenDates(c.fecha));
   const gastosFiltrados = gastos.filter(g => isBetweenDates(g.fecha));
+  const abonosFiltrados = abonos.filter(a => isBetweenDates(a.fecha));
   
   // El crédito pendiente es global y refleja la deuda total actual de los clientes
   const clientesConDeuda = clientes.filter(c => c.credito_usado && c.credito_usado > 0);
   const totalCreditoPendiente = clientes.reduce((sum, c) => sum + (c.credito_usado || 0), 0);
 
   // ── CÁLCULOS FINANCIEROS Y DE NEGOCIO REAL ─────────────────────────────────
-  const totalVentas = ventasCompletadas.reduce((s, v) => s + v.total, 0);
+  // 1. Facturación Total (Causación)
+  const totalFacturado = ventasActivas.reduce((s, v) => s + v.total, 0);
 
-  // Costo de Ventas Real (COGS - Cost of Goods Sold)
-  const costoVentas = ventasCompletadas.reduce((sum, v) => {
+  // 2. Costo de Ventas Real (COGS - Cost of Goods Sold)
+  // Se calcula sobre TODAS las ventas activas, porque la mercancía salió.
+  const costoVentas = ventasActivas.reduce((sum, v) => {
     return sum + v.items.reduce((itemSum, item) => {
+      const cantidadVendida = Number(item.cantidad) || 1;
       if (item.es_preparado && item.receta) {
-        return itemSum + item.receta.reduce((rSum, r) => {
+        const costoRecetaUnitaria = item.receta.reduce((rSum, r) => {
           const mp = materiasPrimas.find(m => m.id === r.materia_prima_id);
-          return rSum + (r.cantidad * (mp?.costo_unitario || 0));
+          return rSum + (Number(r.cantidad) * (mp?.costo_unitario || 0));
         }, 0);
+        return itemSum + (cantidadVendida * costoRecetaUnitaria);
       }
       const p = productos.find(prod => prod.id === item.producto_id);
-      return itemSum + (item.cantidad * (p?.precio_costo || 0));
+      return itemSum + (cantidadVendida * (p?.precio_costo || 0));
     }, 0);
   }, 0);
 
-  // Pagado a proveedores (Compras de inventario - Flujo de Caja)
-  const costoTotalCompras = comprasFiltradas.reduce((sum, c) => sum + c.total, 0);
+  // Pagado a proveedores (Compras de inventario - Histórico Global, sin filtro de fecha)
+  const comprasGlobalesCompletadas = compras.filter(c => c.estado === 'completada');
+  const costoTotalCompras = comprasGlobalesCompletadas.reduce((sum, c) => sum + c.total, 0);
 
-  // Gastos Operativos y de Caja
+  // Gastos Operativos
   const totalGastos = gastosFiltrados.reduce((sum, g) => sum + g.monto, 0);
 
-  // Ganancias (Margen Neto Real de la Operación)
-  const gananciaTotal = totalVentas - costoVentas - totalGastos;
+  // Ganancias (Margen Neto Real de la Operación basado en Causación)
+  const gananciaTotal = totalFacturado - costoVentas - totalGastos;
 
   // ── CHART DATA (Dinámico basado en el rango) ──────────────────────────────
   const chartDataMap: Record<string, { fecha: string; total: number; cantidad: number }> = {};
@@ -141,18 +155,20 @@ export function Dashboard() {
     daysCount++;
   }
 
-  ventasCompletadas.forEach(v => {
+  ventasActivas.forEach(v => {
     const isoDate = getLocalIsoDate(v.fecha);
     if (chartDataMap[isoDate]) {
       chartDataMap[isoDate].total += v.total;
       chartDataMap[isoDate].cantidad += 1;
     } else {
       const d = new Date(`${isoDate}T12:00:00`);
-      chartDataMap[isoDate] = { 
-        fecha: d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }), 
-        total: v.total, 
-        cantidad: 1 
-      };
+      if (!isNaN(d.getTime())) {
+        chartDataMap[isoDate] = { 
+          fecha: d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }), 
+          total: v.total, 
+          cantidad: 1 
+        };
+      }
     }
   });
 
@@ -160,16 +176,20 @@ export function Dashboard() {
 
   // Producto más vendido
   const ventasPorProducto: Record<string, { nombre: string; cantidad: number; codigo: string }> = {};
-  ventasCompletadas.forEach(v => {
+  ventasActivas.forEach(v => {
     v.items.forEach(item => {
+      const cantidadVendida = Number(item.cantidad) || 1;
+      const keyId = item.producto_id || item.nombre; // fallback a nombre si es un preparado sin id
       const prod = productos.find(p => p.id === item.producto_id);
-      const codigo = prod ? prod.codigo : 'N/A';
-      if (!ventasPorProducto[item.producto_id]) {
-        ventasPorProducto[item.producto_id] = { nombre: item.nombre, cantidad: 0, codigo };
+      const codigo = prod ? prod.codigo : 'PREP'; // Código PREP para preparados sin id
+      
+      if (!ventasPorProducto[keyId]) {
+        ventasPorProducto[keyId] = { nombre: item.nombre, cantidad: 0, codigo };
       }
-      ventasPorProducto[item.producto_id].cantidad += item.cantidad;
+      ventasPorProducto[keyId].cantidad += cantidadVendida;
     });
   });
+  
   let productoMasVendido = { nombre: 'Ninguno', cantidad: 0, codigo: 'N/A' };
   Object.values(ventasPorProducto).forEach(p => {
     if (p.cantidad > productoMasVendido.cantidad) {
@@ -179,7 +199,7 @@ export function Dashboard() {
 
   // Vendedor estrella (más ventas en COP)
   const ventasPorVendedor: Record<string, { nombre: string; total: number; cantidad: number }> = {};
-  ventasCompletadas.forEach(v => {
+  ventasActivas.forEach(v => {
     if (!ventasPorVendedor[v.vendedor_id]) {
       ventasPorVendedor[v.vendedor_id] = { nombre: v.vendedor_nombre, total: 0, cantidad: 0 };
     }
@@ -196,16 +216,16 @@ export function Dashboard() {
   const exportReporte = () => {
     const headers = {
       rango: 'Rango de Fechas',
-      ingresos: 'Ingresos Totales (Ventas)',
+      total_facturado: 'Total Vendido (Contado + Crédito)',
       costos_ventas: 'Costo de Ventas (Mercancía Entregada)',
-      inversion_inventario: 'Inversión en Inventario (Compras)',
+      inversion_inventario: 'Inversión en Inventario (Compras a Proveedores)',
       gastos: 'Gastos Operativos',
-      ganancia: 'Ganancia Neta Operativa'
+      ganancia: 'Ganancia Neta'
     };
 
     const data = [{
       rango: `${startDate} al ${endDate}`,
-      ingresos: totalVentas,
+      total_facturado: totalFacturado,
       costos_ventas: costoVentas,
       inversion_inventario: costoTotalCompras,
       gastos: totalGastos,
@@ -239,52 +259,52 @@ export function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-8">
         <KpiCard
-          title="Ventas Reales (Pagadas)"
-          value={formatCurrency(totalVentas)}
-          subtitle={`${ventasCompletadas.length} transacciones concretadas`}
+          title="Ventas Totales"
+          value={formatCurrency(totalFacturado)}
+          subtitle={`${ventasActivas.length} facturas (Contado y Crédito)`}
           icon={<TrendingUp size={22} className="text-amber-600 animate-pulse" />}
           trend="+12% mes"
           color="bg-amber-50"
           delayClass="animate-fade-in-up"
         />
         <KpiCard
-          title="Por Cobrar (Crédito)"
-          value={formatCurrency(totalCreditoPendiente)}
-          subtitle={`${clientesConDeuda.length} cliente(s) con deuda pendiente`}
-          icon={<Wallet size={22} className="text-indigo-600" />}
-          color="bg-indigo-50"
-          delayClass="animate-fade-in-up animation-delay-75"
-        />
-        <KpiCard
           title="Costo de Ventas"
           value={formatCurrency(costoVentas)}
-          subtitle="Costo real de los productos vendidos"
+          subtitle="Costo de mercancía entregada"
           icon={<ShoppingCart size={22} className="text-amber-600" />}
           color="bg-amber-50"
           delayClass="animate-fade-in-up animation-delay-100"
         />
         <KpiCard
-          title="Ganancia Neta Operativa"
+          title="Ganancia Neta"
           value={formatCurrency(gananciaTotal)}
-          subtitle={gananciaTotal < 0 ? 'Pérdidas operativas' : 'Beneficio real (Ventas - Costos - Gastos)'}
+          subtitle={gananciaTotal < 0 ? 'Pérdidas' : 'Facturado - Costos - Gastos'}
           icon={<Award size={22} className={gananciaTotal < 0 ? 'text-red-600' : 'text-emerald-600'} />}
           color={gananciaTotal < 0 ? 'bg-red-50 border-red-100' : 'bg-emerald-50'}
           delayClass="animate-fade-in-up animation-delay-200"
         />
         <KpiCard
-          title="Inversión en Inventario"
-          value={formatCurrency(costoTotalCompras)}
-          subtitle="Dinero gastado comprando a proveedores"
-          icon={<DollarSign size={22} className="text-blue-600" />}
+          title="Por Cobrar (Crédito)"
+          value={formatCurrency(totalCreditoPendiente)}
+          subtitle={`${clientesConDeuda.length} cliente(s) con deuda`}
+          icon={<Wallet size={22} className="text-blue-600" />}
           color="bg-blue-50"
+          delayClass="animate-fade-in-up animation-delay-300"
+        />
+        <KpiCard
+          title="Inv. en Inventario"
+          value={formatCurrency(costoTotalCompras)}
+          subtitle="Valor histórico total"
+          icon={<Package size={22} className="text-purple-600" />}
+          color="bg-purple-50"
           delayClass="animate-fade-in-up animation-delay-300"
         />
         <KpiCard
           title="Stock Crítico"
           value={productosStockBajo.length}
-          subtitle={productosStockBajo.length > 0 ? "¡Requiere reabastecimiento!" : "Inventario óptimo"}
+          subtitle={productosStockBajo.length > 0 ? "¡Reabastecimiento!" : "Inventario óptimo"}
           icon={
             <div className="relative">
               <AlertTriangle size={22} className={productosStockBajo.length > 0 ? "text-red-600" : "text-amber-600"} />

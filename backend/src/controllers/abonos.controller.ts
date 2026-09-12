@@ -58,6 +58,51 @@ export const createAbono = async (req: Request, res: Response) => {
         .eq('id', cliente_id);
     }
 
+    // 3. Distribución FIFO automática para cambiar estado de ventas
+    try {
+      // 3.a Obtener todos los abonos del cliente para calcular el total abonado históricamente
+      const { data: todosAbonos } = await client
+        .from('abonos')
+        .select('monto')
+        .eq('cliente_id', cliente_id);
+        
+      const totalAbonado = (todosAbonos || []).reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+
+      // 3.b Obtener todas las ventas a crédito del cliente (no anuladas), de más antigua a más reciente
+      const { data: ventasCredito } = await client
+        .from('ventas')
+        .select('id, total, estado')
+        .eq('cliente_id', cliente_id)
+        .eq('metodo_pago', 'credito')
+        .neq('estado', 'anulada')
+        .order('fecha', { ascending: true });
+
+      if (ventasCredito && ventasCredito.length > 0) {
+        let saldoDisponible = totalAbonado;
+
+        for (const venta of ventasCredito) {
+          const totalVenta = Number(venta.total) || 0;
+          
+          if (saldoDisponible >= totalVenta) {
+            // La venta está totalmente pagada
+            saldoDisponible -= totalVenta;
+            if (venta.estado !== 'completada') {
+              await client.from('ventas').update({ estado: 'completada' }).eq('id', venta.id);
+            }
+          } else {
+            // La venta no está pagada completamente
+            saldoDisponible = 0; // Se consumió todo el saldo
+            if (venta.estado !== 'pendiente') {
+              await client.from('ventas').update({ estado: 'pendiente' }).eq('id', venta.id);
+            }
+          }
+        }
+      }
+    } catch (fifoError) {
+      console.error("Error en la distribución FIFO de abonos:", fifoError);
+      // No lanzamos el error para no bloquear la respuesta exitosa del abono
+    }
+
     res.status(201).json(abono);
   } catch (error: any) {
     res.status(400).json({ message: 'Error al registrar el abono', error: error.message });

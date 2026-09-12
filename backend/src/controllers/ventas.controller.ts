@@ -207,6 +207,35 @@ export const createVenta = async (req: Request, res: Response) => {
           notas: `Abono inicial en venta ${venta.factura}`,
           registrado_por: venta.vendedor_nombre || 'Sistema'
         }]);
+
+        // Distribución FIFO automática
+        try {
+          const { data: todosAbonos } = await client.from('abonos').select('monto').eq('cliente_id', venta.cliente_id);
+          const totalAbonado = (todosAbonos || []).reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+          
+          const { data: ventasCredito } = await client.from('ventas')
+            .select('id, total, estado')
+            .eq('cliente_id', venta.cliente_id)
+            .eq('metodo_pago', 'credito')
+            .neq('estado', 'anulada')
+            .order('fecha', { ascending: true });
+
+          if (ventasCredito && ventasCredito.length > 0) {
+            let saldoDisponible = totalAbonado;
+            for (const v of ventasCredito) {
+              const totalVenta = Number(v.total) || 0;
+              if (saldoDisponible >= totalVenta) {
+                saldoDisponible -= totalVenta;
+                if (v.estado !== 'completada') await client.from('ventas').update({ estado: 'completada' }).eq('id', v.id);
+              } else {
+                saldoDisponible = 0;
+                if (v.estado !== 'pendiente') await client.from('ventas').update({ estado: 'pendiente' }).eq('id', v.id);
+              }
+            }
+          }
+        } catch (fifoError) {
+          console.error("Error en distribución FIFO en venta:", fifoError);
+        }
       }
     }
 
@@ -328,6 +357,36 @@ export const anularVenta = async (req: Request, res: Response) => {
       .eq('id', id);
 
     if (updateError) throw updateError;
+
+    // Recalcular FIFO si era de crédito
+    if (venta.metodo_pago === 'credito' && venta.cliente_id) {
+      try {
+        const { data: todosAbonos } = await client.from('abonos').select('monto').eq('cliente_id', venta.cliente_id);
+        const totalAbonado = (todosAbonos || []).reduce((sum, a) => sum + (Number(a.monto) || 0), 0);
+        const { data: ventasCredito } = await client.from('ventas')
+          .select('id, total, estado')
+          .eq('cliente_id', venta.cliente_id)
+          .eq('metodo_pago', 'credito')
+          .neq('estado', 'anulada')
+          .order('fecha', { ascending: true });
+
+        if (ventasCredito && ventasCredito.length > 0) {
+          let saldoDisponible = totalAbonado;
+          for (const v of ventasCredito) {
+            const totalVenta = Number(v.total) || 0;
+            if (saldoDisponible >= totalVenta) {
+              saldoDisponible -= totalVenta;
+              if (v.estado !== 'completada') await client.from('ventas').update({ estado: 'completada' }).eq('id', v.id);
+            } else {
+              saldoDisponible = 0;
+              if (v.estado !== 'pendiente') await client.from('ventas').update({ estado: 'pendiente' }).eq('id', v.id);
+            }
+          }
+        }
+      } catch (fifoError) {
+        console.error("Error en distribución FIFO tras anulación:", fifoError);
+      }
+    }
 
     res.status(200).json({ message: 'Venta anulada correctamente' });
   } catch (error: any) {
