@@ -3,16 +3,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-  TrendingUp, Package, Users, AlertTriangle, ShoppingCart, Activity,
-  DollarSign, Award, Wallet, FileDown
+  TrendingUp, Package, AlertTriangle, ShoppingCart, Activity,
+  Award, Wallet, FileDown
 } from 'lucide-react';
 import { Layout } from '../components/layout/Layout';
-import { AlertBox } from '../components/ui/AlertBox';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
 import { useAppData } from '../context/AppDataContext';
-import { useAuth } from '../context/AuthContext';
 import { exportToCSV as downloadCSV } from '../utils/exportToCSV';
 
 function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }: {
@@ -52,6 +49,13 @@ function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }
 const formatCurrency = (v: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
 
+const formatFecha = (dateStr: string) => {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr.length === 10 ? `${dateStr}T12:00:00` : dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -66,8 +70,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function Dashboard() {
-  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas, abonos } = useAppData();
-  const { user } = useAuth();
+  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas } = useAppData();
 
   const getLocalDate = () => {
     const d = new Date();
@@ -87,30 +90,30 @@ export function Dashboard() {
   };
 
   const productosStockBajo = productos.filter(p => p.estado === 'stock_bajo' || p.stock <= p.stock_minimo);
-  
-  // Rango de fechas
+
+  // Rango de fechas. Un input de fecha vacío se trata como "sin límite" en vez de
+  // excluirlo todo, que dejaba el tablero entero en $0 sin explicación.
+  const desde = startDate || '0000-01-01';
+  const hasta = endDate || '9999-12-31';
+
   const isBetweenDates = (dateStr: string) => {
     const dateOnly = getLocalIsoDate(dateStr);
-    return dateOnly >= startDate && dateOnly <= endDate;
+    return dateOnly >= desde && dateOnly <= hasta;
   };
 
   // Ventas activas (todas menos anuladas) para costos y causación
   const ventasActivas = ventas.filter(v => v.estado !== 'anulada' && isBetweenDates(v.fecha));
-  
-  // Ventas pagadas de contado
-  const ventasContado = ventasActivas.filter(v => v.metodo_pago !== 'credito');
 
   const comprasFiltradas = compras.filter(c => c.estado === 'completada' && isBetweenDates(c.fecha));
   const gastosFiltrados = gastos.filter(g => isBetweenDates(g.fecha));
-  const abonosFiltrados = abonos.filter(a => isBetweenDates(a.fecha));
-  
+
   // El crédito pendiente es global y refleja la deuda total actual de los clientes
   const clientesConDeuda = clientes.filter(c => c.credito_usado && c.credito_usado > 0);
-  const totalCreditoPendiente = clientes.reduce((sum, c) => sum + (c.credito_usado || 0), 0);
+  const totalCreditoPendiente = clientes.reduce((sum, c) => sum + (Number(c.credito_usado) || 0), 0);
 
   // ── CÁLCULOS FINANCIEROS Y DE NEGOCIO REAL ─────────────────────────────────
   // 1. Facturación Total (Causación)
-  const totalFacturado = ventasActivas.reduce((s, v) => s + v.total, 0);
+  const totalFacturado = ventasActivas.reduce((s, v) => s + (Number(v.total) || 0), 0);
 
   // 2. Costo de Ventas Real (COGS - Cost of Goods Sold)
   // Se calcula sobre TODAS las ventas activas, porque la mercancía salió.
@@ -129,12 +132,11 @@ export function Dashboard() {
     }, 0);
   }, 0);
 
-  // Pagado a proveedores (Compras de inventario - Histórico Global, sin filtro de fecha)
-  const comprasGlobalesCompletadas = compras.filter(c => c.estado === 'completada');
-  const costoTotalCompras = comprasGlobalesCompletadas.reduce((sum, c) => sum + c.total, 0);
+  // Pagado a proveedores (Compras de inventario dentro del rango seleccionado)
+  const costoTotalCompras = comprasFiltradas.reduce((sum, c) => sum + (Number(c.total) || 0), 0);
 
   // Gastos Operativos
-  const totalGastos = gastosFiltrados.reduce((sum, g) => sum + g.monto, 0);
+  const totalGastos = gastosFiltrados.reduce((sum, g) => sum + (Number(g.monto) || 0), 0);
 
   // Ganancias (Margen Neto Real de la Operación basado en Causación)
   const gananciaTotal = totalFacturado - costoVentas - totalGastos;
@@ -142,12 +144,12 @@ export function Dashboard() {
   // ── CHART DATA (Dinámico basado en el rango) ──────────────────────────────
   const chartDataMap: Record<string, { fecha: string; total: number; cantidad: number }> = {};
   
-  const curDate = new Date(`${startDate}T12:00:00`);
-  const enDate = new Date(`${endDate}T12:00:00`);
+  const curDate = new Date(`${desde}T12:00:00`);
+  const enDate = new Date(`${hasta}T12:00:00`);
   let daysCount = 0;
-  
-  // Fill range with 0s (max 31 days to avoid memory issues)
-  while (curDate <= enDate && daysCount <= 31) {
+
+  // Rellena el rango con ceros (tope de un año para no generar miles de puntos)
+  while (!isNaN(curDate.getTime()) && !isNaN(enDate.getTime()) && curDate <= enDate && daysCount <= 366) {
     const isoDate = `${curDate.getFullYear()}-${String(curDate.getMonth() + 1).padStart(2, '0')}-${String(curDate.getDate()).padStart(2, '0')}`;
     const shortDate = curDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
     chartDataMap[isoDate] = { fecha: shortDate, total: 0, cantidad: 0 };
@@ -158,15 +160,15 @@ export function Dashboard() {
   ventasActivas.forEach(v => {
     const isoDate = getLocalIsoDate(v.fecha);
     if (chartDataMap[isoDate]) {
-      chartDataMap[isoDate].total += v.total;
+      chartDataMap[isoDate].total += Number(v.total) || 0;
       chartDataMap[isoDate].cantidad += 1;
     } else {
       const d = new Date(`${isoDate}T12:00:00`);
       if (!isNaN(d.getTime())) {
-        chartDataMap[isoDate] = { 
-          fecha: d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }), 
-          total: v.total, 
-          cantidad: 1 
+        chartDataMap[isoDate] = {
+          fecha: d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
+          total: Number(v.total) || 0,
+          cantidad: 1
         };
       }
     }
@@ -203,7 +205,7 @@ export function Dashboard() {
     if (!ventasPorVendedor[v.vendedor_id]) {
       ventasPorVendedor[v.vendedor_id] = { nombre: v.vendedor_nombre, total: 0, cantidad: 0 };
     }
-    ventasPorVendedor[v.vendedor_id].total += v.total;
+    ventasPorVendedor[v.vendedor_id].total += Number(v.total) || 0;
     ventasPorVendedor[v.vendedor_id].cantidad += 1;
   });
   let vendedorEstrella = { nombre: 'Ninguno', total: 0, cantidad: 0 };
@@ -265,7 +267,6 @@ export function Dashboard() {
           value={formatCurrency(totalFacturado)}
           subtitle={`${ventasActivas.length} facturas (Contado y Crédito)`}
           icon={<TrendingUp size={22} className="text-amber-600 animate-pulse" />}
-          trend="+12% mes"
           color="bg-amber-50"
           delayClass="animate-fade-in-up"
         />
@@ -296,7 +297,7 @@ export function Dashboard() {
         <KpiCard
           title="Inv. en Inventario"
           value={formatCurrency(costoTotalCompras)}
-          subtitle="Valor histórico total"
+          subtitle="Compras del período seleccionado"
           icon={<Package size={22} className="text-purple-600" />}
           color="bg-purple-50"
           delayClass="animate-fade-in-up animation-delay-300"
@@ -328,7 +329,11 @@ export function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-base font-semibold text-zinc-800">Ventas Diarias</h2>
-              <p className="text-xs text-zinc-400 mt-0.5">Últimos 14 días</p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {startDate && startDate === endDate
+                  ? formatFecha(startDate)
+                  : `${startDate ? formatFecha(startDate) : 'Sin límite'} — ${endDate ? formatFecha(endDate) : 'Sin límite'}`}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-amber-500" />
@@ -404,11 +409,11 @@ export function Dashboard() {
               </div>
             </div>
             <div className="space-y-2.5">
-              {ventas.slice(0, 4).map(v => (
+              {ventasActivas.slice(0, 4).map(v => (
                 <div key={v.id} className="flex items-start justify-between gap-3 pb-2.5 border-b border-zinc-100 last:border-0 last:pb-0">
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-zinc-800 truncate">{v.cliente_nombre}</p>
-                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{v.factura} · {v.fecha}</p>
+                    <p className="text-[10px] text-zinc-400 font-mono mt-0.5">{v.factura} · {formatFecha(v.fecha)}</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs font-bold text-zinc-800">{formatCurrency(v.total)}</p>

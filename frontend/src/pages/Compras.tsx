@@ -28,13 +28,14 @@ function NuevaCompraModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { productos, proveedores, addProducto, addMateriaPrima, addCompra, materiasPrimas } = useAppData();
+  const { productos, proveedores, addProducto, addMateriaPrima, addCompra, materiasPrimas, configuracion } = useAppData();
   const { user } = useAuth();
 
   const [step, setStep] = useState<WizardStep>('proveedor');
   const [tipoItem, setTipoItem] = useState<'producto' | 'materia_prima'>('producto');
   const [proveedorId, setProveedorId] = useState('');
   const [carrito, setCarrito] = useState<CompraItem[]>([]);
+  const [aplicaIva, setAplicaIva] = useState(true);
   const [searchProd, setSearchProd] = useState('');
   const [searchProv, setSearchProv] = useState('');
   const [notas, setNotas] = useState('');
@@ -240,6 +241,7 @@ function NuevaCompraModal({
     setNotas('');
     setSuccess(false);
     setError(null);
+    setAplicaIva(true);
   };
 
   const handleClose = () => {
@@ -353,7 +355,36 @@ function NuevaCompraModal({
     setCarrito(prev => prev.filter(item => getItemId(item) !== id));
   };
 
+  // El carrito guarda siempre valores base (sin IVA); el IVA se aplica al mostrar y al enviar.
+  const ivaPct = configuracion?.iva_porcentaje ?? 19;
+  const ivaFactor = aplicaIva ? 1 + ivaPct / 100 : 1;
+
+  const conIva = (item: CompraItem): CompraItem => {
+    if (!aplicaIva) return item;
+    if (item.tipo_item === 'materia_prima') {
+      const subtotal = Math.round(item.subtotal * ivaFactor);
+      return { ...item, subtotal, precio_costo: item.cantidad > 0 ? subtotal / item.cantidad : 0 };
+    }
+    // Se redondea el unitario y se multiplica, para que cantidad × unitario cuadre exacto con el subtotal.
+    const precio_costo = Math.round(item.precio_costo * ivaFactor);
+    return { ...item, precio_costo, subtotal: item.cantidad * precio_costo };
+  };
+
   const total = carrito.reduce((s, item) => s + item.subtotal, 0);
+  const totalConIva = carrito.reduce((s, item) => s + conIva(item).subtotal, 0);
+  const totalIva = totalConIva - total;
+
+  const ivaToggle = (
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={aplicaIva}
+        onChange={e => setAplicaIva(e.target.checked)}
+        className="w-4 h-4 rounded border-zinc-300 accent-amber-600 cursor-pointer"
+      />
+      <span className="text-xs font-semibold text-zinc-600">Aplicar IVA {ivaPct}%</span>
+    </label>
+  );
 
   const SIN_PROVEEDOR_ID = 'sin-proveedor';
   const proveedorSeleccionado = proveedorId === SIN_PROVEEDOR_ID
@@ -377,14 +408,20 @@ function NuevaCompraModal({
       return;
     }
     
-    const invalidMargin = carrito.find(item => item.tipo_item !== 'materia_prima' && item.precio_costo > (item.precio_venta || 0));
+    const itemsFinales = carrito.map(conIva);
+
+    const invalidMargin = itemsFinales.find(item => item.tipo_item !== 'materia_prima' && item.precio_costo > (item.precio_venta || 0));
     if (invalidMargin) {
-      setError(`El precio de costo de "${invalidMargin.nombre}" no puede ser mayor que su precio de venta sugerido.`);
+      setError(
+        aplicaIva
+          ? `El costo de "${invalidMargin.nombre}" con IVA (${formatCurrency(invalidMargin.precio_costo)}) no puede ser mayor que su precio de venta sugerido.`
+          : `El precio de costo de "${invalidMargin.nombre}" no puede ser mayor que su precio de venta sugerido.`
+      );
       return;
     }
 
     addCompra(
-      carrito,
+      itemsFinales,
       proveedorId,
       user?.id || 'u1',
       user?.name || 'Admin',
@@ -697,9 +734,26 @@ function NuevaCompraModal({
                     ))}
                   </div>
 
-                  <div className="pt-3 border-t border-zinc-200 mt-3 flex justify-between font-bold text-zinc-800 text-sm">
-                    <span>Total estimado</span>
-                    <span className="font-mono text-amber-600">{formatCurrency(total)}</span>
+                  <div className="pt-3 border-t border-zinc-200 mt-3 space-y-1.5">
+                    <div className="flex justify-between items-center pb-1">
+                      {ivaToggle}
+                    </div>
+                    {aplicaIva && (
+                      <>
+                        <div className="flex justify-between text-xs text-zinc-500">
+                          <span>Base gravable</span>
+                          <span className="font-mono">{formatCurrency(total)}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-zinc-500">
+                          <span>IVA ({ivaPct}%)</span>
+                          <span className="font-mono">{formatCurrency(totalIva)}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between font-bold text-zinc-800 text-sm">
+                      <span>Total estimado</span>
+                      <span className="font-mono text-amber-600">{formatCurrency(totalConIva)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -730,8 +784,13 @@ function NuevaCompraModal({
               )}
               
               <AlertBox type="note" title="Registro de Ingreso">
-                Al confirmar la transacción, se incrementará el stock del catálogo y se actualizarán los precios de costo de compra unitarios automáticamente.
+                Al confirmar la transacción, se incrementará el stock del catálogo y se actualizarán los precios de costo de compra unitarios automáticamente
+                {aplicaIva ? `, con el IVA del ${ivaPct}% ya incluido.` : '.'}
               </AlertBox>
+
+              <div className="flex justify-end">
+                {ivaToggle}
+              </div>
 
               <div className="bg-zinc-50 rounded-lg border border-zinc-200 p-4 grid grid-cols-2 gap-4 text-left">
                 <div className="text-xs">
@@ -758,8 +817,8 @@ function NuevaCompraModal({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 bg-white">
-                    {carrito.map(item => (
-                      <tr key={item.producto_id}>
+                    {carrito.map(conIva).map(item => (
+                      <tr key={getItemId(item)}>
                         <td className="px-4 py-2.5 text-zinc-700 text-left truncate" title={item.nombre}>{item.nombre}</td>
                         <td className="px-4 py-2.5 text-center text-zinc-600">{item.cantidad}</td>
                         <td className="px-4 py-2.5 text-right text-zinc-600">{formatCurrency(item.precio_costo)}</td>
@@ -769,9 +828,21 @@ function NuevaCompraModal({
                     ))}
                   </tbody>
                   <tfoot className="bg-amber-50 border-t border-amber-200">
+                    {aplicaIva && (
+                      <>
+                        <tr>
+                          <td colSpan={4} className="px-4 py-1.5 text-right text-xs text-amber-700">Base gravable</td>
+                          <td className="px-4 py-1.5 text-right text-xs text-amber-700 font-mono">{formatCurrency(total)}</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={4} className="px-4 py-1.5 text-right text-xs text-amber-700">IVA ({ivaPct}%)</td>
+                          <td className="px-4 py-1.5 text-right text-xs text-amber-700 font-mono">{formatCurrency(totalIva)}</td>
+                        </tr>
+                      </>
+                    )}
                     <tr>
                       <td colSpan={4} className="px-4 py-3 text-right font-bold text-amber-700 uppercase">TOTAL COMPRA</td>
-                      <td className="px-4 py-3 text-right font-bold text-amber-700 text-base font-mono">{formatCurrency(total)}</td>
+                      <td className="px-4 py-3 text-right font-bold text-amber-700 text-base font-mono">{formatCurrency(totalConIva)}</td>
                     </tr>
                   </tfoot>
                 </table>

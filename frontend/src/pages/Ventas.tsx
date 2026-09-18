@@ -608,7 +608,7 @@ function NuevaVentaModal({
 
 // ── Main Ventas Page ──────────────────────────────────────────────────────────
 export function Ventas() {
-  const { ventas, anularVenta, configuracion } = useAppData();
+  const { ventas, abonos, anularVenta, configuracion } = useAppData();
   const { isAdmin, user } = useAuth();
   const [search, setSearch] = useState('');
   const [filterEstado, setFilterEstado] = useState<Venta['estado'] | 'todos'>('todos');
@@ -617,6 +617,36 @@ export function Ventas() {
   const [anularConfirm, setAnularConfirm] = useState<Venta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Reparto FIFO de los abonos entre las ventas a crédito de cada cliente, replicando
+  // el mismo algoritmo del backend (abonos.controller.ts) para mostrar el saldo por venta.
+  const saldosPorVenta = useMemo(() => {
+    const abonadoPorCliente = new Map<string, number>();
+    for (const a of abonos) {
+      if (!a.cliente_id) continue;
+      abonadoPorCliente.set(a.cliente_id, (abonadoPorCliente.get(a.cliente_id) || 0) + (Number(a.monto) || 0));
+    }
+
+    const porCliente = new Map<string, Venta[]>();
+    for (const v of ventas) {
+      if (v.metodo_pago !== 'credito' || v.estado === 'anulada' || !v.cliente_id) continue;
+      if (!porCliente.has(v.cliente_id)) porCliente.set(v.cliente_id, []);
+      porCliente.get(v.cliente_id)!.push(v);
+    }
+
+    const saldos = new Map<string, { abonado: number; saldo: number }>();
+    for (const [clienteId, lista] of porCliente) {
+      let disponible = abonadoPorCliente.get(clienteId) || 0;
+      const ordenadas = [...lista].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+      for (const v of ordenadas) {
+        const total = Number(v.total) || 0;
+        const abonado = Math.min(disponible, total);
+        disponible -= abonado;
+        saldos.set(v.id, { abonado, saldo: total - abonado });
+      }
+    }
+    return saldos;
+  }, [ventas, abonos]);
 
   const filtered = useMemo(() => ventas.filter(v => {
     const matchSearch = (v.factura || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -968,6 +998,21 @@ export function Ventas() {
                 </div>
               </div>
 
+              {saldosPorVenta.has(v.id) && (
+                <div className="bg-amber-50/60 rounded-lg p-2.5 border border-amber-100 text-xs flex justify-between items-center">
+                  <div>
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold">Abonado</p>
+                    <p className="font-semibold text-emerald-600 font-mono">{formatCurrency(saldosPorVenta.get(v.id)!.abonado)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-zinc-400 text-[10px] uppercase font-bold">Saldo</p>
+                    <p className={`font-bold font-mono ${saldosPorVenta.get(v.id)!.saldo > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                      {formatCurrency(saldosPorVenta.get(v.id)!.saldo)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={() => setDetailVenta(v)}
@@ -999,7 +1044,7 @@ export function Ventas() {
           <table className="w-full text-sm">
             <thead className="bg-zinc-50 border-b border-zinc-200">
               <tr>
-                {['Factura', 'Cliente', 'Vendedor', 'Fecha', 'Ítems', 'Total', 'Estado', 'Acciones'].map(h => (
+                {['Factura', 'Cliente', 'Vendedor', 'Fecha', 'Ítems', 'Total', 'Saldo', 'Estado', 'Acciones'].map(h => (
                   <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -1007,7 +1052,7 @@ export function Ventas() {
             <tbody className="divide-y divide-zinc-100">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center">
+                  <td colSpan={9} className="px-5 py-12 text-center">
                     <ShoppingCart size={32} className="mx-auto text-zinc-300 mb-3" />
                     <p className="text-zinc-400 text-sm">No se encontraron ventas</p>
                   </td>
@@ -1020,6 +1065,22 @@ export function Ventas() {
                   <td className="px-5 py-3.5 text-zinc-600 whitespace-nowrap">{new Date(v.fecha).toLocaleDateString('es-CO')}</td>
                   <td className="px-5 py-3.5 text-zinc-500">{v.items.length} ítem(s)</td>
                   <td className="px-5 py-3.5 font-semibold text-zinc-800 whitespace-nowrap">{formatCurrency(v.total)}</td>
+                  <td className="px-5 py-3.5 whitespace-nowrap">
+                    {saldosPorVenta.has(v.id) ? (
+                      <div className="leading-tight">
+                        <span className={`font-bold font-mono text-sm ${saldosPorVenta.get(v.id)!.saldo > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                          {formatCurrency(saldosPorVenta.get(v.id)!.saldo)}
+                        </span>
+                        {saldosPorVenta.get(v.id)!.abonado > 0 && (
+                          <span className="block text-[10px] text-emerald-600 font-mono">
+                            abonado {formatCurrency(saldosPorVenta.get(v.id)!.abonado)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-zinc-300 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5"><Badge variant={v.estado} /></td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1">
@@ -1170,6 +1231,22 @@ export function Ventas() {
                         <td colSpan={3} className="px-3 py-2.5 text-right font-extrabold text-amber-900 print:text-black text-sm print:text-base">TOTAL NETO</td>
                         <td className="px-3 py-2.5 text-right font-extrabold text-amber-900 print:text-black text-sm print:text-base font-mono">{formatCurrency(detailVenta.total)}</td>
                       </tr>
+                      {saldosPorVenta.has(detailVenta.id) && (
+                        <>
+                          <tr>
+                            <td colSpan={3} className="px-3 py-1.5 text-right text-emerald-700 print:text-black font-semibold">Abonado</td>
+                            <td className="px-3 py-1.5 text-right text-emerald-700 print:text-black font-bold font-mono">
+                              −{formatCurrency(saldosPorVenta.get(detailVenta.id)!.abonado)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan={3} className="px-3 py-1.5 text-right font-extrabold text-zinc-800 print:text-black">SALDO PENDIENTE</td>
+                            <td className={`px-3 py-1.5 text-right font-extrabold font-mono print:text-black ${saldosPorVenta.get(detailVenta.id)!.saldo > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                              {formatCurrency(saldosPorVenta.get(detailVenta.id)!.saldo)}
+                            </td>
+                          </tr>
+                        </>
+                      )}
                     </tfoot>
                   </table>
                 </div>

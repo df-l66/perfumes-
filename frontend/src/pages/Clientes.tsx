@@ -135,7 +135,10 @@ export function Clientes() {
     const uName = user?.name || 'Usuario';
     const uRole = user?.role || 'admin';
     if (editItem) {
-      updateCliente({ ...payload, id: editItem.id }, uName, uRole);
+      // La deuda se deriva de las ventas a crédito y los abonos: al editar no se envía,
+      // porque cualquier cambio de datos de contacto la sobrescribía con el valor del formulario.
+      const { credito_usado: _omitido, ...sinDeuda } = payload;
+      updateCliente({ ...sinDeuda, id: editItem.id } as any, uName, uRole);
       setSuccessToast('¡Cliente actualizado con éxito!');
     } else {
       addCliente(payload, uName, uRole);
@@ -448,7 +451,19 @@ export function Clientes() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Límite de Crédito (COP)', <input value={formatNumberWithDots(form.limite_credito)} onChange={e => handlePriceChange('limite_credito', e.target.value)} className={inp} placeholder="0" />)}
-            {field('Crédito Usado / Deuda (COP)', <input value={formatNumberWithDots(form.credito_usado)} onChange={e => handlePriceChange('credito_usado', e.target.value)} className={inp} placeholder="0" />)}
+            {editItem
+              ? field('Crédito Usado / Deuda (COP)', (
+                  <>
+                    <input value={formatNumberWithDots(form.credito_usado)} readOnly disabled className={`${inp} bg-zinc-100 text-zinc-500 cursor-not-allowed`} />
+                    <p className="text-[10px] text-zinc-400 mt-1">Se actualiza solo con las ventas a crédito y los abonos registrados.</p>
+                  </>
+                ))
+              : field('Saldo Inicial / Deuda (COP)', (
+                  <>
+                    <input value={formatNumberWithDots(form.credito_usado)} onChange={e => handlePriceChange('credito_usado', e.target.value)} className={inp} placeholder="0" />
+                    <p className="text-[10px] text-zinc-400 mt-1">Solo para cargar una deuda previa. Después se calcula automáticamente.</p>
+                  </>
+                ))}
           </div>
           {field('Dirección', <input required value={form.direccion} onChange={e => setForm((f: any) => ({ ...f, direccion: e.target.value }))} className={inp} />)}
           <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100">
