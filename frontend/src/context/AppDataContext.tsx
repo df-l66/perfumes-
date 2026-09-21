@@ -23,7 +23,7 @@ interface AppDataContextType {
   clearNotifications: () => void;
   // Productos
   productos: Producto[];
-  addProducto: (p: Omit<Producto, 'id'>, autorNombre: string, autorRol: string) => void;
+  addProducto: (p: Omit<Producto, 'id'>, autorNombre: string, autorRol: string) => Promise<Producto | undefined>;
   updateProducto: (p: Producto, autorNombre: string, autorRol: string) => void;
   deleteProducto: (id: string, autorNombre: string, autorRol: string) => void;
   // Proveedores
@@ -83,6 +83,19 @@ interface AppDataContextType {
   deleteMateriaPrima: (id: string, autorNombre: string, autorRol: string) => void;
   registrarMovimientoMateriaPrima: (materia_prima_id: string, tipo: 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida', cantidad: number, referencia: string, notas: string, autorId: string, autorNombre: string, autorRol: string) => void;
 }
+
+/**
+ * Siguiente número de factura a partir del MÁS ALTO ya existente, no de la cantidad de
+ * registros: contar produce números repetidos en cuanto se borra o se anula una factura.
+ */
+const siguienteConsecutivo = (facturas: (string | undefined)[], patron: RegExp) => {
+  let max = 0;
+  for (const f of facturas) {
+    const m = f?.match(patron);
+    if (m) max = Math.max(max, parseInt(m[1], 10) || 0);
+  }
+  return max + 1;
+};
 
 export const getLocalTimestamp = () => {
   const d = new Date();
@@ -244,14 +257,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   };
 
   // ── Productos ──────────────────────────────────────────────────────────────
-  const addProducto = async (p: Omit<Producto, 'id'>, autorNombre: string, autorRol: string) => {
+  const addProducto = async (p: Omit<Producto, 'id'>, autorNombre: string, autorRol: string): Promise<Producto | undefined> => {
     try {
       const nuevo = await fetchCreateProducto(p);
       setProductos(prev => [nuevo, ...prev]);
       addLog(`Creó el producto "${nuevo.nombre}" con código ${nuevo.codigo}`, 'productos', autorNombre, autorRol);
+      return nuevo;
     } catch (e) {
       console.error(e);
       alert(`Hubo un error al crear el producto: ${e instanceof Error ? e.message : e}`);
+      return undefined;
     }
   };
 
@@ -309,7 +324,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const prov = proveedores.find(p => p.id === proveedorId);
     const provNombre = proveedorId === 'sin-proveedor' ? 'Sin Proveedor Registrado' : (prov?.nombre ?? 'Desconocido');
     const total = items.reduce((s, i) => s + i.subtotal, 0);
-    const facturaNum = `COM-2025-${String(compras.length + 1).padStart(4, '0')}`;
+    const facturaNum = `COM-2025-${String(siguienteConsecutivo(compras.map(c => c.factura_compra), /^COM-\d+-(\d+)$/)).padStart(4, '0')}`;
 
     const payload = {
       factura_compra: facturaNum,
@@ -433,7 +448,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     const cliente = clientes.find(c => c.id === clienteId);
     const clienteNombre = clienteId === 'walk-in' ? 'Cliente No Registrado' : (cliente?.nombre ?? 'Desconocido');
     const total = items.reduce((s, i) => s + i.subtotal, 0);
-    const facturaNum = `FAC-${String((ventas?.length || 0) + 1).padStart(3, '0')}`;
+    const facturaNum = `FAC-${String(siguienteConsecutivo((ventas || []).map(v => v.factura), /^FAC-(\d+)$/)).padStart(3, '0')}`;
     
     const payload = {
       factura: facturaNum,

@@ -149,10 +149,32 @@ export function MateriasPrimas() {
     setCurrentPage(1);
   }, [search, itemsPerPage, stockFilterStatus, minStockInput, maxStockInput, stockSortBy]);
 
+  // Calculadora: se escribe lo que se pagó y cuántas unidades vinieron, y de ahí sale el
+  // costo por unidad. Es la forma natural de cargarlo y evita el error de teclear el
+  // precio del envase completo como si fuera el precio por gramo.
+  const [calcPrecio, setCalcPrecio] = useState<number | ''>('');
+  const [calcCantidad, setCalcCantidad] = useState<number | ''>('');
+  const costoCalculado =
+    Number(calcPrecio) > 0 && Number(calcCantidad) > 0 ? Number(calcPrecio) / Number(calcCantidad) : null;
+
+  const limpiarCalculadora = () => {
+    setCalcPrecio('');
+    setCalcCantidad('');
+  };
+
+  // Se redondea al peso: el campo de costo solo admite enteros y el formateador de la
+  // pantalla descarta los decimales, así que un valor como 380,8 se vería como 3.808.
+  const aplicarCostoCalculado = (precio: number | '', cantidad: number | '') => {
+    if (Number(precio) > 0 && Number(cantidad) > 0) {
+      setForm((f: any) => ({ ...f, costo_unitario: Math.round(Number(precio) / Number(cantidad)) }));
+    }
+  };
+
   const openCreate = () => {
     setEditItem(null);
     setForm(EMPTY);
     setError(null);
+    limpiarCalculadora();
     setModalOpen(true);
   };
 
@@ -161,6 +183,7 @@ export function MateriasPrimas() {
     const images = p.imagen ? p.imagen.split(',') : [''];
     setForm({ ...p, imagen: images[0] || '', imagen2: images[1] || '' });
     setError(null);
+    limpiarCalculadora();
     setModalOpen(true);
   };
 
@@ -779,9 +802,55 @@ export function MateriasPrimas() {
               <input required type="number" step="any" min="0" className={inp} value={form.stock_minimo} onChange={e => setForm({...form, stock_minimo: e.target.value === '' ? '' : Number(e.target.value)})} />
             </div>
           </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 space-y-2.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-amber-900">Calcular costo desde la compra</span>
+              <span className="text-[11px] text-amber-700">Opcional</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Precio de compra</label>
+                <input
+                  type="text" inputMode="numeric" placeholder="64.000" className={inp}
+                  value={calcPrecio === '' ? '' : formatNumberWithDots(calcPrecio)}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, '');
+                    const n = v === '' ? '' : Number(v);
+                    setCalcPrecio(n);
+                    aplicarCostoCalculado(n, calcCantidad);
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Cantidad que vino ({form.unidad_medida || 'ud'})
+                </label>
+                <input
+                  type="number" step="any" min="0" placeholder="200" className={inp}
+                  value={calcCantidad}
+                  onChange={e => {
+                    const n = e.target.value === '' ? '' : Number(e.target.value);
+                    setCalcCantidad(n);
+                    aplicarCostoCalculado(calcPrecio, n);
+                  }}
+                />
+              </div>
+            </div>
+            {costoCalculado !== null && (
+              <p className="text-xs font-semibold text-emerald-700">
+                Sale a {formatNumberWithDots(Math.round(costoCalculado))} por {form.unidad_medida || 'unidad'} · ya aplicado abajo
+              </p>
+            )}
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Costo Referencia</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Costo por {form.unidad_medida || 'unidad'}
+            </label>
             <input required type="text" className={inp} value={formatNumberWithDots(form.costo_unitario)} onChange={e => handlePriceChange('costo_unitario', e.target.value)} />
+            <span className="text-xs text-gray-500">
+              No es el precio del envase completo. Ej: si pagaste $64.000 por 200 {form.unidad_medida || 'unidad'}, aquí va 320.
+            </span>
           </div>
           {form.tipo === 'esencia' && (
             <div className="space-y-4">

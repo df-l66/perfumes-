@@ -106,7 +106,7 @@ function NuevaCompraModal({
     setQuickProductModalOpen(true);
   };
 
-  const handleQuickProductSubmit = (e: React.FormEvent) => {
+  const handleQuickProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setQuickProdError(null);
@@ -155,17 +155,24 @@ function NuevaCompraModal({
     const userName = user?.name || 'Usuario';
     const userRole = user?.role || 'admin';
 
-    addProducto(computed, userName, userRole);
+    // Hay que esperar el id real que asigna la base de datos: con un id temporal la línea
+    // de compra se rechaza al guardarse y la compra entera falla.
+    const nuevoProducto = await addProducto(computed, userName, userRole);
+
+    if (!nuevoProducto) {
+      setQuickProdError('No se pudo crear el producto. Intenta de nuevo.');
+      return;
+    }
 
     // Agregar automáticamente al carrito de la compra actual
     addToCart({
-      _id: `temp-${Date.now()}`,
-      _nombre: computed.nombre,
-      _codigo: computed.codigo,
-      _precio_costo: computed.precio_costo,
-      _precio_venta: computed.precio_venta,
-      _stock: computed.stock
-    }, 1, computed.precio_costo);
+      _id: nuevoProducto.id,
+      _nombre: nuevoProducto.nombre,
+      _codigo: nuevoProducto.codigo,
+      _precio_costo: nuevoProducto.precio_costo,
+      _precio_venta: nuevoProducto.precio_venta,
+      _stock: nuevoProducto.stock
+    }, 1, nuevoProducto.precio_costo);
 
     setQuickProductModalOpen(false);
   };
@@ -369,6 +376,11 @@ function NuevaCompraModal({
     const precio_costo = Math.round(item.precio_costo * ivaFactor);
     return { ...item, precio_costo, subtotal: item.cantidad * precio_costo };
   };
+
+  const unidadDe = (item: CompraItem) =>
+    item.tipo_item === 'materia_prima'
+      ? materiasPrimas.find(m => m.id === item.materia_prima_id)?.unidad_medida || 'ud'
+      : productos.find(p => p.id === item.producto_id)?.unidad || 'unidad';
 
   const total = carrito.reduce((s, item) => s + item.subtotal, 0);
   const totalConIva = carrito.reduce((s, item) => s + conIva(item).subtotal, 0);
@@ -722,13 +734,42 @@ function NuevaCompraModal({
                           {item.tipo_item !== 'materia_prima' && (
                             <div>
                               <span className="block text-[9px] uppercase font-bold text-zinc-400 mb-1">Precio Venta Sugerido</span>
-                              <input 
-                                value={formatNumberWithDots(item.precio_venta || 0)} 
-                                onChange={e => updateCartSalePrice(getItemId(item), e.target.value)} 
+                              <input
+                                value={formatNumberWithDots(item.precio_venta || 0)}
+                                onChange={e => updateCartSalePrice(getItemId(item), e.target.value)}
                                 className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs font-semibold focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all"
                               />
                             </div>
                           )}
+
+                          {(() => {
+                            const final = conIva(item);
+                            const venta = item.precio_venta || 0;
+                            const ganancia = (venta - final.precio_costo) * item.cantidad;
+                            const utilidad = venta > 0 ? ((venta - final.precio_costo) / venta) * 100 : 0;
+                            return (
+                              <div className="rounded-lg border border-zinc-200 bg-zinc-50/70 px-2.5 py-2 space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] uppercase font-bold text-zinc-400">Valor por {unidadDe(item)}</span>
+                                  <span className="text-xs font-semibold text-zinc-700 font-mono">{formatCurrency(final.precio_costo)}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[9px] uppercase font-bold text-zinc-400">Inversión</span>
+                                  <span className="text-xs font-semibold text-zinc-700 font-mono">{formatCurrency(final.subtotal)}</span>
+                                </div>
+                                {item.tipo_item !== 'materia_prima' && venta > 0 && (
+                                  <div className="flex justify-between items-center border-t border-zinc-200 pt-1">
+                                    <span className="text-[9px] uppercase font-bold text-emerald-700">
+                                      Ganancia · {utilidad.toFixed(1)}%
+                                    </span>
+                                    <span className={`text-xs font-extrabold font-mono ${ganancia < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                                      {formatCurrency(ganancia)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     ))}

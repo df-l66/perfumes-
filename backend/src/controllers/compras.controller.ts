@@ -41,9 +41,10 @@ export const createCompra = async (req: Request, res: Response) => {
 
     if (compraError || !compra) throw compraError || new Error('No se pudo crear el encabezado de compra');
 
+    // Supabase no ofrece transacciones, así que se guardan primero TODAS las líneas y solo
+    // después se toca el inventario. Si una línea falla, nada se ha movido todavía y basta
+    // con borrar la compra: antes quedaba una cabecera fantasma con un total sin respaldo.
     for (const item of items) {
-      const isMP = !!item.materia_prima_id;
-      
       const detalleData = {
         compra_id: compra.id,
         producto_id: item.producto_id || null,
@@ -54,15 +55,31 @@ export const createCompra = async (req: Request, res: Response) => {
         precio_venta: item.precio_venta || 0,
         subtotal: item.subtotal
       };
-      
-      await client.from('compra_detalles').insert([detalleData]);
+
+      const { error: detalleError } = await client.from('compra_detalles').insert([detalleData]);
+      if (detalleError) {
+        await client.from('compra_detalles').delete().eq('compra_id', compra.id);
+        await client.from('compras').delete().eq('id', compra.id);
+        throw new Error(`No se pudo guardar la línea "${item.nombre}": ${detalleError.message}`);
+      }
+    }
+
+    for (const item of items) {
+      const isMP = !!item.materia_prima_id;
 
       if (isMP) {
-        const { data: mp } = await client.from('materias_primas').select('stock').eq('id', item.materia_prima_id).maybeSingle();
+        const { data: mp } = await client.from('materias_primas').select('stock, stock_minimo').eq('id', item.materia_prima_id).maybeSingle();
         if (mp) {
           const nuevoStock = Number(mp.stock) + item.cantidad;
-          await client.from('materias_primas').update({ stock: nuevoStock }).eq('id', item.materia_prima_id);
-          
+          const nuevoEstado = nuevoStock <= 0 ? 'inactivo' : nuevoStock <= Number(mp.stock_minimo) ? 'stock_bajo' : 'activo';
+
+          // precio_costo ya viene por unidad de medida (el carrito divide el costo total
+          // entre la cantidad), así que es el valor por gramo/ml/ud, no el del envase.
+          // Se redondea al peso porque el formulario de materias primas solo maneja enteros.
+          await client.from('materias_primas')
+            .update({ stock: nuevoStock, estado: nuevoEstado, costo_unitario: Math.round(Number(item.precio_costo) || 0) })
+            .eq('id', item.materia_prima_id);
+
           await client.from('movimientos_materias_primas').insert([{
             materia_prima_id: item.materia_prima_id,
             materia_prima_nombre: item.nombre,

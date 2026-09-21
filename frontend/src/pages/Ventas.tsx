@@ -12,6 +12,7 @@ import { AlertBox } from '../components/ui/AlertBox';
 import { PrepararTripleAaaModal } from '../components/ui/PrepararTripleAaaModal';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
+import { calcularSaldosCredito } from '../utils/creditoFifo';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { exportToCSV as downloadCSV } from '../utils/exportToCSV';
@@ -618,35 +619,7 @@ export function Ventas() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Reparto FIFO de los abonos entre las ventas a crédito de cada cliente, replicando
-  // el mismo algoritmo del backend (abonos.controller.ts) para mostrar el saldo por venta.
-  const saldosPorVenta = useMemo(() => {
-    const abonadoPorCliente = new Map<string, number>();
-    for (const a of abonos) {
-      if (!a.cliente_id) continue;
-      abonadoPorCliente.set(a.cliente_id, (abonadoPorCliente.get(a.cliente_id) || 0) + (Number(a.monto) || 0));
-    }
-
-    const porCliente = new Map<string, Venta[]>();
-    for (const v of ventas) {
-      if (v.metodo_pago !== 'credito' || v.estado === 'anulada' || !v.cliente_id) continue;
-      if (!porCliente.has(v.cliente_id)) porCliente.set(v.cliente_id, []);
-      porCliente.get(v.cliente_id)!.push(v);
-    }
-
-    const saldos = new Map<string, { abonado: number; saldo: number }>();
-    for (const [clienteId, lista] of porCliente) {
-      let disponible = abonadoPorCliente.get(clienteId) || 0;
-      const ordenadas = [...lista].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
-      for (const v of ordenadas) {
-        const total = Number(v.total) || 0;
-        const abonado = Math.min(disponible, total);
-        disponible -= abonado;
-        saldos.set(v.id, { abonado, saldo: total - abonado });
-      }
-    }
-    return saldos;
-  }, [ventas, abonos]);
+  const saldosPorVenta = useMemo(() => calcularSaldosCredito(ventas, abonos), [ventas, abonos]);
 
   const filtered = useMemo(() => ventas.filter(v => {
     const matchSearch = (v.factura || '').toLowerCase().includes(search.toLowerCase()) ||

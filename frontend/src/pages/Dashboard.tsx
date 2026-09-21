@@ -10,6 +10,7 @@ import { Layout } from '../components/layout/Layout';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { useAppData } from '../context/AppDataContext';
+import { calcularSaldosCredito } from '../utils/creditoFifo';
 import { exportToCSV as downloadCSV } from '../utils/exportToCSV';
 
 function KpiCard({ title, value, subtitle, icon, trend, color, delayClass = '' }: {
@@ -70,7 +71,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export function Dashboard() {
-  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas } = useAppData();
+  const { productos, ventas, clientes, logs, compras, gastos, materiasPrimas, movimientosMateriasPrimas, abonos } = useAppData();
 
   const getLocalDate = () => {
     const d = new Date();
@@ -90,6 +91,8 @@ export function Dashboard() {
   };
 
   const productosStockBajo = productos.filter(p => p.estado === 'stock_bajo' || p.stock <= p.stock_minimo);
+  const materiasPrimasStockBajo = materiasPrimas.filter(m => m.estado === 'stock_bajo' || Number(m.stock) <= Number(m.stock_minimo));
+  const totalStockBajo = productosStockBajo.length + materiasPrimasStockBajo.length;
 
   // Rango de fechas. Un input de fecha vacío se trata como "sin límite" en vez de
   // excluirlo todo, que dejaba el tablero entero en $0 sin explicación.
@@ -117,23 +120,89 @@ export function Dashboard() {
 
   // 2. Costo de Ventas Real (COGS - Cost of Goods Sold)
   // Se calcula sobre TODAS las ventas activas, porque la mercancía salió.
-  const costoVentas = ventasActivas.reduce((sum, v) => {
-    return sum + v.items.reduce((itemSum, item) => {
-      const cantidadVendida = Number(item.cantidad) || 1;
-      if (item.es_preparado && item.receta) {
-        const costoRecetaUnitaria = item.receta.reduce((rSum, r) => {
-          const mp = materiasPrimas.find(m => m.id === r.materia_prima_id);
-          return rSum + (Number(r.cantidad) * (mp?.costo_unitario || 0));
-        }, 0);
-        return itemSum + (cantidadVendida * costoRecetaUnitaria);
-      }
-      const p = productos.find(prod => prod.id === item.producto_id);
-      return itemSum + (cantidadVendida * (p?.precio_costo || 0));
-    }, 0);
-  }, 0);
+  // El costo de los perfumes preparados no se puede leer del ítem: el backend no persiste
+  // `receta` en venta_detalles. Se reconstruye desde los movimientos de materias primas,
+  // que sí registran la receta consumida con referencia "Venta {factura}". Las de anulación
+  // llevan "Anulación de Venta ..." y tipo 'entrada', por eso no entran.
+  //
+  // Solo se cuentan los insumos cuyo costo ya quedó confirmado por una compra registrada.
+  // Los demás conservan un costo cargado a mano que suele ser el precio del envase entero,
+  // y computarlo daría una pérdida falsa. Cada compra que se registre suma su insumo aquí.
+  const idsConCostoDeCompra = new Set<string>();
+  for (const c of compras) {
+    if (c.estado === 'anulada') continue;
+    for (const it of c.items || []) if (it.materia_prima_id) idsConCostoDeCompra.add(it.materia_prima_id);
+  }
 
-  // Pagado a proveedores (Compras de inventario dentro del rango seleccionado)
+  const costoRecetaPorFactura = new Map<string, number>();
+  const insumosPendientes = new Set<string>();
+  for (const m of movimientosMateriasPrimas) {
+    if (m.tipo !== 'salida' || !m.referencia?.startsWith('Venta ')) continue;
+    if (!idsConCostoDeCompra.has(m.materia_prima_id)) {
+      insumosPendientes.add(m.materia_prima_id);
+      continue;
+    }
+    const factura = m.referencia.slice('Venta '.length).trim();
+    const mp = materiasPrimas.find(x => x.id === m.materia_prima_id);
+    const costo = (Number(m.cantidad) || 0) * (Number(mp?.costo_unitario) || 0);
+    costoRecetaPorFactura.set(factura, (costoRecetaPorFactura.get(factura) || 0) + costo);
+  }
+  const insumosSinVerificar = insumosPendientes.size;
+
+  // Las dos naturalezas del negocio se miden por separado: los productos de catálogo se
+  // compran y se revenden tal cual, mientras que los preparados se fabrican consumiendo
+  // materias primas. Mezclarlas impide saber de dónde sale realmente la ganancia.
+  const catalogo = { vendido: 0, costo: 0 };
+  const preparados = { vendido: 0, costo: 0 };
+
+  for (const v of ventasActivas) {
+    for (const item of v.items) {
+      const cantidadVendida = Number(item.cantidad) || 1;
+      const p = productos.find(prod => prod.id === item.producto_id);
+      if (p) {
+        catalogo.vendido += Number(item.subtotal) || 0;
+        catalogo.costo += cantidadVendida * (Number(p.precio_costo) || 0);
+      } else {
+        preparados.vendido += Number(item.subtotal) || 0;
+      }
+    }
+    preparados.costo += costoRecetaPorFactura.get(v.factura) || 0;
+  }
+
+  const costoVentas = catalogo.costo + preparados.costo;
+
+  // Facturación según el estado de cobro, que es como el usuario lee el tablero.
+  const ventasCompletadas = ventasActivas.filter(v => v.estado === 'completada');
+  const ventasACredito = ventasActivas.filter(v => v.estado !== 'completada');
+  const totalCompletadas = ventasCompletadas.reduce((s, v) => s + (Number(v.total) || 0), 0);
+  const totalACredito = ventasACredito.reduce((s, v) => s + (Number(v.total) || 0), 0);
+
+  // De las ventas todavía pendientes, cuánto llevan abonado y cuánto falta realmente.
+  // El reparto FIFO es el mismo que usa el backend para decidir si una venta ya está pagada.
+  const saldosCredito = calcularSaldosCredito(ventasActivas, abonos);
+  const abonadoPendientes = ventasACredito.reduce((s, v) => s + (saldosCredito.get(v.id)?.abonado || 0), 0);
+  const saldoPorCobrar = ventasACredito.reduce(
+    (s, v) => s + (saldosCredito.get(v.id)?.saldo ?? (Number(v.total) || 0)),
+    0
+  );
+  const contadoCompletadas = ventasCompletadas.filter(v => v.metodo_pago !== 'credito').length;
+
+  // Pagado a proveedores (Compras de inventario dentro del rango seleccionado), separando
+  // mercancía de reventa de insumos de fabricación. "sinDetalle" es la diferencia entre el
+  // total de la factura y la suma de sus líneas: aparece en compras viejas que perdieron
+  // líneas por un insert sin verificar, y se muestra aparte para no inventar a qué tipo van.
   const costoTotalCompras = comprasFiltradas.reduce((sum, c) => sum + (Number(c.total) || 0), 0);
+  const comprasPorTipo = comprasFiltradas.reduce((acc, c) => {
+    let sumaLineas = 0;
+    for (const it of c.items || []) {
+      const sub = Number(it.subtotal) || 0;
+      sumaLineas += sub;
+      if (it.materia_prima_id) acc.materiasPrimas += sub;
+      else acc.productos += sub;
+    }
+    acc.sinDetalle += (Number(c.total) || 0) - sumaLineas;
+    return acc;
+  }, { productos: 0, materiasPrimas: 0, sinDetalle: 0 });
 
   // Gastos Operativos
   const totalGastos = gastosFiltrados.reduce((sum, g) => sum + (Number(g.monto) || 0), 0);
@@ -265,7 +334,7 @@ export function Dashboard() {
         <KpiCard
           title="Ventas Totales"
           value={formatCurrency(totalFacturado)}
-          subtitle={`${ventasActivas.length} facturas (Contado y Crédito)`}
+          subtitle={`Completadas ${formatCurrency(totalCompletadas)} · Crédito ${formatCurrency(totalACredito)}`}
           icon={<TrendingUp size={22} className="text-amber-600 animate-pulse" />}
           color="bg-amber-50"
           delayClass="animate-fade-in-up"
@@ -273,7 +342,7 @@ export function Dashboard() {
         <KpiCard
           title="Costo de Ventas"
           value={formatCurrency(costoVentas)}
-          subtitle="Costo de mercancía entregada"
+          subtitle={`Catálogo ${formatCurrency(catalogo.costo)} · Insumos ${formatCurrency(preparados.costo)}`}
           icon={<ShoppingCart size={22} className="text-amber-600" />}
           color="bg-amber-50"
           delayClass="animate-fade-in-up animation-delay-100"
@@ -297,19 +366,22 @@ export function Dashboard() {
         <KpiCard
           title="Inv. en Inventario"
           value={formatCurrency(costoTotalCompras)}
-          subtitle="Compras del período seleccionado"
+          subtitle={
+            `Productos ${formatCurrency(comprasPorTipo.productos)} · Insumos ${formatCurrency(comprasPorTipo.materiasPrimas)}` +
+            (Math.abs(comprasPorTipo.sinDetalle) > 1 ? ` · Sin detalle ${formatCurrency(comprasPorTipo.sinDetalle)}` : '')
+          }
           icon={<Package size={22} className="text-purple-600" />}
           color="bg-purple-50"
           delayClass="animate-fade-in-up animation-delay-300"
         />
         <KpiCard
           title="Stock Crítico"
-          value={productosStockBajo.length}
-          subtitle={productosStockBajo.length > 0 ? "¡Reabastecimiento!" : "Inventario óptimo"}
+          value={totalStockBajo}
+          subtitle={totalStockBajo > 0 ? `${productosStockBajo.length} producto(s) · ${materiasPrimasStockBajo.length} insumo(s)` : "Inventario óptimo"}
           icon={
             <div className="relative">
-              <AlertTriangle size={22} className={productosStockBajo.length > 0 ? "text-red-600" : "text-amber-600"} />
-              {productosStockBajo.length > 0 && (
+              <AlertTriangle size={22} className={totalStockBajo > 0 ? "text-red-600" : "text-amber-600"} />
+              {totalStockBajo > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -317,9 +389,102 @@ export function Dashboard() {
               )}
             </div>
           }
-          color={productosStockBajo.length > 0 ? "bg-red-50/80 border border-red-100" : "bg-amber-50"}
+          color={totalStockBajo > 0 ? "bg-red-50/80 border border-red-100" : "bg-amber-50"}
           delayClass="animate-fade-in-up animation-delay-300"
         />
+      </div>
+
+      {/* Estado de cobro de las ventas */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm mb-6">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-base font-semibold text-zinc-800">Estado de Cobro</h2>
+          <span className="text-xs text-zinc-400">Ventas del período seleccionado</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Completadas</span>
+              <span className="text-[10px] text-emerald-600 font-semibold">{ventasCompletadas.length} factura(s)</span>
+            </div>
+            <p className="text-2xl font-extrabold text-emerald-700 font-mono mt-1">{formatCurrency(totalCompletadas)}</p>
+            <p className="text-[11px] text-emerald-600 mt-1">
+              Ya cobradas{contadoCompletadas > 0 ? ` · ${contadoCompletadas} de contado` : ''}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-4">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">A Crédito · pendientes</span>
+              <span className="text-[10px] text-amber-600 font-semibold">{ventasACredito.length} factura(s)</span>
+            </div>
+            <p className="text-2xl font-extrabold text-amber-700 font-mono mt-1">{formatCurrency(totalACredito)}</p>
+            <div className="mt-2 pt-2 border-t border-amber-200/70 space-y-1">
+              <div className="flex justify-between text-[11px]">
+                <span className="text-zinc-500">Ya abonado</span>
+                <span className="font-mono font-semibold text-emerald-600">{formatCurrency(abonadoPendientes)}</span>
+              </div>
+              <div className="flex justify-between text-[11px]">
+                <span className="text-zinc-600 font-semibold">Falta por cobrar</span>
+                <span className="font-mono font-bold text-red-600">{formatCurrency(saldoPorCobrar)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desglose por naturaleza del negocio */}
+      <div className="bg-white rounded-xl border border-zinc-200 p-6 shadow-sm mb-8">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-base font-semibold text-zinc-800">Resultado por Naturaleza</h2>
+          <span className="text-xs text-zinc-400">Reventa de catálogo frente a fabricación propia</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200">
+                <th className="py-2 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider"></th>
+                <th className="py-2 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">Productos de Catálogo</th>
+                <th className="py-2 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">Perfumes Preparados</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+              <tr>
+                <td className="py-2.5 text-zinc-500 text-xs font-semibold uppercase">Vendido</td>
+                <td className="py-2.5 text-right font-mono font-semibold text-zinc-800">{formatCurrency(catalogo.vendido)}</td>
+                <td className="py-2.5 text-right font-mono font-semibold text-zinc-800">{formatCurrency(preparados.vendido)}</td>
+              </tr>
+              <tr>
+                <td className="py-2.5 text-zinc-500 text-xs font-semibold uppercase">Costo</td>
+                <td className="py-2.5 text-right font-mono text-zinc-600">{formatCurrency(catalogo.costo)}</td>
+                <td className="py-2.5 text-right font-mono text-zinc-600">{formatCurrency(preparados.costo)}</td>
+              </tr>
+              <tr className="bg-zinc-50/60">
+                <td className="py-2.5 text-zinc-700 text-xs font-bold uppercase">Ganancia</td>
+                {[catalogo, preparados].map((d, i) => {
+                  const g = d.vendido - d.costo;
+                  const margen = d.vendido > 0 ? (g / d.vendido) * 100 : 0;
+                  return (
+                    <td key={i} className="py-2.5 text-right">
+                      <span className={`font-mono font-extrabold ${g < 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {formatCurrency(g)}
+                      </span>
+                      <span className={`block text-[10px] font-semibold ${g < 0 ? 'text-red-400' : 'text-emerald-500'}`}>
+                        {margen.toFixed(1)}% de margen
+                      </span>
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {insumosSinVerificar > 0 && (
+          <p className="mt-3 text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+            El costo de los preparados aún está incompleto: {insumosSinVerificar} insumo(s) usados en recetas todavía
+            no tienen su costo confirmado por una compra, así que por ahora no se suman. Cada compra que registres
+            incorpora su insumo a este cálculo.
+          </p>
+        )}
       </div>
 
       {/* Sales Chart + Recent Sales */}
