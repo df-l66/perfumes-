@@ -572,6 +572,25 @@ function NuevaCompraModal({
           {/* Step 2: Carrito */}
           {step === 'productos' && (
             <div className="space-y-4">
+              <label className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer select-none transition-colors ${aplicaIva ? 'bg-amber-50 border-amber-200' : 'bg-zinc-50 border-zinc-200'}`}>
+                <input
+                  type="checkbox"
+                  checked={aplicaIva}
+                  onChange={e => setAplicaIva(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 shrink-0 rounded border-zinc-300 accent-amber-600 cursor-pointer"
+                />
+                <span>
+                  <span className={`block text-sm font-bold ${aplicaIva ? 'text-amber-900' : 'text-zinc-700'}`}>
+                    Aplicar IVA del {ivaPct}% a esta compra
+                  </span>
+                  <span className="block text-xs text-zinc-500 mt-0.5">
+                    {aplicaIva
+                      ? `Los costos que escribas abajo se toman sin IVA y se les suma el ${ivaPct}%.`
+                      : 'Desmarcado: el proveedor ya te da el precio con IVA incluido, así que los costos se guardan tal cual los escribas.'}
+                  </span>
+                </span>
+              </label>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 
                 {/* Catalog Picker */}
@@ -776,9 +795,6 @@ function NuevaCompraModal({
                   </div>
 
                   <div className="pt-3 border-t border-zinc-200 mt-3 space-y-1.5">
-                    <div className="flex justify-between items-center pb-1">
-                      {ivaToggle}
-                    </div>
                     {aplicaIva && (
                       <>
                         <div className="flex justify-between text-xs text-zinc-500">
