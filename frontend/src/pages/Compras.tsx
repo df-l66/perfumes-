@@ -424,10 +424,13 @@ function NuevaCompraModal({
 
     const invalidMargin = itemsFinales.find(item => item.tipo_item !== 'materia_prima' && item.precio_costo > (item.precio_venta || 0));
     if (invalidMargin) {
+      const sinPrecioVenta = !(Number(invalidMargin.precio_venta) > 0);
       setError(
-        aplicaIva
-          ? `El costo de "${invalidMargin.nombre}" con IVA (${formatCurrency(invalidMargin.precio_costo)}) no puede ser mayor que su precio de venta sugerido.`
-          : `El precio de costo de "${invalidMargin.nombre}" no puede ser mayor que su precio de venta sugerido.`
+        sinPrecioVenta
+          ? `"${invalidMargin.nombre}" no tiene precio de venta. Escríbelo en el campo "Precio Venta Sugerido" del carrito, en el paso anterior.`
+          : aplicaIva
+            ? `El costo de "${invalidMargin.nombre}" con IVA (${formatCurrency(invalidMargin.precio_costo)}) no puede ser mayor que su precio de venta (${formatCurrency(invalidMargin.precio_venta || 0)}). Súbele el precio de venta o desmarca el IVA.`
+            : `El costo de "${invalidMargin.nombre}" (${formatCurrency(invalidMargin.precio_costo)}) no puede ser mayor que su precio de venta (${formatCurrency(invalidMargin.precio_venta || 0)}).`
       );
       return;
     }
@@ -914,6 +917,12 @@ function NuevaCompraModal({
                   placeholder="Ej: Factura de proveedor #99881..."
                 />
               ))}
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-700">
+                  {error}
+                </div>
+              )}
 
               <div className="flex justify-between pt-2 border-t border-zinc-100">
                 <Button variant="secondary" onClick={() => setStep('productos')}>

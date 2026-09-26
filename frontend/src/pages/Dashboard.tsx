@@ -509,8 +509,8 @@ export function Dashboard() {
             <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
               <defs>
                 <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#c5a32a" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#c5a32a" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -522,7 +522,7 @@ export function Dashboard() {
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey="total" stroke="#0d9488" strokeWidth={2.5} fill="url(#salesGrad)" dot={{ r: 4, fill: '#0d9488', strokeWidth: 0 }} activeDot={{ r: 5, fill: '#0d9488' }} />
+              <Area type="monotone" dataKey="total" stroke="#c5a32a" strokeWidth={2.5} fill="url(#salesGrad)" dot={{ r: 4, fill: '#c5a32a', strokeWidth: 0 }} activeDot={{ r: 5, fill: '#c5a32a' }} />
               <Area type="monotone" dataKey="cantidad" stroke="transparent" fill="transparent" />
             </AreaChart>
           </ResponsiveContainer>

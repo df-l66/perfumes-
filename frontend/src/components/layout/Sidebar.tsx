@@ -100,7 +100,7 @@ export function Sidebar() {
           isHovered || mobileMenuOpen ? 'px-4 py-3.5' : 'p-2 hidden md:block'
         }`}>
           <div className={`flex items-center gap-3 ${!(isHovered || mobileMenuOpen) && 'justify-center'}`}>
-            <div className="w-9 h-9 rounded-full bg-linear-to-tr from-amber-600 to-emerald-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-inner">
+            <div className="w-9 h-9 rounded-full bg-linear-to-tr from-amber-700 to-amber-500 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-inner">
               {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
             </div>
             <div className={`min-w-0 transition-all duration-300 origin-left ${

@@ -1,12 +1,29 @@
 @import "tailwindcss";
 
+/* La interfaz usa la escala `amber` de Tailwind, que tira a naranja. Aquí se redefine
+   con tonos dorados: así las 441 clases amber-* repartidas por la app cambian de color
+   sin tener que tocarlas una por una. Tono ~46° en vez de los ~38° del ámbar original. */
+@theme {
+  --color-amber-50:  #fdfbf0;
+  --color-amber-100: #faf4d9;
+  --color-amber-200: #f2e5ac;
+  --color-amber-300: #e8d177;
+  --color-amber-400: #d9bc4a;
+  --color-amber-500: #c5a32a;
+  --color-amber-600: #a8851c;
+  --color-amber-700: #866a17;
+  --color-amber-800: #654f14;
+  --color-amber-900: #473811;
+  --color-amber-950: #292009;
+}
+
 @layer base {
   :root {
     --color-sidebar-bg: #09090b; /* zinc-950 */
     --color-sidebar-hover: #18181b; /* zinc-900 */
-    --color-sidebar-active: #d97706; /* amber-600 */
-    --color-accent: #d97706; /* amber-600 */
-    --color-accent-hover: #b45309; /* amber-700 */
+    --color-sidebar-active: #a8851c; /* dorado 600 */
+    --color-accent: #a8851c; /* dorado 600 */
+    --color-accent-hover: #866a17; /* dorado 700 */
   }
 }
 
