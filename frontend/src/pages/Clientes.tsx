@@ -97,11 +97,14 @@ export function Clientes() {
       return;
     }
 
-    // Validar documento único
-    const docExiste = clientes.some(c => c.documento.trim() === form.documento.trim() && (!editItem || c.id !== editItem.id));
-    if (docExiste) {
-      setError(`El documento o NIT "${form.documento}" ya está registrado a nombre de otro cliente.`);
-      return;
+    // Validar documento único, solo si se escribió uno: puede haber varios clientes sin documento.
+    const documentoIngresado = (form.documento || '').trim();
+    if (documentoIngresado) {
+      const docExiste = clientes.some(c => (c.documento || '').trim() === documentoIngresado && (!editItem || c.id !== editItem.id));
+      if (docExiste) {
+        setError(`El documento o NIT "${documentoIngresado}" ya está registrado a nombre de otro cliente.`);
+        return;
+      }
     }
 
     // Validar email
@@ -111,9 +114,9 @@ export function Clientes() {
       return;
     }
 
-    // Validar teléfono
-    const telDigitos = form.telefono.replace(/\s+/g, '');
-    if (!/^\+?\d+$/.test(telDigitos)) {
+    // Validar teléfono solo si se escribió uno
+    const telDigitos = (form.telefono || '').replace(/\s+/g, '');
+    if (telDigitos && !/^\+?\d+$/.test(telDigitos)) {
       setError("El número de teléfono debe contener únicamente dígitos numéricos.");
       return;
     }
@@ -439,15 +442,15 @@ export function Clientes() {
                 <option value="persona">Persona Natural</option>
               </select>
             ))}
-            {field('Documento (NIT / CC)', <input required value={form.documento} onChange={e => setForm((f: any) => ({ ...f, documento: e.target.value }))} className={inp} />)}
+            {field('Documento (NIT / CC) — opcional', <input value={form.documento} onChange={e => setForm((f: any) => ({ ...f, documento: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Email', <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className={inp} />)}
-            {field('Teléfono', <input required minLength={7} pattern="[+0-9- ]+" value={form.telefono} onChange={e => setForm((f: any) => ({ ...f, telefono: e.target.value }))} className={inp} />)}
+            {field('Email — opcional', <input type="email" value={form.email} onChange={e => setForm((f: any) => ({ ...f, email: e.target.value }))} className={inp} />)}
+            {field('Teléfono — opcional', <input value={form.telefono} onChange={e => setForm((f: any) => ({ ...f, telefono: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('Ciudad', <input required value={form.ciudad} onChange={e => setForm((f: any) => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
-            {field('Fecha de Registro', <input type="date" required value={form.fecha_registro} onChange={e => setForm((f: any) => ({ ...f, fecha_registro: e.target.value }))} className={inp} />)}
+            {field('Ciudad — opcional', <input value={form.ciudad} onChange={e => setForm((f: any) => ({ ...f, ciudad: e.target.value }))} className={inp} />)}
+            {field('Fecha de Registro', <input type="date" value={form.fecha_registro} onChange={e => setForm((f: any) => ({ ...f, fecha_registro: e.target.value }))} className={inp} />)}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('Límite de Crédito (COP)', <input value={formatNumberWithDots(form.limite_credito)} onChange={e => handlePriceChange('limite_credito', e.target.value)} className={inp} placeholder="0" />)}
@@ -465,7 +468,7 @@ export function Clientes() {
                   </>
                 ))}
           </div>
-          {field('Dirección', <input required value={form.direccion} onChange={e => setForm((f: any) => ({ ...f, direccion: e.target.value }))} className={inp} />)}
+          {field('Dirección — opcional', <input value={form.direccion} onChange={e => setForm((f: any) => ({ ...f, direccion: e.target.value }))} className={inp} />)}
           <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100">
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
             <Button type="submit">{editItem ? 'Guardar' : 'Crear'}</Button>

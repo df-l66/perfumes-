@@ -22,8 +22,7 @@ export function RegistroCliente() {
     setError(null);
     try {
       if (!formData.nombre.trim()) throw new Error('El nombre o razón social es obligatorio.');
-      if (!formData.documento.trim()) throw new Error('El documento (NIT/Cédula) es obligatorio.');
-      if (!/^\d+$/.test(formData.documento.trim())) throw new Error('El documento debe contener únicamente números.');
+      if (formData.documento.trim() && !/^\d+$/.test(formData.documento.trim())) throw new Error('El documento debe contener únicamente números.');
       if (formData.documento.trim().length < 5) throw new Error('El número de documento es muy corto.');
 
       if (formData.email) {
@@ -191,7 +190,6 @@ export function RegistroCliente() {
                   </label>
                   <input
                     type="text"
-                    required
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                     value={formData.documento}
                     onChange={(e) => setFormData({ ...formData, documento: e.target.value.replace(/\D/g, '') })}
@@ -201,7 +199,6 @@ export function RegistroCliente() {
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Teléfono</label>
                   <input
                     type="tel"
-                    required
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value.replace(/[^\d+]/g, '') })}
@@ -213,7 +210,6 @@ export function RegistroCliente() {
                 <label className="block text-sm font-medium text-zinc-700 mb-1.5">Correo Electrónico</label>
                 <input
                   type="email"
-                  required
                   className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -225,7 +221,6 @@ export function RegistroCliente() {
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Ciudad</label>
                   <input
                     type="text"
-                    required
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                     value={formData.ciudad}
                     onChange={(e) => setFormData({ ...formData, ciudad: e.target.value.replace(/\d/g, '') })}
@@ -235,7 +230,6 @@ export function RegistroCliente() {
                   <label className="block text-sm font-medium text-zinc-700 mb-1.5">Dirección</label>
                   <input
                     type="text"
-                    required
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-sm"
                     value={formData.direccion}
                     onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}

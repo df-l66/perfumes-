@@ -49,22 +49,20 @@ export const createCliente = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'El nombre o razón social es obligatorio.' });
     }
 
-    if (!documentoClean) {
-      return res.status(400).json({ message: 'El número de documento o NIT es obligatorio.' });
-    }
 
-    // Validar si el documento ya existe
-    const { data: existingDoc, error: docError } = await client
-      .from('clientes')
-      .select('id')
-      .eq('documento', documentoClean)
-      .maybeSingle();
+    // El documento es opcional. La unicidad solo se comprueba cuando se envía uno, porque
+    // varios clientes pueden quedar sin documento y no deben considerarse duplicados.
+    const consultaDoc: any = documentoClean
+      ? await client.from('clientes').select('id').eq('documento', documentoClean)
+      : { data: [], error: null };
+    const existingDocs = consultaDoc.data;
+    const docError = consultaDoc.error;
       
     if (docError) {
       console.error('Error al verificar documento existente:', docError);
     }
 
-    if (existingDoc) {
+    if ((existingDocs || []).length > 0) {
       return res.status(400).json({ message: `El documento o NIT "${documentoClean}" ya se encuentra registrado.` });
     }
 
